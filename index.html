@@ -1,0 +1,3245 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Altın Eksper — Profesyonel Operasyon Platformu</title>
+<meta name="theme-color" content="#1e293b">
+
+<style>
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body{
+    margin:0;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background:#f4f6f8;
+    color:#1e293b;
+}
+
+header{
+    background:#1e293b;
+    color:#fff;
+    padding:12px 5%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.logo-wrap{ display:flex; flex-direction:column; }
+.logo{ font-size:22px; font-weight:800; color:#f59e0b; cursor:pointer; }
+.tag{ font-size:11px; color:#94a3b8; }
+
+.header-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+.container{
+    max-width:1150px;
+    margin:20px auto;
+    padding:0 16px;
+}
+
+.card{
+    background:#fff;
+    border-radius:10px;
+    padding:18px;
+    margin-bottom:16px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.06);
+    border:1px solid #e2e8f0;
+}
+
+.consumer-hero{
+    background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color:#fff;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:16px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+.market{
+    background:#334155;
+    color:#fff;
+    border:none;
+}
+
+.market-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.market-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+}
+
+.market-box{
+    background:rgba(255,255,255,0.08);
+    border-radius:8px;
+    padding:12px;
+}
+
+.market-box span{
+    font-size:11px;
+    color:#94a3b8;
+    display:block;
+    margin-bottom:2px;
+    font-weight:600;
+}
+
+.market-box strong{
+    display:block;
+    font-size:18px;
+    color:#f59e0b;
+    margin-top:2px;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1.5fr 1.2fr 1.4fr;
+    gap:12px;
+}
+
+label{
+    font-weight:600;
+    font-size:13px;
+    display:block;
+    margin-bottom:5px;
+    color:#475569;
+}
+
+input, select, button{ font:inherit; }
+
+input, select{
+    width:100%;
+    padding:9px 12px;
+    border:1px solid #cbd5e1;
+    border-radius:6px;
+    background:#fff;
+    font-size:14px;
+}
+
+input:focus, select:focus{
+    outline:none;
+    border-color:#f59e0b;
+}
+
+button{
+    border:0;
+    border-radius:6px;
+    padding:9px 14px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:13px;
+    transition:0.15s ease-in-out;
+}
+
+.primary{ background:#f59e0b; color:#1e293b; }
+.primary:hover{ background:#d97706; color:#fff; }
+.secondary{ background:#475569; color:#fff; }
+.secondary:hover{ background:#334155; }
+.danger{ background:#ef4444; color:#fff; }
+.danger:hover{ background:#dc2626; }
+.wa-btn{ background:#25d366; color:#fff; display:inline-flex; align-items:center; gap:6px; }
+
+table{ width:100%; border-collapse:collapse; margin-top:10px; }
+th{ background:#1e293b; color:#fff; padding:10px; text-align:left; font-size:12px; font-weight:600; text-transform:uppercase; }
+td{ padding:8px 10px; border-bottom:1px solid #e2e8f0; vertical-align:middle; }
+
+tfoot tr{ background:#f8fafc; }
+tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
+
+.tfoot-label{ font-size:11px; color:#64748b; display:block; text-align:center; font-weight:600; }
+.tfoot-value{ font-size:15px; font-weight:700; color:#1e293b; display:block; text-align:center; margin-top:2px; }
+.tfoot-grand-total{ font-size:18px; font-weight:800; color:#b45309; display:block; margin-top:2px; }
+
+.product-wrap{ display:flex; flex-direction:column; gap:4px; }
+.photo-uploader{ display:none; align-items:center; gap:6px; margin-top:2px; }
+.photo-btn{
+    background:#f1f5f9; border:1px dashed #94a3b8; color:#475569; font-size:11px;
+    padding:3px 6px; border-radius:4px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;
+}
+.photo-preview-wrap{ display:none; position:relative; width:34px; height:34px; }
+.photo-preview-wrap img{ width:100%; height:100%; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; cursor:pointer; }
+.photo-remove{
+    position:absolute; top:-5px; right:-5px; background:#ef4444; color:#fff;
+    border-radius:50%; width:15px; height:15px; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; padding:0;
+}
+
+.unit-price{
+    font-size:12px; font-weight:600; color:#475569; background:#f1f5f9;
+    border-radius:4px; padding:4px 8px; white-space:nowrap; display:inline-block;
+}
+
+.quotes-card{
+    background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-top:16px;
+}
+.quote-row{
+    display:grid; grid-template-columns:1.2fr 1fr 1.6fr 40px; gap:8px; align-items:center; margin-bottom:8px;
+}
+.best-offer-box{
+    display:flex; justify-content:space-between; align-items:center; background:#1e293b; color:#fff;
+    padding:12px 16px; border-radius:8px; margin-top:12px; flex-wrap:wrap; gap:10px;
+}
+
+.action-bar{ display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+.history-card{ background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-top:16px; }
+.history-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.ledger-summary{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:12px; }
+.ledger-box{ background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:10px; text-align:center; }
+.ledger-box span{ font-size:11px; color:#64748b; display:block; }
+.ledger-box strong{ font-size:15px; color:#1e293b; display:block; margin-top:2px; }
+
+.history-tabs{ display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:8px; }
+.tab-btn{ background:#f1f5f9; color:#475569; padding:6px 12px; font-size:12px; font-weight:600; border-radius:6px; }
+.tab-btn.active{ background:#1e293b; color:#fff; }
+
+.date-group-card{
+    background:#fff;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    margin-bottom:14px;
+    overflow:hidden;
+}
+
+.date-group-header{
+    background:#e2e8f0;
+    padding:8px 12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:12px;
+    font-weight:700;
+    color:#334155;
+}
+
+.date-group-summary{
+    display:flex;
+    gap:10px;
+    font-size:11px;
+    color:#475569;
+}
+
+.history-item{
+    background:#fff;
+    border-bottom:1px solid #f1f5f9;
+    padding:12px;
+}
+.history-item:last-child{ border-bottom:none; }
+
+.trash-badge{
+    background:#fee2e2;
+    color:#dc2626;
+    padding:2px 6px;
+    border-radius:4px;
+    font-size:10px;
+    font-weight:700;
+    display:inline-block;
+    margin-left:6px;
+}
+
+.report-modal{
+    display:none;
+    position:fixed;
+    top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.65);
+    z-index:99999;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+}
+
+.report-modal-content{
+    background:#fff;
+    border-radius:12px;
+    max-width:750px;
+    width:100%;
+    max-height:90vh;
+    overflow-y:auto;
+    padding:22px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.25);
+}
+
+.report-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:10px;
+    margin:14px 0;
+}
+
+.report-box{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+    padding:12px;
+    text-align:center;
+}
+
+.report-box span{ font-size:11px; color:#64748b; display:block; }
+.report-box strong{ font-size:16px; color:#1e293b; display:block; margin-top:3px; }
+
+.report-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:12px;
+    font-size:12px;
+}
+
+.report-table th{
+    background:#f1f5f9;
+    color:#475569;
+    padding:8px;
+    border:1px solid #e2e8f0;
+    text-align:left;
+}
+
+.report-table td{
+    padding:8px;
+    border:1px solid #e2e8f0;
+}
+
+.live-status{ font-size:12px; font-weight:700; }
+.live-ok{ color:#86efac; }
+
+.user-badge{
+    background:rgba(255,255,255,0.15);
+    color:#f8fafc;
+    font-size:12px;
+    padding:6px 10px;
+    border-radius:6px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+}
+.user-badge:hover{ background:rgba(255,255,255,0.25); }
+
+.mode-toggle-btn{
+    background:#f59e0b;
+    color:#1e293b;
+    font-weight:700;
+    padding:6px 12px;
+    border-radius:6px;
+    border:none;
+    cursor:pointer;
+    font-size:12px;
+}
+
+.inbox-card{
+    background:#eff6ff;
+    border:2px solid #2563eb;
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:16px;
+    display:none;
+}
+.inbox-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.inbox-item{
+    background:#fff;
+    border:1px solid #cbd5e1;
+    border-left:5px solid #2563eb;
+    border-radius:6px;
+    padding:12px 14px;
+    margin-bottom:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.06);
+}
+.inbox-item.selected{
+    border-left-color:#10b981;
+    background:#f0fdf4;
+}
+.inbox-timer{
+    font-size:12px;
+    font-weight:700;
+    background:#fee2e2;
+    color:#dc2626;
+    padding:4px 8px;
+    border-radius:4px;
+}
+
+.district-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    margin:6px 0;
+}
+.district-chip{
+    background:#f1f5f9;
+    border:1px solid #cbd5e1;
+    padding:3px 8px;
+    border-radius:16px;
+    font-size:11px;
+    cursor:pointer;
+    user-select:none;
+    color:#475569;
+    font-weight:600;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+}
+.district-chip.active{
+    background:#f59e0b;
+    border-color:#d97706;
+    color:#1e293b;
+    font-weight:700;
+}
+
+@media(max-width:800px){
+    .market-grid, .form-grid, .report-grid{ grid-template-columns:1fr 1fr; }
+    .quote-row{ grid-template-columns:1fr 1fr; }
+    .ledger-summary{ grid-template-columns:1fr; }
+    .date-group-header{ flex-direction:column; align-items:flex-start; gap:4px; }
+    table{ font-size:12px; display:block; overflow-x:auto; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo-wrap">
+        <div class="logo">Altın Eksper</div>
+        <div class="tag" id="headerTag">Altınını Değerinde Sat — Güvenilir Sarraf Teklifleri</div>
+    </div>
+    <div class="header-actions">
+        <button type="button" class="mode-toggle-btn" id="modeSwitchBtn" onclick="toggleAppMode()">
+            🔐 Kuyumcu Girişi
+        </button>
+        <div id="adminHeaderActions" style="display:none; gap:6px;">
+            <div class="user-badge" onclick="openProfileModal()">
+                👤 <span id="headerStoreName">Dükkan Profilim</span>
+            </div>
+            <button type="button" class="secondary" style="font-size:12px; padding:6px 10px; background:#0284c7;" onclick="openDirectoryModal()">
+                📖 Sarraf Rehberi
+            </button>
+            <button type="button" class="primary" style="font-size:12px; padding:6px 10px;" onclick="openDailyReportModal()">
+                📊 Günlük Rapor
+            </button>
+            <button type="button" class="secondary" style="font-size:12px; padding:6px 10px; background:#475569;" onclick="openMonthlyReportModal()">
+                📈 Aylık Rapor
+            </button>
+            <button type="button" class="wa-btn" style="font-size:12px; padding:6px 10px;" onclick="copyDirectWhatsAppLink()">
+                🔗 Müşteri Linki
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+
+<div class="consumer-hero" id="consumerHeroCard">
+    <h1 style="margin:0 0 6px; font-size:20px; color:#f59e0b;">Altınınızı Kuyumcu Kuyumcu Gezmeden Değerinde Satın</h1>
+    <p style="margin:0; font-size:13px; color:#cbd5e1; line-height:1.4;">
+        Aşağıdan satmak istediğiniz altınları ekleyin; anlık toptan serbest piyasa değerini görün ve seçeceğiniz ilçelerdeki anlaşmalı sarraflardan <b>15 dakika içinde en iyi nakit alış tekliflerini</b> WhatsApp'tan alın. Dilerseniz listenizi PDF veya Excel olarak anında indirebilirsiniz.
+    </p>
+</div>
+
+<!-- GELEN MÜŞTERİ TALEPLERİ HAVUZU -->
+<div id="inboxCard" class="inbox-card">
+    <div class="inbox-head">
+        <div>
+            <h3 style="margin:0; font-size:16px; color:#1e3a8a;">📬 Gelen Müşteri Satış Talepleri (<span id="inboxCount">0</span> Aktif İhale)</h3>
+            <span style="font-size:12px; color:#475569;">15 dakikalık süresi dolan talepler havuzdan kendiliğinden silinir.</span>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+            <button type="button" class="secondary" id="toggleInboxCollapseBtn" style="font-size:11px; padding:5px 10px; background:#334155;" onclick="toggleInboxCollapse()">
+                ▲ Havuzu Gizle
+            </button>
+            <button type="button" class="secondary" style="background:#2563eb; font-size:11px; padding:5px 10px;" onclick="renderInboxList()">
+                🔄 Yenile
+            </button>
+            <button type="button" class="danger" style="font-size:11px; padding:5px 10px;" onclick="clearAllInboxRequests()">
+                🗑 Temizle
+            </button>
+        </div>
+    </div>
+    <div id="inboxList" style="margin-top:12px;"></div>
+</div>
+
+<div class="card">
+    <div class="form-grid">
+        <div id="txTypeContainer" style="display:none;">
+            <label>İşlem Türü</label>
+            <select id="transactionType">
+                <option value="Alış" selected>Müşteri Satışı (Alış)</option>
+                <option value="Satış">Satış</option>
+                <option value="Hurda">Hurda Alış</option>
+            </select>
+        </div>
+        <div>
+            <label>Müşteri Adı Soyadı</label>
+            <input id="customerNote" placeholder="Örn. Ahmet Yılmaz">
+        </div>
+        <div>
+            <label>WhatsApp Numarası</label>
+            <input id="customerPhone" placeholder="05XX XXX XX XX" type="tel">
+        </div>
+        <div>
+            <label>Teklif İstediğiniz İlçeler (Antalya)</label>
+            <div class="district-chips" id="districtChipsContainer"></div>
+            <div style="display:flex; gap:4px; margin-top:4px;" id="districtAddWrapper">
+                <select id="districtAddSelect" style="padding:4px 8px; font-size:12px;" onchange="onDistrictSelectAdd(this)">
+                    <option value="">+ Başka İlçe Ekle...</option>
+                </select>
+            </div>
+            <input type="hidden" id="customerDistrict" value="Muratpaşa, Kepez">
+        </div>
+    </div>
+
+    <!-- HIZLI ÜRÜN EKLEME (MÜŞTERİ MODUNDA) -->
+    <div id="quickAddBar" style="margin-top:12px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+        <span style="font-size:12px; font-weight:600; color:#64748b;">Hızlı Ürün Ekle:</span>
+        <button type="button" class="secondary" style="padding:5px 10px; font-size:11px;" onclick="addQuickRow('bracelet', 22)">+ 22k Bilezik</button>
+        <button type="button" class="secondary" style="padding:5px 10px; font-size:11px;" onclick="addQuickRow('quarter', 22)">+ Çeyrek</button>
+        <button type="button" class="secondary" style="padding:5px 10px; font-size:11px;" onclick="addQuickRow('half', 22)">+ Yarım</button>
+        <button type="button" class="secondary" style="padding:5px 10px; font-size:11px;" onclick="addQuickRow('full', 22)">+ Tam</button>
+        <button type="button" class="secondary" style="padding:5px 10px; font-size:11px;" onclick="addQuickRow('scrap', 14)">+ 14k Hurda</button>
+        <button type="button" class="secondary" style="padding:5px 10px; font-size:11px;" onclick="addQuickRow('scrap', 18)">+ 18k Hurda</button>
+        <button type="button" class="secondary" style="padding:5px 10px; font-size:11px;" onclick="addQuickRow('gram', 24)">+ 24k Has Gram</button>
+    </div>
+</div>
+
+<div class="card market">
+    <div class="market-head">
+        <h2 style="margin:0; font-size:16px;">Canlı Gösterge Piyasası</h2>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <div id="liveStatus" class="live-status">● Piyasa Hazır</div>
+            <button type="button" class="secondary admin-only-btn" style="display:none; padding:3px 8px; font-size:11px; background:#1e293b;" onclick="setCustomPrice()">✏️ Kuru Elle Ayarla</button>
+            <button type="button" class="secondary" style="padding:3px 8px; font-size:11px; background:#1e293b;" onclick="loadLivePrices()">🔄 Güncelle</button>
+        </div>
+    </div>
+    <div class="market-grid">
+        <div class="market-box">
+            <span>Has Altın (0.995)</span>
+            <strong id="marketGram">₺6.725,00</strong>
+        </div>
+        <div class="market-box">
+            <span>Çeyrek Altın</span>
+            <strong id="marketQuarter">₺10.692,75</strong>
+        </div>
+        <div class="market-box">
+            <span>Yarım Altın</span>
+            <strong id="marketHalf">₺21.385,50</strong>
+        </div>
+        <div class="market-box">
+            <span>Tam Altın</span>
+            <strong id="marketFull">₺42.771,00</strong>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th style="width:25%;">Ürün</th>
+                <th style="width:15%;">Ayar</th>
+                <th style="width:12%;">Adet</th>
+                <th style="width:15%;">Gram</th>
+                <th style="width:18%;">Birim Alış Ref.</th>
+                <th style="width:15%;">Tutar ₺ (Alış)</th>
+                <th style="width:5%;"></th>
+            </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+
+        <tfoot>
+            <tr>
+                <td colspan="2" style="font-weight:700; color:#1e293b; font-size:14px;">GENEL TOPLAM</td>
+                <td>
+                    <span class="tfoot-label">Toplam Adet</span>
+                    <strong class="tfoot-value" id="totalQty">0</strong>
+                </td>
+                <td>
+                    <span class="tfoot-label">Toplam Gram</span>
+                    <strong class="tfoot-value" id="totalGrams">0,00 g</strong>
+                </td>
+                <td style="font-size:12px; color:#64748b; font-weight:600; text-align:right;">Piyasa Alış Ref:</td>
+                <td><strong class="tfoot-grand-total" id="grandTotal">₺0,00</strong></td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="primary consumer-only-btn" type="button" onclick="addRow('gram')">+ Yeni Ürün Ekle</button>
+            <button type="button" class="secondary" style="background:#0284c7;" onclick="exportCustomerLiveExcel()">
+                📊 Değerleme Listesi (Excel)
+            </button>
+            <button type="button" class="secondary" style="background:#475569;" onclick="exportCustomerLivePDF()">
+                📄 Değerleme Fişi (PDF)
+            </button>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="wa-btn consumer-only-btn" style="background:#25d366; padding:10px 18px; font-size:14px; font-weight:700;" onclick="sendCustomerDirectReportWhatsApp()">
+                📲 WhatsApp ile Teklif İste (0536 043 42 07)
+            </button>
+            <button type="button" class="wa-btn admin-only-btn" style="display:none; background:#0284c7;" onclick="openAuctionDispatchModal()">
+                📢 İhaleyi Sarraflara Dağıt
+            </button>
+            <button type="button" class="secondary admin-only-btn" style="display:none;" onclick="copyKuyumcuTemplate()">
+                📋 Metni Kopyala
+            </button>
+        </div>
+    </div>
+
+    <div id="adminPanelArea" style="display:none; margin-top:20px; border-top:2px dashed #cbd5e1; padding-top:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:13px; font-weight:800; color:#b45309;">⚙️ KUYUMCU VE PAZAR YERİ YÖNETİM PANELİ</span>
+            <span id="liveSyncBadge" style="font-size:11px; font-weight:700; color:#059669; background:#ecfdf5; padding:2px 8px; border-radius:4px; display:none;">
+                ● Canlı Teklif Akışı Açık
+            </span>
+        </div>
+
+        <div class="quotes-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                <h3 style="margin:0; font-size:15px; color:#1e293b;">Pazar Yeri — Kuyumcu Alış Teklifleri</h3>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:4px; font-size:12px; font-weight:600; color:#475569;">
+                        <span>Komisyon Payı:</span>
+                        <input type="number" id="commissionMargin" placeholder="0 TL" style="width:85px; padding:4px 8px; font-size:12px;" oninput="evaluateBestQuote()">
+                    </div>
+                    <button type="button" class="secondary" style="padding:4px 10px; font-size:11px;" onclick="addQuoteRow()">+ Teklif Ekle</button>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1.2fr 1fr 1.6fr 40px; gap:8px; font-size:11px; font-weight:700; color:#64748b; margin-bottom:4px;">
+                <div>Kuyumcu (Rehberden Seçilebilir)</div>
+                <div>Verilen Teklif (TL)</div>
+                <div>Mağaza Adresi / Harita Linki</div>
+                <div></div>
+            </div>
+            <div id="quotesContainer"></div>
+
+            <div class="best-offer-box">
+                <div>
+                    <div>
+                        <span>KUYUMCU EN YÜKSEK: </span>
+                        <strong id="bestQuoteLabel" style="color:#f59e0b; font-size:18px;">— TL</strong>
+                        <span id="bestJewelerLabel" style="font-size:12px; margin-left:6px; color:#94a3b8;"></span>
+                    </div>
+                    <div style="font-size:12px; margin-top:3px; color:#86efac;" id="netCustomerQuoteDiv">
+                        Müşteriye Sunulacak Net: <strong id="netCustomerQuoteLabel">— TL</strong>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" class="wa-btn" onclick="sendCustomerWhatsApp()">
+                        💬 Müşteriye Teklifleri Gönder (WhatsApp)
+                    </button>
+                    <!-- KAZANAN KUYUMCUNUN TELEFON VE GOOGLE HARİTA LİNKİNİ MÜŞTERİYE İLETİR -->
+                    <button type="button" class="wa-btn" style="background:#0284c7;" onclick="finalizeAppointmentAndNotifyWinner()">
+                        📍 Randevu & Konum Fişi İlet
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <button class="primary" type="button" id="mainSaveBtn" onclick="saveTransaction(false)">💾 İşlemi Kaydet</button>
+            <button class="secondary" type="button" id="saveAsNewBtn" onclick="saveTransaction(true)" style="display:none;">➕ Yeni Olarak Kaydet</button>
+            <button class="secondary" type="button" onclick="resetForm()">🔄 Yeni İşlem (Sıfırla)</button>
+            <button class="secondary" type="button" onclick="toggleHistory()">📋 İşlem Defteri</button>
+        </div>
+
+        <div id="saveMessage" style="min-height:18px; margin-top:6px; color:#10b981; font-size:13px; font-weight:700;"></div>
+
+        <div id="historyCard" class="history-card" style="display:none">
+            <div class="history-head">
+                <h3 style="margin:0; font-size:16px;">Tarihsel İşlem Defteri</h3>
+                <button class="danger" type="button" onclick="clearAllDeleted()" id="clearDeletedBtn" style="display:none; padding:5px 10px; font-size:11px;">⚠️ Çöp Kutusunu Boşalt</button>
+            </div>
+
+            <div class="ledger-summary">
+                <div class="ledger-box">
+                    <span id="ledgerCountLabel">Toplam İşlem Sayısı</span>
+                    <strong id="ledgerCount">0</strong>
+                </div>
+                <div class="ledger-box">
+                    <span id="ledgerGramLabel">Toplam Gram Hacmi</span>
+                    <strong id="ledgerGram">0,00 g</strong>
+                </div>
+                <div class="ledger-box">
+                    <span id="ledgerTotalLabel">Toplam TL Hacmi</span>
+                    <strong id="ledgerTotal">₺0,00</strong>
+                </div>
+            </div>
+
+            <div class="history-tabs">
+                <button type="button" class="tab-btn active" id="tabActive" onclick="switchHistoryTab('active')">Aktif İşlemler (<span id="activeCount">0</span>)</button>
+                <button type="button" class="tab-btn" id="tabTrash" onclick="switchHistoryTab('trash')">🗑 Çöp Kutusu (<span id="trashCount">0</span>)</button>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 180px; gap:8px; margin-bottom:12px;">
+                <input type="text" id="historySearch" placeholder="🔍 Müşteri adı, telefon veya ilçe ara..." oninput="renderHistory()">
+                <select id="historyTypeFilter" onchange="renderHistory()">
+                    <option value="">Tüm İşlem Türleri</option>
+                    <option value="Alış">Yalnızca Alışlar</option>
+                    <option value="Satış">Yalnızca Satışlar</option>
+                    <option value="Hurda">Hurda Alışlar</option>
+                </select>
+            </div>
+
+            <div id="historyList"></div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- MODALLER: REHBER, İHALE DAĞITIM, RAPORLAR, PROFİL -->
+<div id="directoryModal" class="report-modal">
+    <div class="report-modal-content" style="max-width:750px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
+            <div>
+                <h3 style="margin:0; font-size:18px; color:#1e293b;">📖 Anlaşmalı Sarraf Rehberi</h3>
+                <span style="font-size:12px; color:#64748b;">İhale dağıtımı yapılacak tüm Antalya sarrafları.</span>
+            </div>
+            <button type="button" class="secondary" style="padding:4px 8px;" onclick="closeDirectoryModal()">✕</button>
+        </div>
+
+        <div style="margin:14px 0; background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
+            <h4 style="margin:0 0 10px; font-size:13px; color:#1e293b;">+ Yeni Sarraf Ekle</h4>
+            <div style="display:grid; grid-template-columns:100px 1.2fr 1fr 1fr; gap:8px; margin-bottom:8px;">
+                <input id="dirNewCode" placeholder="Kod (K001)">
+                <input id="dirNewName" placeholder="Kuyumcu Ünvanı">
+                <select id="dirNewDistrict"></select>
+                <input id="dirNewPhone" placeholder="WhatsApp Tel">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 100px; gap:8px;">
+                <input id="dirNewAddress" placeholder="Açık Adres veya Google Harita Linki">
+                <button type="button" class="primary" onclick="addDirectoryJeweler()">Ekle</button>
+            </div>
+        </div>
+
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th style="width:70px;">Kod</th>
+                    <th>Sarraf Adı</th>
+                    <th style="width:90px;">İlçe</th>
+                    <th style="width:110px;">WhatsApp</th>
+                    <th style="width:40px;"></th>
+                </tr>
+            </thead>
+            <tbody id="directoryTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="auctionDispatchModal" class="report-modal">
+    <div class="report-modal-content" style="max-width:620px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
+            <div>
+                <h3 style="margin:0; font-size:18px; color:#1e293b;">📢 İhaleyi Sarraflara Dağıt</h3>
+                <span style="font-size:12px; color:#64748b;" id="auctionDispatchSubtitle"></span>
+            </div>
+            <button type="button" class="secondary" style="padding:4px 8px;" onclick="closeAuctionDispatchModal()">✕</button>
+        </div>
+
+        <div style="margin:14px 0;">
+            <p style="font-size:12px; color:#475569; margin:0 0 10px;">
+                Müşterinin seçtiği ilçelerdeki anlaşmalı sarraflar listelendi. Tek tıkla ihale metnini iletebilirsiniz:
+            </p>
+            <div id="matchingJewelersList" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+    </div>
+</div>
+
+<div id="dailyReportModal" class="report-modal">
+    <div class="report-modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
+            <div>
+                <h3 style="margin:0; font-size:18px; color:#1e293b;">Günlük Kasa & Hacim Raporu</h3>
+                <span style="font-size:12px; color:#64748b;" id="reportDateSubtitle"></span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="date" id="reportDateInput" onchange="generateDailyReport()" style="padding:4px 8px; font-size:12px; border-radius:4px; width:auto;">
+                <button type="button" class="secondary" style="padding:4px 8px;" onclick="closeDailyReportModal()">✕</button>
+            </div>
+        </div>
+
+        <div class="report-grid">
+            <div class="report-box"><span>Toplam İşlem</span><strong id="repTxCount">0</strong></div>
+            <div class="report-box"><span>Toplam Alış Hacmi</span><strong id="repTotalBuyGram">0,00 g</strong></div>
+            <div class="report-box"><span>Toplam Ödenen TL</span><strong id="repTotalBuyTL">₺0,00</strong></div>
+            <div class="report-box"><span>Farklı Müşteri</span><strong id="repUniqueCustomers">0</strong></div>
+        </div>
+
+        <h4 style="margin:14px 0 6px; font-size:14px; color:#334155;">Ürün & Ayar Bazlı Kasa Giriş Dökümü</h4>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Ürün Grubu</th>
+                    <th>Ayar</th>
+                    <th style="text-align:center;">Toplam Adet</th>
+                    <th style="text-align:center;">Toplam Gram</th>
+                    <th style="text-align:right;">Toplam Tutar ₺</th>
+                </tr>
+            </thead>
+            <tbody id="reportTableBody"></tbody>
+        </table>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:18px;">
+            <button type="button" class="secondary" onclick="printDailyReportPDF()">📄 Gün Sonu Raporu Yazdır (PDF)</button>
+            <button type="button" class="primary" onclick="closeDailyReportModal()">Kapat</button>
+        </div>
+    </div>
+</div>
+
+<div id="monthlyReportModal" class="report-modal">
+    <div class="report-modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
+            <div>
+                <h3 style="margin:0; font-size:18px; color:#1e293b;">Aylık Kasa & Hacim Raporu</h3>
+                <span style="font-size:12px; color:#64748b;" id="monthlyDateSubtitle"></span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="month" id="monthlyDateInput" onchange="generateMonthlyReport()" style="padding:4px 8px; font-size:12px; border-radius:4px; width:auto;">
+                <button type="button" class="secondary" style="padding:4px 8px;" onclick="closeMonthlyReportModal()">✕</button>
+            </div>
+        </div>
+
+        <div class="report-grid">
+            <div class="report-box"><span>Toplam İşlem</span><strong id="mRepTxCount">0</strong></div>
+            <div class="report-box"><span>Toplam Gram Hacmi</span><strong id="mRepTotalGram">0,00 g</strong></div>
+            <div class="report-box"><span>Toplam Ciro / Tutar</span><strong id="mRepTotalTL">₺0,00</strong></div>
+            <div class="report-box"><span>Aktif Gün Sayısı</span><strong id="mRepActiveDays">0</strong></div>
+        </div>
+
+        <h4 style="margin:14px 0 6px; font-size:14px; color:#334155;">İşlem Türü Dağılımı</h4>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>İşlem Türü</th>
+                    <th style="text-align:center;">İşlem Adedi</th>
+                    <th style="text-align:center;">Toplam Gram</th>
+                    <th style="text-align:right;">Toplam Tutar ₺</th>
+                </tr>
+            </thead>
+            <tbody id="mReportTypeTableBody"></tbody>
+        </table>
+
+        <h4 style="margin:16px 0 6px; font-size:14px; color:#334155;">Aylık Ürün Grubu Dağılımı</h4>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Ürün Grubu</th>
+                    <th>Ayar</th>
+                    <th style="text-align:center;">Toplam Adet</th>
+                    <th style="text-align:center;">Toplam Gram</th>
+                    <th style="text-align:right;">Toplam Tutar ₺</th>
+                </tr>
+            </thead>
+            <tbody id="mReportProductTableBody"></tbody>
+        </table>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:18px;">
+            <button type="button" class="secondary" onclick="printMonthlyReportPDF()">📄 Aylık Raporu Yazdır (PDF)</button>
+            <button type="button" class="primary" onclick="closeMonthlyReportModal()">Kapat</button>
+        </div>
+    </div>
+</div>
+
+<div id="profileModal" class="report-modal">
+    <div class="report-modal-content" style="max-width:550px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
+            <h3 style="margin:0; font-size:18px; color:#1e293b;">Mağaza Profili & Güvenli Yedekleme</h3>
+            <button type="button" class="secondary" style="padding:4px 8px;" onclick="closeProfileModal()">✕</button>
+        </div>
+
+        <div style="margin-top:14px;">
+            <div style="margin-bottom:10px;">
+                <label>Kuyumcu / Mağaza Adı</label>
+                <input id="storeNameInput" placeholder="Örn. Sarraf Yılmaz Gold">
+            </div>
+            <div style="margin-bottom:10px;">
+                <label>Yetkili Adı Soyadı</label>
+                <input id="storeOwnerInput" placeholder="Örn. Reşit Yakarer">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+                <div>
+                    <label>İletişim / WhatsApp</label>
+                    <input id="storePhoneInput" placeholder="05XX XXX XX XX">
+                </div>
+                <div>
+                    <label>İl / İlçe</label>
+                    <input id="storeCityInput" placeholder="Örn. Antalya / Muratpaşa">
+                </div>
+            </div>
+            <div style="margin-bottom:14px;">
+                <label>Kuyumcu Giriş PIN Kodu</label>
+                <input id="storePinInput" type="password" placeholder="Varsayılan: 1234">
+            </div>
+            <button type="button" class="primary" style="width:100%;" onclick="saveStoreProfile()">💾 Profil Bilgilerini Kaydet</button>
+        </div>
+
+        <hr style="margin:20px 0; border:0; border-top:1px dashed #cbd5e1;">
+
+        <h4 style="margin:0 0 8px; font-size:14px; color:#334155;">Veri Güvenliği & Cihaz Aktarımı</h4>
+        <p style="font-size:12px; color:#64748b; margin-bottom:12px;">Tüm işlem defterinizi, günlük/aylık kayıtlarınızı bilgisayarınıza indirebilir veya başka bilgisayardan yükleyebilirsiniz.</p>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button type="button" class="secondary" style="flex:1; background:#0f766e;" onclick="downloadFullBackup()">
+                📥 Tam Yedeği İndir (JSON)
+            </button>
+            <label class="secondary" style="flex:1; background:#0369a1; text-align:center; padding:9px 14px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:600; display:inline-block;">
+                📤 Yedekten Yükle
+                <input type="file" accept=".json" style="display:none;" onchange="restoreFromBackupFile(event)">
+            </label>
+        </div>
+    </div>
+</div>
+
+<script>
+const ALTIN_EKSPER_PHONE = '905360434207';
+const BACKEND_API_URL = 'http://localhost:3000/api';
+const INBOX_STORAGE_KEY = 'altinEksperLiveInbox_v1';
+const DIRECTORY_STORAGE_KEY = 'altinEksperJewelersDir_v1';
+const MILYEM_24K = 0.995;
+
+const ANTALYA_DISTRICTS = [
+    'Muratpaşa', 'Kepez', 'Konyaaltı', 'Alanya', 'Manavgat',
+    'Serik', 'Kumluca', 'Kaş', 'Korkuteli', 'Gazipaşa',
+    'Finike', 'Kemer', 'Elmalı', 'Döşemealtı', 'Aksu',
+    'Demre', 'Akseki', 'Gündoğmuş', 'İbradı'
+];
+
+const DEFAULT_SELECTED_DISTRICTS = ['Muratpaşa', 'Kepez', 'Konyaaltı'];
+
+const COIN_HAS_MULTIPLIERS = {
+    quarter: 1.59,
+    half: 3.18,
+    full: 6.36,
+    resat: 6.56,
+    ataLira: 6.56,
+    gremse: 15.90,
+    resatBesli: 32.70,
+    ataBesli: 32.70,
+    resat25: 16.35,
+    ata25: 16.35
+};
+
+const WEIGHTS = {
+    quarter: 1.754,
+    half: 3.508,
+    full: 7.016,
+    resat: 7.216,
+    ataLira: 7.216,
+    gremse: 17.54,
+    resatBesli: 36.08,
+    ataBesli: 36.08,
+    resat25: 18.04,
+    ata25: 18.04
+};
+
+const PRODUCTS = {
+    gram: 'Gram Altın',
+    bracelet: 'Bilezik',
+    scrap: 'Hurda Altın',
+    quarter: 'Çeyrek Altın',
+    half: 'Yarım Altın',
+    full: 'Tam Altın',
+    resat: 'Reşat Altın',
+    ataLira: 'Ata Lira',
+    gremse: 'Gremse',
+    resatBesli: 'Reşat Beşli',
+    ataBesli: 'Ata Beşli',
+    resat25: "Reşat 2,5'luk",
+    ata25: "Ata 2,5'luk"
+};
+
+const PRICES = { gram: 6725, quarter: 10692.75, half: 21385.50, full: 42771.00 };
+
+let rowId = 0;
+let quoteId = 0;
+let currentEditingId = null;
+let currentLoadedRequestId = null;
+let currentHistoryTab = 'active';
+let currentReportSummary = null;
+let currentMonthlySummary = null;
+let isKuyumcuMode = false;
+let isInboxCollapsed = false;
+let inboxPollInterval = null;
+let quotesLivePollInterval = null;
+
+function money(n) {
+    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 2 }).format(Number(n) || 0);
+}
+
+function num(v) {
+    const n = parseFloat(String(v ?? '').replace(',', '.'));
+    return Number.isFinite(n) ? n : 0;
+}
+
+function safeText(value) {
+    return String(value ?? '').replace(/[&<>"']/g, function(c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c];
+    });
+}
+
+function optionsFor(product) {
+    if (product === 'gram') return '<option value="24">24 Ayar</option><option value="22">22 Ayar</option>';
+    if (product === 'bracelet') return '<option value="22">22 Ayar</option><option value="14">14 Ayar</option>';
+    if (product === 'scrap') {
+        return '<option value="24">24 Ayar</option>' +
+               '<option value="22">22 Ayar</option>' +
+               '<option value="18">18 Ayar</option>' +
+               '<option value="14">14 Ayar</option>' +
+               '<option value="10">10 Ayar</option>' +
+               '<option value="9">9 Ayar</option>' +
+               '<option value="8">8 Ayar</option>';
+    }
+    return '<option value="22">22 Ayar</option>';
+}
+
+function productOptions(selected) {
+    return Object.entries(PRODUCTS).map(function(item) {
+        return '<option value="' + item[0] + '" ' + (item[0] === selected ? 'selected' : '') + '>' + item[1] + '</option>';
+    }).join('');
+}
+
+function gramPriceForKarat(karat) {
+    const k = num(karat);
+    const baseGramBuy = PRICES.gram;
+    if (!baseGramBuy || baseGramBuy <= 0) return 0;
+
+    switch (k) {
+        case 24: return baseGramBuy;
+        case 22: return baseGramBuy * (22 / 24);
+        case 18: return baseGramBuy * 0.700;
+        case 14: return baseGramBuy * 0.550;
+        case 10: return baseGramBuy * 0.380;
+        case 9:  return baseGramBuy * 0.330;
+        case 8:  return baseGramBuy * 0.280;
+        default: return 0;
+    }
+}
+
+function setCustomPrice() {
+    const current = Math.round(PRICES.gram);
+    const val = prompt("Has Altın (0.995) Alış Kuru Giriniz (TL):", current);
+    if (val !== null) {
+        const parsed = num(val);
+        if (parsed > 500) {
+            updateAllPrices(parsed);
+            const status = document.getElementById('liveStatus');
+            if (status) {
+                status.textContent = '● Manuel Kur Ayarlandı';
+                status.className = 'live-status live-ok';
+            }
+        }
+    }
+}
+
+function updateAllPrices(hasGramPrice) {
+    PRICES.gram = hasGramPrice;
+    PRICES.quarter = PRICES.gram * COIN_HAS_MULTIPLIERS.quarter;
+    PRICES.half = PRICES.gram * COIN_HAS_MULTIPLIERS.half;
+    PRICES.full = PRICES.gram * COIN_HAS_MULTIPLIERS.full;
+
+    const mg = document.getElementById('marketGram');
+    const mq = document.getElementById('marketQuarter');
+    const mh = document.getElementById('marketHalf');
+    const mf = document.getElementById('marketFull');
+
+    if (mg) mg.textContent = money(PRICES.gram);
+    if (mq) mq.textContent = money(PRICES.quarter);
+    if (mh) mh.textContent = money(PRICES.half);
+    if (mf) mf.textContent = money(PRICES.full);
+
+    calculate();
+}
+
+async function loadLivePrices() {
+    const status = document.getElementById('liveStatus');
+    if (status) { 
+        status.textContent = '● Kurlar güncelleniyor...'; 
+        status.className = 'live-status'; 
+    }
+
+    let calculatedGram = 0;
+
+    try {
+        const resUsd = await fetch('https://open.er-api.com/v6/latest/USD', { cache: 'no-store' });
+        if (resUsd.ok) {
+            const dataUsd = await resUsd.json();
+            const usdTry = dataUsd?.rates?.TRY;
+
+            const resGold = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT', { cache: 'no-store' });
+            if (resGold.ok) {
+                const dataGold = await resGold.json();
+                const ounceUsd = parseFloat(dataGold.price);
+                if (ounceUsd > 1000 && usdTry > 10) {
+                    calculatedGram = (ounceUsd / 31.1034768) * usdTry * MILYEM_24K;
+                }
+            }
+        }
+    } catch (e) {}
+
+    if (calculatedGram > 1000) {
+        updateAllPrices(calculatedGram);
+        if (status) {
+            const clock = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            status.textContent = '● Canlı Alış (' + clock + ')';
+            status.className = 'live-status live-ok';
+        }
+    } else {
+        updateAllPrices(PRICES.gram || 6725);
+        if (status) {
+            status.textContent = '● Gösterge Kuru Aktif';
+            status.className = 'live-status live-ok';
+        }
+    }
+}
+
+function initDistrictSelectors() {
+    const chipsBox = document.getElementById('districtChipsContainer');
+    if (chipsBox) {
+        chipsBox.innerHTML = '';
+        DEFAULT_SELECTED_DISTRICTS.forEach(function(d) {
+            addDistrictChipElement(d, true);
+        });
+    }
+
+    const addSelect = document.getElementById('districtAddSelect');
+    if (addSelect) {
+        addSelect.innerHTML = '<option value="">+ Başka İlçe Ekle...</option>';
+        ANTALYA_DISTRICTS.forEach(function(d) {
+            addSelect.innerHTML += '<option value="' + d + '">' + d + '</option>';
+        });
+    }
+
+    const dirDistSelect = document.getElementById('dirNewDistrict');
+    if (dirDistSelect) {
+        dirDistSelect.innerHTML = '';
+        ANTALYA_DISTRICTS.forEach(function(d) {
+            dirDistSelect.innerHTML += '<option value="' + d + '">' + d + '</option>';
+        });
+    }
+
+    updateCustomerDistrictInput();
+}
+
+function addDistrictChipElement(districtName, isActive) {
+    const chipsBox = document.getElementById('districtChipsContainer');
+    if (!chipsBox) return;
+
+    const existing = Array.from(chipsBox.querySelectorAll('.district-chip')).find(function(c) {
+        return c.dataset.name === districtName;
+    });
+    if (existing) {
+        if (isActive) existing.classList.add('active');
+        return;
+    }
+
+    const span = document.createElement('span');
+    span.className = 'district-chip' + (isActive ? ' active' : '');
+    span.dataset.name = districtName;
+    span.innerHTML = districtName + ' <b style="font-size:10px; margin-left:3px;" onclick="removeDistrictChip(event, this)">×</b>';
+    span.addEventListener('click', function(e) {
+        if (e.target.tagName !== 'B') {
+            span.classList.toggle('active');
+            updateCustomerDistrictInput();
+        }
+    });
+    chipsBox.appendChild(span);
+    updateCustomerDistrictInput();
+}
+
+function removeDistrictChip(event, bElement) {
+    event.stopPropagation();
+    const chip = bElement.parentElement;
+    if (chip) chip.remove();
+    updateCustomerDistrictInput();
+}
+
+function onDistrictSelectAdd(selectEl) {
+    const val = selectEl.value;
+    if (!val) return;
+    addDistrictChipElement(val, true);
+    selectEl.value = '';
+}
+
+function updateCustomerDistrictInput() {
+    const selected = [];
+    document.querySelectorAll('.district-chip.active').forEach(function(el) {
+        selected.push(el.dataset.name || el.textContent.replace('×','').trim());
+    });
+    const finalVal = selected.length ? selected.join(', ') : 'Merkez';
+    const input = document.getElementById('customerDistrict');
+    if (input) input.value = finalVal;
+}
+
+function setDistrictChipsFromText(text) {
+    const arr = (text || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    const chipsBox = document.getElementById('districtChipsContainer');
+    if (!chipsBox) return;
+
+    chipsBox.innerHTML = '';
+    arr.forEach(function(d) {
+        addDistrictChipElement(d, true);
+    });
+    updateCustomerDistrictInput();
+}
+
+function toggleAppMode() {
+    const prof = getStoreProfile();
+    const correctPin = prof.pin || '1234';
+
+    if (!isKuyumcuMode) {
+        const enteredPin = prompt("Kuyumcu Yönetim Paneli için PIN kodunu giriniz:\n(Varsayılan: 1234)");
+        if (enteredPin === correctPin) {
+            isKuyumcuMode = true;
+            applyModeUI();
+            resetWorkbenchClean();
+            renderInboxList();
+            if (inboxPollInterval) clearInterval(inboxPollInterval);
+            inboxPollInterval = setInterval(renderInboxList, 4000);
+        } else if (enteredPin !== null) {
+            alert("Hatalı PIN kodu girdiniz!");
+        }
+    } else {
+        isKuyumcuMode = false;
+        applyModeUI();
+        if (inboxPollInterval) clearInterval(inboxPollInterval);
+        stopLiveQuotePolling();
+    }
+}
+
+function applyModeUI() {
+    const btn = document.getElementById('modeSwitchBtn');
+    const hero = document.getElementById('consumerHeroCard');
+    const adminArea = document.getElementById('adminPanelArea');
+    const adminHeader = document.getElementById('adminHeaderActions');
+    const txTypeBox = document.getElementById('txTypeContainer');
+    const headerTag = document.getElementById('headerTag');
+    const inboxCard = document.getElementById('inboxCard');
+    const adminButtons = document.querySelectorAll('.admin-only-btn');
+    const consumerButtons = document.querySelectorAll('.consumer-only-btn');
+    const quickAddBar = document.getElementById('quickAddBar');
+    const districtAddWrapper = document.getElementById('districtAddWrapper');
+
+    if (isKuyumcuMode) {
+        btn.textContent = "👤 Müşteri Moduna Dön";
+        btn.style.background = "#475569";
+        btn.style.color = "#fff";
+        hero.style.display = "none";
+        adminArea.style.display = "block";
+        adminHeader.style.display = "flex";
+        txTypeBox.style.display = "block";
+        inboxCard.style.display = "block";
+        headerTag.textContent = "Profesyonel Kuyumcu Tezgâh & Operasyon Paneli";
+        
+        if (quickAddBar) quickAddBar.style.display = "none";
+        if (districtAddWrapper) districtAddWrapper.style.display = "none";
+        consumerButtons.forEach(function(b) { b.style.display = "none"; });
+        adminButtons.forEach(function(b) { b.style.display = "inline-block"; });
+    } else {
+        btn.textContent = "🔐 Kuyumcu Girişi";
+        btn.style.background = "#f59e0b";
+        btn.style.color = "#1e293b";
+        hero.style.display = "block";
+        adminArea.style.display = "none";
+        adminHeader.style.display = "none";
+        txTypeBox.style.display = "none";
+        inboxCard.style.display = "none";
+        headerTag.textContent = "Altınını Değerinde Sat — Güvenilir Sarraf Teklifleri";
+
+        if (quickAddBar) quickAddBar.style.display = "flex";
+        if (districtAddWrapper) districtAddWrapper.style.display = "flex";
+        consumerButtons.forEach(function(b) { b.style.display = "inline-block"; });
+        adminButtons.forEach(function(b) { b.style.display = "none"; });
+    }
+}
+
+function toggleInboxCollapse() {
+    const listEl = document.getElementById('inboxList');
+    const btn = document.getElementById('toggleInboxCollapseBtn');
+    if (!listEl || !btn) return;
+
+    isInboxCollapsed = !isInboxCollapsed;
+    if (isInboxCollapsed) {
+        listEl.style.display = 'none';
+        btn.textContent = '▼ Havuzu Göster';
+    } else {
+        listEl.style.display = 'block';
+        btn.textContent = '▲ Havuzu Gizle';
+    }
+}
+
+function getLocalInbox() {
+    try { return JSON.parse(localStorage.getItem(INBOX_STORAGE_KEY) || '[]'); } catch (e) { return []; }
+}
+
+function setLocalInbox(list) {
+    try { localStorage.setItem(INBOX_STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
+function clearAllInboxRequests() {
+    if (!confirm('Gelen müşteri talepleri havuzunu temizlemek istediğinizden emin misiniz?')) return;
+    setLocalInbox([]);
+    renderInboxList();
+}
+
+async function renderInboxList() {
+    if (!isKuyumcuMode) return;
+
+    let requests = getLocalInbox();
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/requests');
+        if (res.ok) {
+            const data = await res.json();
+            if (data.requests && data.requests.length) {
+                const serverReqs = data.requests;
+                serverReqs.forEach(function(sr) {
+                    if (!requests.some(function(lr) { return String(lr.requestId) === String(sr.requestId); })) {
+                        requests.unshift(sr);
+                    }
+                });
+            }
+        }
+    } catch (e) {}
+
+    const nowTime = new Date().getTime();
+    const activeRequestsOnly = requests.filter(function(req) {
+        if (!req.expiresAt) return true;
+        const expireTime = new Date(req.expiresAt).getTime();
+        return (expireTime - nowTime) > 0;
+    });
+
+    if (activeRequestsOnly.length !== requests.length) {
+        requests = activeRequestsOnly;
+        setLocalInbox(requests);
+    }
+
+    const container = document.getElementById('inboxList');
+    const countBadge = document.getElementById('inboxCount');
+    if (countBadge) countBadge.textContent = requests.length;
+
+    if (!requests.length) {
+        container.innerHTML = '<div style="text-align:center; color:#64748b; font-size:13px; padding:10px;">Henüz aktif bir müşteri talebi bulunmuyor.</div>';
+        return;
+    }
+
+    let html = '';
+    requests.forEach(function(req) {
+        const diff = new Date(req.expiresAt).getTime() - nowTime;
+        const m = Math.floor(diff / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        const timerHtml = '<span class="inbox-timer">⏱ ' + m + 'dk ' + s + 'sn Kaldı</span>';
+
+        html += '<div class="inbox-item" id="inbox_card_' + req.requestId + '">' +
+            '<div style="flex:1;">' +
+                '<div style="display:flex; align-items:center; gap:8px;">' +
+                    '<strong style="font-size:15px; color:#1e293b;">#' + req.requestId + ' — ' + safeText(req.customerName) + '</strong>' +
+                    '<span style="font-size:12px; color:#64748b;">📍 ' + safeText(req.district) + '</span>' +
+                    '<span style="font-size:12px; color:#64748b;">📞 ' + safeText(req.customerPhone) + '</span>' +
+                '</div>' +
+                '<div style="font-size:12px; color:#334155; margin-top:4px;">' +
+                    (req.items ? req.items.length : 0) + ' Kalem Ürün • Ağırlık: <b>' + safeText(req.totalGrams) + '</b> • Gösterge Değer: <b style="color:#b45309;">' + safeText(req.totalReferenceTL) + '</b>' +
+                '</div>' +
+            '</div>' +
+            '<div style="display:flex; align-items:center; gap:8px;">' +
+                timerHtml +
+                '<button type="button" class="primary" style="padding:6px 12px; font-size:12px; background:#2563eb; color:#fff;" onclick="selectCustomerRequest(\'' + req.requestId + '\')">' +
+                    '📋 Bu Talebi Aç & Fiyat Ver' +
+                '</button>' +
+                '<button type="button" class="danger" style="padding:6px 8px; font-size:11px;" onclick="deleteInboxRequest(\'' + req.requestId + '\')" title="Talebi Listeden Sil">×</button>' +
+            '</div>' +
+        '</div>';
+    });
+
+    container.innerHTML = html;
+}
+
+function deleteInboxRequest(requestId) {
+    let requests = getLocalInbox();
+    requests = requests.filter(function(r) { return String(r.requestId) !== String(requestId); });
+    setLocalInbox(requests);
+    renderInboxList();
+}
+
+function startLiveQuotePolling(requestId) {
+    stopLiveQuotePolling();
+    const syncBadge = document.getElementById('liveSyncBadge');
+    if (syncBadge) syncBadge.style.display = 'inline-block';
+
+    quotesLivePollInterval = setInterval(async function() {
+        if (!currentLoadedRequestId || currentLoadedRequestId !== requestId) return;
+        try {
+            const res = await fetch(BACKEND_API_URL + '/request/' + requestId);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.data && data.data.quotes) {
+                    syncQuotesWithServer(data.data.quotes);
+                }
+            }
+        } catch (e) {}
+    }, 3000);
+}
+
+function stopLiveQuotePolling() {
+    if (quotesLivePollInterval) {
+        clearInterval(quotesLivePollInterval);
+        quotesLivePollInterval = null;
+    }
+    const syncBadge = document.getElementById('liveSyncBadge');
+    if (syncBadge) syncBadge.style.display = 'none';
+}
+
+function syncQuotesWithServer(serverQuotes) {
+    const currentRows = Array.from(document.querySelectorAll('.quote-row'));
+    let hasChange = false;
+
+    serverQuotes.forEach(function(sq) {
+        const existingRow = currentRows.find(function(r) {
+            const codeInput = r.querySelector('.quote-name')?.value || '';
+            return codeInput.includes(sq.jewelerCode);
+        });
+
+        if (existingRow) {
+            const priceInput = existingRow.querySelector('.quote-price');
+            if (priceInput && num(priceInput.value) !== sq.offerPrice) {
+                priceInput.value = sq.offerPrice;
+                hasChange = true;
+            }
+        } else {
+            addQuoteRow(sq.jewelerCode, sq.offerPrice, sq.note);
+            hasChange = true;
+        }
+    });
+
+    if (hasChange) {
+        evaluateBestQuote();
+    }
+}
+
+function selectCustomerRequest(requestId) {
+    const requests = getLocalInbox();
+    const req = requests.find(function(r) { return String(r.requestId) === String(requestId); });
+    if (!req) { alert('Talep bulunamadı veya süresi dolduğu için silinmiş olabilir.'); return; }
+
+    currentEditingId = null;
+    currentLoadedRequestId = String(requestId);
+
+    document.getElementById('customerNote').value = req.customerName || '';
+    document.getElementById('customerPhone').value = req.customerPhone || '';
+    setDistrictChipsFromText(req.district || 'Muratpaşa, Kepez');
+    document.getElementById('transactionType').value = 'Alış';
+    document.getElementById('commissionMargin').value = '';
+
+    const rowsContainer = document.getElementById('rows');
+    rowsContainer.innerHTML = '';
+
+    (req.items || []).forEach(function(it) {
+        addRow(it.productCode);
+        const tr = rowsContainer.lastElementChild;
+        if (!tr) return;
+        const karatEl = tr.querySelector('.karat');
+        if (karatEl && !karatEl.disabled && it.karat) karatEl.value = it.karat;
+        if (it.qty) tr.querySelector('.qty').value = it.qty;
+        if (it.grams) tr.querySelector('.grams').value = it.grams;
+        calculateRow(tr);
+    });
+
+    const qc = document.getElementById('quotesContainer');
+    qc.innerHTML = '';
+    
+    if (req.quotes && req.quotes.length > 0) {
+        req.quotes.forEach(function(q) {
+            addQuoteRow(q.jewelerCode || q.name, q.offerPrice || q.price, q.note);
+        });
+    } else {
+        addQuoteRow('K001');
+        addQuoteRow('K002');
+    }
+
+    evaluateBestQuote();
+    calculate();
+
+    document.querySelectorAll('.inbox-item').forEach(function(el) { el.classList.remove('selected'); });
+    const targetCard = document.getElementById('inbox_card_' + requestId);
+    if (targetCard) targetCard.classList.add('selected');
+
+    startLiveQuotePolling(requestId);
+
+    window.scrollTo({ top: 380, behavior: 'smooth' });
+    showSaveMessage('✓ #' + requestId + ' nolu talep yüklendi. Canlı teklif akışı dinleniyor...');
+}
+
+function resetWorkbenchClean() {
+    stopLiveQuotePolling();
+    currentEditingId = null;
+    currentLoadedRequestId = null;
+    document.getElementById('mainSaveBtn').textContent = '💾 İşlemi Kaydet';
+    document.getElementById('saveAsNewBtn').style.display = 'none';
+    document.getElementById('customerNote').value = '';
+    document.getElementById('customerPhone').value = '';
+    setDistrictChipsFromText('Muratpaşa, Kepez, Konyaaltı');
+    document.getElementById('transactionType').value = 'Alış';
+    document.getElementById('commissionMargin').value = '';
+    document.getElementById('rows').innerHTML = '';
+    document.getElementById('quotesContainer').innerHTML = '';
+    document.querySelectorAll('.inbox-item').forEach(function(el) { el.classList.remove('selected'); });
+    
+    if (!isKuyumcuMode) {
+        addRow('gram');
+    }
+    
+    addQuoteRow('K001');
+    addQuoteRow('K002');
+    evaluateBestQuote();
+    calculate();
+}
+
+function addQuickRow(product, karat) {
+    product = product || 'gram';
+    karat = karat || 22;
+    addRow(product);
+    const rowsContainer = document.getElementById('rows');
+    const tr = rowsContainer.lastElementChild;
+    if (!tr) return;
+
+    const karatEl = tr.querySelector('.karat');
+    if (karatEl && !karatEl.disabled) karatEl.value = String(karat);
+    configureRow(tr);
+
+    const targetInput = tr.querySelector('.qty:not([disabled]), .grams:not([disabled])');
+    if (targetInput) targetInput.focus();
+}
+
+function addRow(product) {
+    product = product || 'gram';
+    const tr = document.createElement('tr');
+    tr.dataset.id = ++rowId;
+    tr.dataset.photo = '';
+
+    tr.innerHTML = 
+        '<td>' +
+            '<div class="product-wrap">' +
+                '<select class="product">' + productOptions(product) + '</select>' +
+                '<div class="photo-uploader">' +
+                    '<label class="photo-btn">📷 Foto <input type="file" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event, this)"></label>' +
+                    '<div class="photo-preview-wrap">' +
+                        '<img src="" alt="Foto" onclick="viewPhoto(this.src)">' +
+                        '<button type="button" class="photo-remove" onclick="removePhoto(this)">×</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</td>' +
+        '<td><select class="karat"></select></td>' +
+        '<td><input class="qty" type="number" min="0" step="1" placeholder="0"></td>' +
+        '<td><input class="grams" type="number" min="0" step="0.01" placeholder="0,00"></td>' +
+        '<td class="unit-price">—</td>' +
+        '<td class="amount" style="font-weight:700; color:#1e293b;">₺0,00</td>' +
+        '<td><button class="danger" type="button" style="padding:4px 8px; font-size:11px;">Sil</button></td>';
+
+    document.getElementById('rows').appendChild(tr);
+
+    tr.querySelector('.product').addEventListener('change', function() { configureRow(tr); });
+    tr.querySelector('.karat').addEventListener('change', function() { calculate(); });
+
+    tr.querySelectorAll('input[type="number"]').forEach(function(input) {
+        input.addEventListener('input', function() { calculate(); });
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addRow('gram');
+                const nextTr = document.getElementById('rows').lastElementChild;
+                const nextTarget = nextTr.querySelector('.grams:not([disabled]), .qty:not([disabled])');
+                if (nextTarget) nextTarget.focus();
+            }
+        });
+    });
+
+    tr.querySelector('.danger').addEventListener('click', function() { tr.remove(); calculate(); });
+    configureRow(tr);
+}
+
+function handlePhotoUpload(event, inputElement) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const tr = inputElement.closest('tr');
+        tr.dataset.photo = e.target.result;
+        const previewWrap = tr.querySelector('.photo-preview-wrap');
+        previewWrap.querySelector('img').src = e.target.result;
+        previewWrap.style.display = 'inline-block';
+        inputElement.parentElement.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removePhoto(btnElement) {
+    const tr = btnElement.closest('tr');
+    tr.dataset.photo = '';
+    tr.querySelector('.photo-preview-wrap').style.display = 'none';
+    const photoBtn = tr.querySelector('.photo-btn');
+    photoBtn.style.display = 'inline-flex';
+    const fileInput = photoBtn.querySelector('input[type="file"]');
+    if (fileInput) fileInput.value = '';
+}
+
+function viewPhoto(src) {
+    if (!src) return;
+    const win = window.open("");
+    if (win) {
+        win.document.write('<img src="' + src + '" style="max-width:100%; height:auto; display:block; margin:20px auto;">');
+    }
+}
+
+function configureRow(tr) {
+    const product = tr.querySelector('.product').value;
+    const karat = tr.querySelector('.karat');
+    const qty = tr.querySelector('.qty');
+    const grams = tr.querySelector('.grams');
+    const photoUploader = tr.querySelector('.photo-uploader');
+
+    const gramBased = ['gram', 'bracelet', 'scrap'].includes(product);
+    const photoAllowed = ['bracelet', 'scrap'].includes(product);
+
+    if (photoUploader) {
+        photoUploader.style.display = photoAllowed ? 'flex' : 'none';
+        if (!photoAllowed) {
+            tr.dataset.photo = '';
+            const previewWrap = tr.querySelector('.photo-preview-wrap');
+            if (previewWrap) previewWrap.style.display = 'none';
+            const photoBtn = tr.querySelector('.photo-btn');
+            if (photoBtn) photoBtn.style.display = 'inline-flex';
+        }
+    }
+
+    karat.innerHTML = optionsFor(product);
+
+    if (!gramBased) {
+        karat.value = '22';
+        karat.disabled = true;
+        qty.disabled = false;
+        grams.disabled = true;
+        grams.value = '';
+    } else {
+        karat.disabled = false;
+        qty.disabled = true;
+        qty.value = '';
+        grams.disabled = false;
+    }
+
+    updateUnitPrice(tr);
+    calculate();
+}
+
+function updateUnitPrice(tr) {
+    const product = tr.querySelector('.product').value;
+    const karat = tr.querySelector('.karat').value;
+    const label = tr.querySelector('.unit-price');
+
+    if (product === 'gram' || product === 'bracelet' || product === 'scrap') {
+        const gramsInput = tr.querySelector('.grams');
+        if (gramsInput) gramsInput.readOnly = false;
+        const price = gramPriceForKarat(karat);
+        label.textContent = 'Gram Alış: ' + money(price);
+        return;
+    }
+
+    const multiplier = COIN_HAS_MULTIPLIERS[product] || 0;
+    const unitPrice = PRICES.gram * multiplier;
+    label.textContent = 'Adet Alış: ' + money(unitPrice);
+}
+
+function calculateRow(tr) {
+    const product = tr.querySelector('.product').value;
+    const karat = tr.querySelector('.karat').value;
+    const qty = num(tr.querySelector('.qty').value);
+    const grams = num(tr.querySelector('.grams').value);
+
+    let amount = 0;
+    let countedGram = 0;
+    let countedQty = 0;
+
+    if (product === 'gram' || product === 'bracelet' || product === 'scrap') {
+        const gramPrice = gramPriceForKarat(karat);
+        amount = grams * gramPrice;
+        countedGram = grams;
+    } else {
+        const multiplier = COIN_HAS_MULTIPLIERS[product] || 0;
+        const weight = WEIGHTS[product] || 0;
+        amount = qty * (PRICES.gram * multiplier);
+        countedGram = qty * weight;
+        countedQty = qty;
+
+        const gramsInput = tr.querySelector('.grams');
+        if (gramsInput) {
+            gramsInput.value = (qty * weight).toFixed(2);
+            gramsInput.readOnly = true;
+        }
+    }
+
+    amount = Math.max(0, amount);
+    tr.querySelector('.amount').textContent = money(amount);
+    updateUnitPrice(tr);
+
+    return { amount: amount, countedGram: countedGram, countedQty: countedQty };
+}
+
+function calculate() {
+    let total = 0, gram = 0, qty = 0;
+
+    document.querySelectorAll('#rows > tr').forEach(function(tr) {
+        const result = calculateRow(tr);
+        total += result.amount;
+        gram += result.countedGram;
+        qty += Number(tr.querySelector('.qty')?.value || 0);
+    });
+
+    const totalQty = document.getElementById('totalQty');
+    if (totalQty) totalQty.textContent = qty.toLocaleString('tr-TR');
+
+    const totalGrams = document.getElementById('totalGrams');
+    if (totalGrams) totalGrams.textContent = gram.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' g';
+
+    const grandTotal = document.getElementById('grandTotal');
+    if (grandTotal) grandTotal.textContent = money(total);
+
+    evaluateBestQuote();
+}
+
+function getDirectoryJewelers() {
+    try {
+        const d = JSON.parse(localStorage.getItem(DIRECTORY_STORAGE_KEY) || '[]');
+        if (d && d.length) return d;
+    } catch (e) {}
+
+    const defaults = [
+        { code: 'K001', name: 'Yıldız Sarrafiye', district: 'Muratpaşa', phone: '05320000001', address: 'Işıklar Cad. No:14 Muratpaşa / Antalya' },
+        { code: 'K002', name: 'Akdeniz Kuyumculuk', district: 'Kepez', phone: '05320000002', address: 'Dokuma Çallı Meydanı No:5 Kepez / Antalya' },
+        { code: 'K003', name: 'Toros Altın', district: 'Konyaaltı', phone: '05320000003', address: 'Atatürk Bulvarı No:88 Konyaaltı / Antalya' },
+        { code: 'K004', name: 'Alanya Sarraf', district: 'Alanya', phone: '05320000004', address: 'Hükümet Cad. No:22 Alanya / Antalya' },
+        { code: 'K005', name: 'Manavgat Mücevherat', district: 'Manavgat', phone: '05320000005', address: 'Antalya Cad. No:45 Manavgat / Antalya' }
+    ];
+    setDirectoryJewelers(defaults);
+    return defaults;
+}
+
+function setDirectoryJewelers(list) {
+    try { localStorage.setItem(DIRECTORY_STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
+function openDirectoryModal() {
+    renderDirectoryTable();
+    const modal = document.getElementById('directoryModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeDirectoryModal() {
+    const modal = document.getElementById('directoryModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function renderDirectoryTable() {
+    const tbody = document.getElementById('directoryTableBody');
+    if (!tbody) return;
+    const list = getDirectoryJewelers();
+
+    tbody.innerHTML = list.map(function(j, i) {
+        return '<tr>' +
+            '<td><b>' + safeText(j.code) + '</b></td>' +
+            '<td>' + safeText(j.name) + '<div style="font-size:11px; color:#64748b;">' + safeText(j.address) + '</div></td>' +
+            '<td><span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:600;">' + safeText(j.district) + '</span></td>' +
+            '<td>' + safeText(j.phone) + '</td>' +
+            '<td><button type="button" class="danger" style="padding:2px 6px; font-size:10px;" onclick="removeDirectoryJeweler(' + i + ')">×</button></td>' +
+        '</tr>';
+    }).join('');
+}
+
+function addDirectoryJeweler() {
+    const code = document.getElementById('dirNewCode').value.trim() || ('K00' + (getDirectoryJewelers().length + 1));
+    const name = document.getElementById('dirNewName').value.trim();
+    const dist = document.getElementById('dirNewDistrict').value;
+    const phone = document.getElementById('dirNewPhone').value.trim();
+    const addr = document.getElementById('dirNewAddress').value.trim() || (dist + ' / Antalya');
+
+    if (!name) { alert('Lütfen kuyumcu ünvanını yazınız.'); return; }
+
+    const list = getDirectoryJewelers();
+    list.push({ code: code, name: name, district: dist, phone: phone, address: addr });
+    setDirectoryJewelers(list);
+
+    document.getElementById('dirNewName').value = '';
+    document.getElementById('dirNewPhone').value = '';
+    document.getElementById('dirNewAddress').value = '';
+    renderDirectoryTable();
+}
+
+function removeDirectoryJeweler(index) {
+    const list = getDirectoryJewelers();
+    list.splice(index, 1);
+    setDirectoryJewelers(list);
+    renderDirectoryTable();
+}
+
+function addQuoteRow(name, price, note) {
+    name = name || '';
+    price = price || '';
+    note = note || '';
+    const c = document.getElementById('quotesContainer');
+    const div = document.createElement('div');
+    div.className = 'quote-row';
+    div.dataset.qid = ++quoteId;
+
+    const jewelers = getDirectoryJewelers();
+    let optionsHtml = '<option value="">-- Rehberden Seç veya Elle Yaz --</option>';
+    jewelers.forEach(function(j) {
+        optionsHtml += '<option value="' + j.code + '" data-name="' + j.name + '" data-address="' + j.address + '">' + j.code + ' — ' + j.name + ' (' + j.district + ')</option>';
+    });
+
+    div.innerHTML = 
+        '<div>' +
+            '<select class="quote-select" style="font-size:12px; padding:6px;" onchange="onQuoteSelectJeweler(this)">' + optionsHtml + '</select>' +
+            '<input type="text" class="quote-name" placeholder="Kuyumcu Kodu / Adı" value="' + name + '" style="margin-top:2px; font-size:12px; padding:4px 8px;">' +
+        '</div>' +
+        '<input type="number" class="quote-price" placeholder="Alış Teklifi TL" value="' + price + '" oninput="handleQuoteInput(this)">' +
+        '<input type="text" class="quote-note" placeholder="Mağaza Adresi / Harita Linki" value="' + note + '">' +
+        '<button type="button" class="danger" style="padding:4px 8px; font-size:11px;" onclick="this.parentElement.remove(); evaluateBestQuote();">×</button>';
+    c.appendChild(div);
+    evaluateBestQuote();
+}
+
+function onQuoteSelectJeweler(selectEl) {
+    const opt = selectEl.options[selectEl.selectedIndex];
+    if (!opt || !opt.value) return;
+
+    const row = selectEl.closest('.quote-row');
+    const nameInput = row.querySelector('.quote-name');
+    const noteInput = row.querySelector('.quote-note');
+
+    nameInput.value = opt.value + ' (' + opt.dataset.name + ')';
+    if (opt.dataset.address) {
+        noteInput.value = opt.dataset.address;
+    }
+    evaluateBestQuote();
+}
+
+function handleQuoteInput(inputEl) {
+    evaluateBestQuote();
+
+    const row = inputEl.closest('.quote-row');
+    if (!row) return;
+
+    const jCode = row.querySelector('.quote-name')?.value || 'K001';
+    const oPrice = num(row.querySelector('.quote-price')?.value);
+    const oNote = row.querySelector('.quote-note')?.value || '';
+
+    if (currentLoadedRequestId && oPrice > 0) {
+        try {
+            fetch(BACKEND_API_URL + '/request/quote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    requestId: currentLoadedRequestId,
+                    jewelerCode: jCode,
+                    offerPrice: oPrice,
+                    note: oNote
+                })
+            }).catch(function() {});
+        } catch (e) {}
+
+        const requests = getLocalInbox();
+        const targetReq = requests.find(function(r) { return String(r.requestId) === String(currentLoadedRequestId); });
+        if (targetReq) {
+            targetReq.quotes = targetReq.quotes || [];
+            const exIdx = targetReq.quotes.findIndex(function(q) { return q.jewelerCode === jCode; });
+            if (exIdx !== -1) {
+                targetReq.quotes[exIdx] = { jewelerCode: jCode, offerPrice: oPrice, note: oNote };
+            } else {
+                targetReq.quotes.push({ jewelerCode: jCode, offerPrice: oPrice, note: oNote });
+            }
+            setLocalInbox(requests);
+        }
+    }
+}
+
+function evaluateBestQuote() {
+    let max = 0, bestName = '';
+    document.querySelectorAll('.quote-row').forEach(function(r) {
+        const p = num(r.querySelector('.quote-price').value);
+        const n = r.querySelector('.quote-name').value || 'İsimsiz Kuyumcu';
+        if (p > max) { max = p; bestName = n; }
+    });
+
+    const commission = num(document.getElementById('commissionMargin')?.value);
+    const netCustomer = Math.max(0, max - commission);
+
+    const bLabel = document.getElementById('bestQuoteLabel');
+    const jLabel = document.getElementById('bestJewelerLabel');
+    const netLabel = document.getElementById('netCustomerQuoteLabel');
+
+    if (max > 0) {
+        bLabel.textContent = money(max);
+        jLabel.textContent = '(' + bestName + ')';
+        netLabel.textContent = money(netCustomer);
+    } else {
+        bLabel.textContent = '— TL';
+        jLabel.textContent = '';
+        netLabel.textContent = '— TL';
+    }
+}
+
+function copyDirectWhatsAppLink() {
+    const profile = getStoreProfile();
+    const phone = profile.phone || ALTIN_EKSPER_PHONE;
+    const msg = 'Merhaba ' + (profile.name ? profile.name : 'Altın Eksper') + ', altınlarımı satmak ve kuyumculardan alış teklifi almak istiyorum.\n\n1. Ürün: \n2. Ürün: \nİlçe: \n(Ürün fotoğraflarını bu mesaja ekleyebilirsiniz)';
+    const link = 'https://wa.me/' + phone.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg);
+    navigator.clipboard.writeText(link).then(function() { alert('Müşteri teklif alma linki kopyalandı!'); });
+}
+
+function openAuctionDispatchModal() {
+    const distText = document.getElementById('customerDistrict')?.value || 'Merkez';
+    const totalG = document.getElementById('totalGrams')?.textContent || '0,00 g';
+    const reqId = currentLoadedRequestId || String(Date.now()).slice(-6);
+
+    let productLines = '';
+    let hasPhoto = false;
+
+    document.querySelectorAll('#rows > tr').forEach(function(tr, i) {
+        const pName = PRODUCTS[tr.querySelector('.product').value];
+        const k = tr.querySelector('.karat').value;
+        const g = tr.querySelector('.grams').value;
+        const q = tr.querySelector('.qty').value;
+        if (tr.dataset.photo) hasPhoto = true;
+        productLines += (i+1) + '. ' + pName + ' (' + k + ' Ayar) - ' + (g ? g + ' gr ' : '') + (q ? q + ' adet' : '') + '\n';
+    });
+
+    if (!productLines) {
+        alert('Lütfen önce satılacak ürünleri ekleyin veya listeden bir talep seçin.');
+        return;
+    }
+
+    const selectedDistricts = distText.split(',').map(function(s) { return s.trim().toLowerCase(); });
+    const allJewelers = getDirectoryJewelers();
+    
+    let matching = allJewelers.filter(function(j) {
+        return selectedDistricts.some(function(sd) { return j.district.toLowerCase().includes(sd); });
+    });
+    if (!matching.length) matching = allJewelers;
+
+    document.getElementById('auctionDispatchSubtitle').textContent = 'Talep No: #' + reqId + ' • Hedef İlçeler: ' + distText;
+    const container = document.getElementById('matchingJewelersList');
+
+    const profile = getStoreProfile();
+    const brand = profile.name || 'Altın Eksper';
+    const portalUrl = window.location.href.replace('index.html', 'kuyumcu.html') + '?id=' + reqId;
+
+    const auctionMsg = '🚨 *' + brand.toUpperCase() + ' — YENİ NAKİT ALIŞ İHALESİ*\n\n' +
+        '🏷 *İhale Takip Kodu:* #' + reqId + '\n' +
+        '📍 *Talep Edilen İlçeler:* ' + distText + '\n' +
+        '⚖️ *Toplam Ağırlık:* ' + totalG + '\n\n' +
+        '📦 *Ürün Kalemleri:*\n' + productLines + '\n' +
+        '📷 *Görsel Durumu:* ' + (hasPhoto ? 'Ürün Görseli Sistemde Mevcut 📷' : 'Görsel Bulunmuyor') + '\n\n' +
+        '⏱ *Kalan Teklif Süresi:* 15 Dakika\n\n' +
+        '👉 *Teklifinizi girmek için lütfen aşağıdaki linke dokununuz:*\n' +
+        portalUrl;
+
+    container.innerHTML = matching.map(function(j) {
+        const phoneClean = (j.phone || '').replace(/[^0-9]/g, '');
+        let waUrl = '';
+        if (phoneClean) {
+            let p = phoneClean.startsWith('0') ? '90' + phoneClean.substring(1) : (phoneClean.length === 10 ? '90' + phoneClean : phoneClean);
+            waUrl = 'https://api.whatsapp.com/send?phone=' + p + '&text=' + encodeURIComponent(auctionMsg);
+        } else {
+            waUrl = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(auctionMsg);
+        }
+
+        return '<div style="background:#fff; border:1px solid #cbd5e1; border-radius:6px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">' +
+            '<div>' +
+                '<strong style="color:#1e293b;">' + safeText(j.name) + ' (' + safeText(j.code) + ')</strong>' +
+                '<div style="font-size:11px; color:#64748b;">📍 ' + safeText(j.district) + ' • 📞 ' + safeText(j.phone || 'Belirtilmedi') + '</div>' +
+            '</div>' +
+            '<a href="' + waUrl + '" target="_blank" class="wa-btn" style="text-decoration:none; padding:6px 12px; font-size:12px;">' +
+                '📲 İhale Fırlat' +
+            '</a>' +
+        '</div>';
+    }).join('');
+
+    const modal = document.getElementById('auctionDispatchModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeAuctionDispatchModal() {
+    const modal = document.getElementById('auctionDispatchModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function sendCustomerDirectReportWhatsApp() {
+    const cName = document.getElementById('customerNote')?.value.trim() || 'Müşteri';
+    const cPhone = document.getElementById('customerPhone')?.value.trim() || 'Belirtilmedi';
+    const dist = document.getElementById('customerDistrict')?.value.trim() || 'Merkez';
+    const totalTL = document.getElementById('grandTotal')?.textContent || '0,00 ₺';
+    const totalG = document.getElementById('totalGrams')?.textContent || '0,00 g';
+
+    let productLines = '';
+    const payloadItems = [];
+
+    document.querySelectorAll('#rows > tr').forEach(function(tr, i) {
+        const pCode = tr.querySelector('.product').value;
+        const pName = PRODUCTS[pCode];
+        const k = tr.querySelector('.karat').value;
+        const g = tr.querySelector('.grams').value;
+        const q = tr.querySelector('.qty').value;
+        const amt = tr.querySelector('.amount').textContent;
+
+        payloadItems.push({
+            index: i + 1,
+            productCode: pCode,
+            productName: pName,
+            karat: k,
+            grams: g,
+            qty: q,
+            amount: amt
+        });
+
+        productLines += (i+1) + '. ' + pName + ' (' + k + 'k) — ' + (g ? g+' gr ' : '') + (q ? q+' adet ' : '') + '[' + amt + ']\n';
+    });
+
+    if (!payloadItems.length) {
+        alert('Lütfen önce satılacak ürünleri ekleyin.');
+        return;
+    }
+
+    const tempId = String(Date.now()).slice(-6);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    const requestPayload = {
+        requestId: tempId,
+        customerName: cName,
+        customerPhone: cPhone,
+        district: dist,
+        totalGrams: totalG,
+        totalReferenceTL: totalTL,
+        items: payloadItems,
+        createdAt: new Date().toISOString(),
+        expiresAt: expiresAt
+    };
+
+    const localInbox = getLocalInbox();
+    localInbox.unshift(requestPayload);
+    setLocalInbox(localInbox);
+
+    try {
+        fetch(BACKEND_API_URL + '/request/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestPayload)
+        }).catch(function() {});
+    } catch (e) {}
+
+    const msg = '🔔 *ALTIN EKSPER — RESMİ SATIŞ TALEBİ*\n\n' +
+                '📋 *Talep No:* #' + tempId + '\n' +
+                '👤 *Müşteri:* ' + cName + '\n' +
+                '📞 *İletişim:* ' + cPhone + '\n' +
+                '📍 *Teklif İstenen İlçeler:* ' + dist + '\n\n' +
+                '📦 *Ürün Listesi:*\n' + productLines + '\n' +
+                '⚖️ *Toplam Ağırlık:* ' + totalG + '\n' +
+                '💰 *Piyasa Alış Referansı:* ' + totalTL + '\n\n' +
+                '📌 *Talebin Sistem Tarafından Değerlendirilerek Seçtiğim İlçelerdeki En İyi Kuyumcu Tekliflerinin İletilmesini Rica Ederim.*';
+
+    const url = 'https://api.whatsapp.com/send?phone=905360434207&text=' + encodeURIComponent(msg);
+    window.open(url, '_blank');
+}
+
+function copyKuyumcuTemplate() {
+    const dist = document.getElementById('customerDistrict')?.value.trim() || 'Merkez';
+    let productLines = '', hasPhoto = false;
+
+    document.querySelectorAll('#rows > tr').forEach(function(tr) {
+        const pName = PRODUCTS[tr.querySelector('.product').value];
+        const k = tr.querySelector('.karat').value;
+        const g = tr.querySelector('.grams').value;
+        const q = tr.querySelector('.qty').value;
+        if (tr.dataset.photo) hasPhoto = true;
+        productLines += '• ' + pName + ' (' + k + ' Ayar) - ' + (g ? g + ' gr ' : '') + (q ? q + ' adet' : '') + '\n';
+    });
+
+    if (!productLines) { alert('Lütfen önce ürün ekleyin.'); return; }
+
+    const profile = getStoreProfile();
+    const title = profile.name ? ('🔔 *' + profile.name.toUpperCase() + ' — ANLIK NAKİT ALIŞ TALEBİ*') : '🔔 *ALTIN EKSPER — ANLIK NAKİT ALIŞ TALEBİ*';
+    const tempId = currentLoadedRequestId || String(Date.now()).slice(-4);
+    const portalUrl = window.location.href.replace('index.html', 'kuyumcu.html') + '?id=' + tempId;
+
+    const msg = title + '\n\n' +
+                '📍 *Bölge / İlçe:* ' + dist + '\n' +
+                '🏷 *Talep Takip No:* #' + tempId + '\n\n' +
+                '📦 *Ürün Grubu:*\n' + productLines +
+                '📷 *Görsel Durumu:* ' + (hasPhoto ? 'Fotoğraf Mevcut 📷' : 'Görsel Yok') + '\n\n' +
+                '⏱ *Teklif Süresi:* 15 Dakika\n\n' +
+                '👉 Teklif vermek için tıklayın:\n' + portalUrl;
+
+    navigator.clipboard.writeText(msg).then(function() { alert('Kuyumcular için teklif linkli talep metni kopyalandı!'); });
+}
+
+function sendCustomerWhatsApp() {
+    const cName = document.getElementById('customerNote').value.trim() || 'Değerli Müşterimiz';
+    const cPhone = document.getElementById('customerPhone').value.replace(/[^0-9]/g, '');
+    const commission = num(document.getElementById('commissionMargin')?.value);
+    const quotes = [];
+
+    document.querySelectorAll('.quote-row').forEach(function(r) {
+        const p = num(r.querySelector('.quote-price').value);
+        const note = r.querySelector('.quote-note').value.trim();
+        if (p > 0) quotes.push({ price: p, netPrice: Math.max(0, p - commission), note: note });
+    });
+
+    if (!quotes.length) { alert('Henüz hiçbir kuyumcudan teklif girilmedi.'); return; }
+    quotes.sort(function(a, b) { return b.price - a.price; });
+
+    let offerBlock = '';
+    quotes.forEach(function(q, idx) {
+        const badge = idx === 0 ? '🥇 *En İyi Nakit Teklif:*' : (idx === 1 ? '🥈 *Alternatif Teklif:*' : '🥉 *Teklif:*');
+        const noteText = q.note ? (' _(' + q.note + ')_') : '';
+        offerBlock += badge + ' ' + money(q.netPrice) + noteText + '\n';
+    });
+
+    const profile = getStoreProfile();
+    const brand = profile.name || 'Altın Eksper';
+
+    const msg = 'Sayın *' + cName + '*,\n' +
+                '*' + brand + '* güvencesiyle bölgenizdeki anlaşmalı sarraflardan toplanan en avantajlı nakit alış teklifleri:\n\n' +
+                offerBlock + '\n' +
+                '⏱ _Bu teklifler anlık serbest piyasa hareketliliği nedeniyle **15 dakika** geçerlidir._\n\n' +
+                'Teklifi onaylamak ve anlaşmalı sarrafımızın konum/randevu kodunu almak için bu mesaja *\"ONAY\"* yazıp yanıtlayınız.';
+
+    if (cPhone) {
+        let p = cPhone.startsWith('0') ? '90' + cPhone.substring(1) : (cPhone.length === 10 ? '90' + cPhone : cPhone);
+        window.open('https://api.whatsapp.com/send?phone=' + p + '&text=' + encodeURIComponent(msg), '_blank');
+    } else {
+        navigator.clipboard.writeText(msg).then(() => alert('Müşteri teklif özeti kopyalandı!'));
+    }
+}
+
+/* YENİ: KAZANAN SARRAFIN TELEFONU VE GOOGLE MAPS HARİTA LİNKİNİ EKSİKSİZ İLETEN RANDEVU FONKSİYONU */
+function finalizeAppointmentAndNotifyWinner() {
+    const cName = document.getElementById('customerNote').value.trim() || 'Değerli Müşterimiz';
+    const cPhone = document.getElementById('customerPhone').value.replace(/[^0-9]/g, '');
+    const commission = num(document.getElementById('commissionMargin')?.value);
+    
+    let max = 0, bestJewelerName = '', bestJewelerNote = '';
+    document.querySelectorAll('.quote-row').forEach(function(r) {
+        const p = num(r.querySelector('.quote-price').value);
+        if (p > max) {
+            max = p;
+            bestJewelerName = r.querySelector('.quote-name').value || 'Anlaşmalı Sarraf';
+            bestJewelerNote = r.querySelector('.quote-note').value || 'Adres bilgisi mağazada iletilecek';
+        }
+    });
+
+    if (max <= 0) {
+        alert('Lütfen önce bir kuyumcu teklifi belirleyin.');
+        return;
+    }
+
+    const netPrice = money(Math.max(0, max - commission));
+    const txId = currentLoadedRequestId || (currentEditingId ? currentEditingId.slice(-6) : String(Date.now()).slice(-6));
+    const jewelerCode = bestJewelerName.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
+
+    // Rehberden dükkan telefonunu ve net adresini çek
+    const directory = getDirectoryJewelers();
+    const matchedJeweler = directory.find(function(j) {
+        return j.code === jewelerCode || bestJewelerName.includes(j.name);
+    });
+    
+    const jewelerPhone = matchedJeweler ? matchedJeweler.phone : 'Belirtilmedi';
+    const jewelerAddress = (matchedJeweler && matchedJeweler.address) ? matchedJeweler.address : bestJewelerNote;
+    const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(jewelerAddress);
+
+    // 1. Kazanan sarrafa sunucudan tebrik/randevu bildirimi gönder
+    if (currentLoadedRequestId) {
+        fetch(BACKEND_API_URL + '/request/notify-winner', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                requestId: currentLoadedRequestId,
+                winnerCode: jewelerCode,
+                agreedPrice: max,
+                customerName: cName
+            })
+        }).catch(function() {});
+    }
+
+    // 2. Müşteriye tam detaylı konum, telefon ve harita fişi oluştur
+    const msg = 'Sayın *' + cName + '*, işleminiz onaylandı! 🎉\n\n' +
+                '🏪 *Yetkili Anlaşmalı Sarraf:* ' + bestJewelerName + '\n' +
+                '📞 *Sarraf İletişim / Tel:* ' + jewelerPhone + '\n' +
+                '📍 *Mağaza Adresi:* ' + jewelerAddress + '\n' +
+                '🗺️ *Yol Tarifi (Harita):* ' + mapUrl + '\n\n' +
+                '🎟️ *İşlem Randevu Kodu:* #' + txId + '\n' +
+                '💰 *Taahhüt Edilen Net Nakit:* ' + netPrice + '\n\n' +
+                '📌 *Bilgilendirme:* Anlaşmalı sarrafımıza rezervasyon bilginiz iletilmiştir. Mağazada fiziki ayar/tartı teyidi sonrasında ödemeniz anında nakit veya IBAN transferiyle eksiksiz yapılacaktır.';
+
+    if (cPhone) {
+        let p = cPhone.startsWith('0') ? '90' + cPhone.substring(1) : (cPhone.length === 10 ? '90' + cPhone : cPhone);
+        window.open('https://api.whatsapp.com/send?phone=' + p + '&text=' + encodeURIComponent(msg), '_blank');
+    } else {
+        navigator.clipboard.writeText(msg).then(function() {
+            alert('Müşteri randevu, telefon ve konum metni kopyalandı! Kazanan sarrafa da bildirim yollandı.');
+        });
+    }
+}
+
+function resetForm() {
+    resetWorkbenchClean();
+    showSaveMessage('Yeni işlem ekranı hazırlandı.');
+}
+
+const STORAGE_KEY = 'altinEksperTransactions_v2';
+const PROFILE_KEY = 'altinEksperStoreProfile_v1';
+
+function readHistory() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { return []; } }
+function writeHistory(list) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {} }
+
+function getStoreProfile() {
+    try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}'); } catch (e) { return {}; }
+}
+
+function setStoreProfile(prof) {
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(prof)); } catch (e) {}
+    updateHeaderProfile();
+}
+
+function updateHeaderProfile() {
+    const prof = getStoreProfile();
+    const el = document.getElementById('headerStoreName');
+    if (el) el.textContent = prof.name ? prof.name : 'Dükkan Profilim';
+}
+
+function saveTransaction(forceAsNew) {
+    forceAsNew = !!forceAsNew;
+    calculate();
+    let totalGramNum = 0;
+
+    const rows = Array.from(document.querySelectorAll('#rows > tr')).map(function(tr) {
+        const p = tr.querySelector('.product').value;
+        const g = num(tr.querySelector('.grams').value);
+        const q = num(tr.querySelector('.qty').value);
+        const w = WEIGHTS[p] || 0;
+
+        if (['gram', 'bracelet', 'scrap'].includes(p)) totalGramNum += g;
+        else totalGramNum += (q * w);
+
+        return {
+            product: p,
+            productName: PRODUCTS[p],
+            karat: tr.querySelector('.karat').value,
+            qty: tr.querySelector('.qty').value,
+            grams: tr.querySelector('.grams').value,
+            photo: tr.dataset.photo || '',
+            unitPrice: tr.querySelector('.unit-price').textContent,
+            amount: tr.querySelector('.amount').textContent
+        };
+    });
+
+    if (!rows.length || totalGramNum <= 0) {
+        showSaveMessage('Lütfen geçerli bir gram veya adet giriniz.', true);
+        return;
+    }
+
+    const quotes = Array.from(document.querySelectorAll('.quote-row')).map(function(r) {
+        return {
+            name: r.querySelector('.quote-name').value,
+            price: r.querySelector('.quote-price').value,
+            note: r.querySelector('.quote-note').value
+        };
+    });
+
+    const history = readHistory();
+    const isUpdate = currentEditingId && !forceAsNew;
+    const targetId = isUpdate ? currentEditingId : String(Date.now());
+
+    const itemData = {
+        id: targetId,
+        date: new Date().toISOString(),
+        transactionType: document.getElementById('transactionType').value,
+        customerNote: document.getElementById('customerNote').value.trim(),
+        customerPhone: document.getElementById('customerPhone')?.value.trim() || '',
+        customerDistrict: document.getElementById('customerDistrict')?.value.trim() || '',
+        total: document.getElementById('grandTotal').textContent,
+        totalGramsRaw: totalGramNum,
+        bestPrice: document.getElementById('bestQuoteLabel').textContent,
+        commission: document.getElementById('commissionMargin')?.value || '0',
+        quotes: quotes,
+        deleted: false,
+        rows: rows
+    };
+
+    if (isUpdate) {
+        const existingIndex = history.findIndex(function(x) { return String(x.id) === String(targetId); });
+        if (existingIndex !== -1) history[existingIndex] = itemData;
+        else history.unshift(itemData);
+        showSaveMessage('✓ İşlem başarıyla güncellendi.');
+    } else {
+        history.unshift(itemData);
+        showSaveMessage('✓ Yeni işlem deftere kaydedildi.');
+    }
+
+    writeHistory(history);
+    currentEditingId = null;
+    document.getElementById('mainSaveBtn').textContent = '💾 İşlemi Kaydet';
+    document.getElementById('saveAsNewBtn').style.display = 'none';
+
+    const historyCard = document.getElementById('historyCard');
+    if (historyCard) {
+        historyCard.style.display = 'block';
+        renderHistory();
+        historyCard.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+function moveToTrash(id) {
+    const history = readHistory();
+    const item = history.find(function(x) { return String(x.id) === String(id); });
+    if (!item) return;
+    item.deleted = true;
+    item.deletedAt = new Date().toISOString();
+    writeHistory(history);
+    showSaveMessage('İşlem güvenle çöp kutusuna taşındı.');
+    renderHistory();
+}
+
+function recoverFromTrash(id) {
+    const history = readHistory();
+    const item = history.find(function(x) { return String(x.id) === String(id); });
+    if (!item) return;
+    item.deleted = false;
+    delete item.deletedAt;
+    writeHistory(history);
+    showSaveMessage('İşlem aktif deftere geri yüklendi.');
+    renderHistory();
+}
+
+function permanentlyDelete(id) {
+    const confirmDelete = confirm('DİKKAT: Bu işlem kalıcı olarak yok edilecek ve geri getirilemeyecektir.\n\nSilmek istediğinizden emin misiniz?');
+    if (!confirmDelete) return;
+
+    const history = readHistory();
+    writeHistory(history.filter(function(x) { return String(x.id) !== String(id); }));
+    showSaveMessage('İşlem kalıcı olarak silindi.');
+    renderHistory();
+}
+
+function clearAllDeleted() {
+    const history = readHistory();
+    const trashCount = history.filter(function(x) { return x.deleted; }).length;
+    if (trashCount === 0) return;
+
+    const confirmClear = confirm('UYARI: Çöp kutusundaki ' + trashCount + ' adet işlem tamamen yok edilecektir.\n\nBu işlem geri alınamaz. Onaylıyor musunuz?');
+    if (!confirmClear) return;
+
+    writeHistory(history.filter(function(x) { return !x.deleted; }));
+    showSaveMessage('Çöp kutusu tamamen boşaltıldı.');
+    renderHistory();
+}
+
+function switchHistoryTab(tab) {
+    currentHistoryTab = tab;
+    document.getElementById('tabActive').className = 'tab-btn ' + (tab === 'active' ? 'active' : '');
+    document.getElementById('tabTrash').className = 'tab-btn ' + (tab === 'trash' ? 'active' : '');
+    document.getElementById('clearDeletedBtn').style.display = tab === 'trash' ? 'inline-block' : 'none';
+    renderHistory();
+}
+
+function renderHistory() {
+    const listElement = document.getElementById('historyList');
+    const history = readHistory();
+    const searchVal = (document.getElementById('historySearch')?.value || '').toLowerCase().trim();
+    const typeFilter = document.getElementById('historyTypeFilter')?.value || '';
+
+    const activeList = history.filter(function(x) { return !x.deleted; });
+    const trashList = history.filter(function(x) { return x.deleted; });
+
+    document.getElementById('activeCount').textContent = activeList.length;
+    document.getElementById('trashCount').textContent = trashList.length;
+
+    const targetList = currentHistoryTab === 'active' ? activeList : trashList;
+
+    let sumGram = 0, sumTL = 0;
+    targetList.forEach(function(item) {
+        sumGram += (item.totalGramsRaw || 0);
+        sumTL += parseFloat(String(item.total).replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
+    });
+
+    const isTrash = currentHistoryTab === 'trash';
+    document.getElementById('ledgerCountLabel').textContent = isTrash ? 'Silinen İşlem Sayısı' : 'Toplam İşlem Sayısı';
+    document.getElementById('ledgerGramLabel').textContent = isTrash ? 'Silinen Gram Hacmi' : 'Toplam Gram Hacmi';
+    document.getElementById('ledgerTotalLabel').textContent = isTrash ? 'Silinen TL Tutarı' : 'Toplam TL Hacmi';
+
+    document.getElementById('ledgerCount').textContent = targetList.length;
+    document.getElementById('ledgerGram').textContent = sumGram.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' g';
+    document.getElementById('ledgerTotal').textContent = money(sumTL);
+
+    const filtered = targetList.filter(function(item) {
+        const name = (item.customerNote || '').toLowerCase();
+        const phone = (item.customerPhone || '').toLowerCase();
+        const dist = (item.customerDistrict || '').toLowerCase();
+        const type = item.transactionType || '';
+        const dateStr = new Date(item.date).toLocaleDateString('tr-TR');
+
+        const matchesSearch = !searchVal || (name.includes(searchVal) || phone.includes(searchVal) || dist.includes(searchVal) || dateStr.includes(searchVal));
+        const matchesType = !typeFilter || type === typeFilter;
+
+        return matchesSearch && matchesType;
+    });
+
+    if (!filtered.length) {
+        listElement.innerHTML = '<div style="padding:20px 0; text-align:center; color:#94a3b8;">' + (searchVal || typeFilter ? 'Kriterlere uygun kayıt bulunamadı.' : (isTrash ? 'Çöp kutusu boş.' : 'Henüz kayıtlı işlem bulunmuyor.')) + '</div>';
+        return;
+    }
+
+    const groups = {};
+    filtered.forEach(function(item) {
+        const d = new Date(item.date);
+        const key = d.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' });
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(item);
+    });
+
+    let html = '';
+    for (const [dateKey, items] of Object.entries(groups)) {
+        let groupGram = 0;
+        let groupTL = 0;
+
+        items.forEach(function(it) {
+            groupGram += (it.totalGramsRaw || 0);
+            groupTL += parseFloat(String(it.total).replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
+        });
+
+        const itemsHtml = items.map(function(item) {
+            const products = item.rows.map(function(row) {
+                let text = row.productName;
+                if (row.karat) text += ' • ' + row.karat + ' Ayar';
+                if (row.grams) text += ' • ' + row.grams + ' g';
+                if (row.qty) text += ' • ' + row.qty + ' adet';
+                const photoThumb = row.photo ? (' <span style="cursor:pointer; color:#0288d1;" onclick="viewPhoto(\'' + row.photo + '\')">📷 [Foto]</span>') : '';
+                return '<div>• ' + safeText(text) + photoThumb + ' — ' + safeText(row.amount) + '</div>';
+            }).join('');
+
+            const timeStr = new Date(item.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            const phoneInfo = item.customerPhone ? (' • 📞 ' + safeText(item.customerPhone)) : '';
+            const distInfo = item.customerDistrict ? (' • 📍 ' + safeText(item.customerDistrict)) : '';
+            const bestOfferInfo = item.bestPrice && item.bestPrice !== '— TL' ? ('<div style="color:#10b981; font-weight:700; margin-top:4px;">En İyi Kuyumcu Teklifi: ' + item.bestPrice + '</div>') : '';
+            const deletedTimeBadge = item.deletedAt ? ('<span class="trash-badge">Silindi: ' + new Date(item.deletedAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) + '</span>') : '';
+
+            let actionsHtml = '';
+            if (!isTrash) {
+                actionsHtml = 
+                    '<button type="button" onclick="restoreTransaction(\'' + item.id + '\')" class="primary" style="padding:4px 8px; font-size:11px;">♻️ Düzenle</button> ' +
+                    '<button type="button" onclick="exportPDF(\'' + item.id + '\')" class="secondary" style="padding:4px 8px; font-size:11px;">📄 PDF</button> ' +
+                    '<button type="button" onclick="exportExcel(\'' + item.id + '\')" class="secondary" style="padding:4px 8px; font-size:11px;">📊 Excel</button> ' +
+                    '<button type="button" onclick="moveToTrash(\'' + item.id + '\')" class="danger" style="padding:4px 8px; font-size:11px;">🗑 Çöpe At</button>';
+            } else {
+                actionsHtml = 
+                    '<button type="button" onclick="recoverFromTrash(\'' + item.id + '\')" class="primary" style="background:#10b981; color:#fff; padding:4px 8px; font-size:11px;">↩ Geri Kurtar</button> ' +
+                    '<button type="button" onclick="permanentlyDelete(\'' + item.id + '\')" class="danger" style="background:#991b1b; padding:4px 8px; font-size:11px;">❌ Kalıcı Olarak Sil</button>';
+            }
+
+            return '<div class="history-item">' +
+                '<div style="display:flex; justify-content:space-between; align-items:flex-start;">' +
+                    '<div>' +
+                        '<strong>' + safeText(item.customerNote || 'Müşteri adı girilmedi') + phoneInfo + distInfo + '</strong>' +
+                        deletedTimeBadge +
+                    '</div>' +
+                    '<span style="font-size:11px; font-weight:700; color:#64748b; background:#f1f5f9; padding:2px 6px; border-radius:4px;">' + timeStr + '</span>' +
+                '</div>' +
+                '<div style="font-size:11px; color:#64748b; margin:2px 0 6px;">İşlem: <b>' + safeText(item.transactionType) + '</b></div>' +
+                '<div style="font-size:12px; color:#475569; line-height:1.5;">' + products + '</div>' +
+                '<div style="font-size:14px; font-weight:700; color:#b45309; margin-top:6px;">Piyasa Alış Toplamı: ' + safeText(item.total) + '</div>' +
+                bestOfferInfo +
+                '<div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">' + actionsHtml + '</div>' +
+            '</div>';
+        }).join('');
+
+        html += '<div class="date-group-card">' +
+            '<div class="date-group-header">' +
+                '<span>📅 ' + dateKey + ' (' + items.length + ' İşlem)</span>' +
+                '<div class="date-group-summary">' +
+                    '<span>Hacim: <b>' + groupGram.toFixed(2) + ' g</b></span>' +
+                    '<span>Toplam: <b>' + money(groupTL) + '</b></span>' +
+                '</div>' +
+            '</div>' +
+            '<div>' + itemsHtml + '</div>' +
+        '</div>';
+    }
+
+    listElement.innerHTML = html;
+}
+
+function restoreRows(savedRows) {
+    if (!Array.isArray(savedRows) || savedRows.length === 0) return;
+    const rowsContainer = document.getElementById('rows');
+    rowsContainer.innerHTML = '';
+
+    savedRows.forEach(function(savedRow) {
+        addRow(savedRow.product || 'gram');
+        const tr = rowsContainer.lastElementChild;
+        if (!tr) return;
+
+        const productEl = tr.querySelector('.product');
+        const karatEl = tr.querySelector('.karat');
+        const qtyEl = tr.querySelector('.qty');
+        const gramsEl = tr.querySelector('.grams');
+
+        if (productEl) { productEl.value = savedRow.product || 'gram'; configureRow(tr); }
+        if (karatEl && savedRow.karat && !karatEl.disabled) karatEl.value = savedRow.karat;
+        if (qtyEl && savedRow.qty) qtyEl.value = savedRow.qty;
+        if (gramsEl && savedRow.grams) gramsEl.value = savedRow.grams;
+
+        if (savedRow.photo) {
+            tr.dataset.photo = savedRow.photo;
+            const previewWrap = tr.querySelector('.photo-preview-wrap');
+            const img = previewWrap?.querySelector('img');
+            const photoBtn = tr.querySelector('.photo-btn');
+            if (previewWrap && img && photoBtn) {
+                img.src = savedRow.photo;
+                previewWrap.style.display = 'inline-block';
+                photoBtn.style.display = 'none';
+            }
+        }
+        calculateRow(tr);
+    });
+    calculate();
+}
+
+function restoreTransaction(id) {
+    const history = readHistory();
+    const item = history.find(function(x) { return String(x.id) === String(id); });
+    if (!item) { showSaveMessage('İşlem bulunamadı.', true); return; }
+
+    currentEditingId = String(id);
+    document.getElementById('mainSaveBtn').textContent = '💾 Değişiklikleri Kaydet';
+    document.getElementById('saveAsNewBtn').style.display = 'inline-block';
+
+    if (item.transactionType) document.getElementById('transactionType').value = item.transactionType;
+    if (item.customerNote) document.getElementById('customerNote').value = item.customerNote;
+    if (item.customerPhone) document.getElementById('customerPhone').value = item.customerPhone;
+    setDistrictChipsFromText(item.customerDistrict || 'Muratpaşa, Kepez');
+    if (item.commission) document.getElementById('commissionMargin').value = item.commission;
+
+    restoreRows(item.rows);
+
+    const qc = document.getElementById('quotesContainer');
+    qc.innerHTML = '';
+    if (Array.isArray(item.quotes) && item.quotes.length > 0) {
+        item.quotes.forEach(function(q) { addQuoteRow(q.name, q.price, q.note); });
+    } else {
+        addQuoteRow('K001');
+        addQuoteRow('K002');
+    }
+    evaluateBestQuote();
+
+    const historyCard = document.getElementById('historyCard');
+    if (historyCard) historyCard.style.display = 'none';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showSaveMessage('İşlem düzenlenmek üzere yüklendi.');
+}
+
+function showSaveMessage(text, error) {
+    error = !!error;
+    const element = document.getElementById('saveMessage');
+    element.textContent = text;
+    element.style.color = error ? '#ef4444' : '#10b981';
+    clearTimeout(window._saveTimer);
+    window._saveTimer = setTimeout(function() { element.textContent = ''; }, 3500);
+}
+
+function toggleHistory() {
+    const element = document.getElementById('historyCard');
+    element.style.display = element.style.display === 'none' ? 'block' : 'none';
+    if (element.style.display === 'block') renderHistory();
+}
+
+function safePrintHtml(fullHtml) {
+    try {
+        const win = window.open("", "_blank");
+        if (win) {
+            win.document.open();
+            win.document.write(fullHtml);
+            win.document.close();
+            setTimeout(function() {
+                win.focus();
+                win.print();
+            }, 400);
+            return;
+        }
+    } catch (e) {}
+
+    let iframe = document.getElementById('print_iframe');
+    if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'print_iframe';
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+    }
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(fullHtml);
+    doc.close();
+    setTimeout(function() {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+    }, 400);
+}
+
+function exportCustomerLivePDF() {
+    calculate();
+    const rows = Array.from(document.querySelectorAll('#rows > tr'));
+    if (!rows.length) {
+        alert("Lütfen önce listenize en az bir altın ürünü ekleyin.");
+        return;
+    }
+
+    const cName = document.getElementById('customerNote')?.value.trim() || 'Değerli Müşterimiz';
+    const cPhone = document.getElementById('customerPhone')?.value.trim() || 'Belirtilmedi';
+    const dist = document.getElementById('customerDistrict')?.value.trim() || 'Merkez';
+    const totalTL = document.getElementById('grandTotal')?.textContent || '0,00 ₺';
+    const totalG = document.getElementById('totalGrams')?.textContent || '0,00 g';
+    const totalQ = document.getElementById('totalQty')?.textContent || '0';
+    const dateFormatted = new Intl.DateTimeFormat("tr-TR", { dateStyle: "long", timeStyle: "short" }).format(new Date());
+
+    let tableRows = '';
+    rows.forEach(function(tr, index) {
+        const p = tr.querySelector('.product').value;
+        const pName = PRODUCTS[p];
+        const k = tr.querySelector('.karat').value;
+        const q = tr.querySelector('.qty').value;
+        const g = tr.querySelector('.grams').value;
+        const u = tr.querySelector('.unit-price').textContent;
+        const amt = tr.querySelector('.amount').textContent;
+
+        tableRows += '<tr>' +
+            '<td style="text-align:center; color:#64748b;">' + (index + 1) + '</td>' +
+            '<td><strong>' + safeText(pName) + '</strong></td>' +
+            '<td style="text-align:center;">' + safeText(k ? k + ' Ayar' : '—') + '</td>' +
+            '<td style="text-align:center;">' + (q > 0 ? q : '—') + '</td>' +
+            '<td style="text-align:center;">' + (g > 0 ? g + ' g' : '—') + '</td>' +
+            '<td style="text-align:right; font-size:11px; color:#64748b;">' + safeText(u) + '</td>' +
+            '<td style="text-align:right; font-weight:700; color:#1e293b;">' + safeText(amt) + '</td>' +
+        '</tr>';
+    });
+
+    const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Altın Eksper — Müşteri Ön Değerleme Fişi</title>' +
+        '<style>@page { size: A4 portrait; margin: 12mm; } body{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color:#1e293b; margin:0; font-size:12.5px; line-height:1.4; } .doc-header{ display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px; margin-bottom:12px; } .brand-title{ font-size:20px; font-weight:800; color:#1e293b; } .info-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px; margin-bottom:12px; font-size:12px; } table{ width:100%; border-collapse:collapse; margin-top:6px; } th{ background:#1e293b; color:#fff; font-size:11px; text-transform:uppercase; padding:6px; border:1px solid #1e293b; } td{ border:1px solid #e2e8f0; padding:6px; font-size:12px; } .summary-card{ margin-top:12px; display:flex; justify-content:flex-end; } .summary-table{ width:300px; border:1px solid #cbd5e1; border-radius:6px; background:#f8fafc; } .summary-table td{ border:none; border-bottom:1px solid #e2e8f0; padding:5px 10px; } .summary-table tr:last-child td{ border-bottom:none; background:#1e293b; color:#fff; font-weight:800; font-size:13px; } .disclaimer{ margin-top:20px; font-size:11px; color:#64748b; border:1px solid #cbd5e1; border-radius:6px; padding:10px; background:#f8fafc; }</style></head><body>' +
+        '<div class="doc-header"><div><div class="brand-title">ALTIN EKSPER</div><div style="font-size:11px; color:#64748b; font-weight:600;">Müşteri Ön Değerleme & Fiyat Tespit Fişi</div></div><div style="text-align:right; font-size:11px; color:#475569;"><div><strong>Tarih:</strong> ' + dateFormatted + '</div><div><strong>İletişim:</strong> 0536 043 42 07</div></div></div>' +
+        '<div class="info-grid"><div><strong>Müşteri:</strong> ' + safeText(cName) + '</div><div><strong>Bölge / İlçe:</strong> ' + safeText(dist) + '</div><div><strong>Telefon:</strong> ' + safeText(cPhone) + '</div><div><strong>Piyasa Durumu:</strong> Güncel Toptan Gösterge</div></div>' +
+        '<table><thead><tr><th style="width:30px;">#</th><th>Ürün Cinsi</th><th style="width:75px; text-align:center;">Ayar</th><th style="width:50px; text-align:center;">Adet</th><th style="width:70px; text-align:center;">Gram</th><th style="width:115px; text-align:right;">Birim Alış Ref.</th><th style="width:110px; text-align:right;">Piyasa Değeri</th></tr></thead><tbody>' + tableRows + '</tbody></table>' +
+        '<div class="summary-card"><table class="summary-table"><tr><td style="color:#64748b;">Toplam Adet:</td><td style="text-align:right; font-weight:700;">' + totalQ + '</td></tr><tr><td style="color:#64748b;">Toplam Ağırlık:</td><td style="text-align:right; font-weight:700;">' + totalG + '</td></tr><tr><td>GÖSTERGE TOPLAM:</td><td style="text-align:right; color:#f59e0b;">' + totalTL + '</td></tr></table></div>' +
+        '<div class="disclaimer"><strong>Bilgilendirme Notu:</strong> Bu fiş Altın Eksper platformu üzerinden anlık toptan serbest piyasa kurları baz alınarak müşterimiz için düzenlenmiştir. Anlaşmalı kuyumcularımızda fiziki tartım ve ayar kontrolü yapıldıktan sonra kesin nakit ödemeniz anında nakit veya IBAN ile gerçekleştirilir.</div>' +
+        '</body></html>';
+
+    safePrintHtml(html);
+}
+
+function exportCustomerLiveExcel() {
+    calculate();
+    const rows = Array.from(document.querySelectorAll('#rows > tr'));
+    if (!rows.length) {
+        alert("Lütfen önce listenize en az bir altın ürünü ekleyin.");
+        return;
+    }
+
+    const cName = document.getElementById('customerNote')?.value.trim() || 'Değerli Müşterimiz';
+    const cPhone = document.getElementById('customerPhone')?.value.trim() || 'Belirtilmedi';
+    const dist = document.getElementById('customerDistrict')?.value.trim() || 'Merkez';
+    const totalTL = document.getElementById('grandTotal')?.textContent || '₺0,00';
+    const totalG = document.getElementById('totalGrams')?.textContent || '0,00 g';
+    const totalQ = document.getElementById('totalQty')?.textContent || '0';
+    const dateFormatted = new Intl.DateTimeFormat("tr-TR", { dateStyle: "long", timeStyle: "short" }).format(new Date());
+
+    let tableRows = '';
+    rows.forEach(function(tr, index) {
+        const p = tr.querySelector('.product').value;
+        const pName = PRODUCTS[p] || "Altın";
+        const k = tr.querySelector('.karat').value ? (tr.querySelector('.karat').value + ' Ayar') : '—';
+        const q = tr.querySelector('.qty').value || '—';
+        const g = tr.querySelector('.grams').value ? (tr.querySelector('.grams').value + ' g') : '—';
+        const u = tr.querySelector('.unit-price').textContent || '—';
+        const amt = tr.querySelector('.amount').textContent || '₺0,00';
+
+        tableRows += '<tr>' +
+            '<td style="text-align:center;">' + (index + 1) + '</td>' +
+            '<td><b>' + safeText(pName) + '</b></td>' +
+            '<td style="text-align:center;">' + safeText(k) + '</td>' +
+            '<td style="text-align:center;">' + safeText(q) + '</td>' +
+            '<td style="text-align:center;">' + safeText(g) + '</td>' +
+            '<td style="text-align:right;">' + safeText(u) + '</td>' +
+            '<td style="text-align:right; font-weight:bold;">' + safeText(amt) + '</td>' +
+        '</tr>';
+    });
+
+    const excelHtml = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">' +
+    '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">' +
+    '<style>table { border-collapse: collapse; width: 100%; font-family: Calibri, sans-serif; font-size: 11pt; } th, td { border: 1px solid #cbd5e1; padding: 6px 10px; } th { background-color: #1e293b; color: #ffffff; font-weight: bold; text-align: center; } .header-meta { background-color: #f1f5f9; font-weight: bold; } .total-row { background-color: #f8fafc; font-weight: bold; }</style>' +
+    '</head><body>' +
+    '<table>' +
+        '<tr><td colspan="7" style="font-size:16pt; font-weight:bold; color:#1e293b; text-align:center;">ALTIN EKSPER — MÜŞTERİ ÖN DEĞERLEME FİŞİ</td></tr>' +
+        '<tr><td colspan="7" style="font-size:9pt; color:#64748b; text-align:center;">Tarih: ' + dateFormatted + '</td></tr>' +
+        '<tr><td colspan="7"></td></tr>' +
+        '<tr class="header-meta"><td colspan="2">Müşteri / Not:</td><td colspan="5">' + safeText(cName) + '</td></tr>' +
+        '<tr class="header-meta"><td colspan="2">Telefon:</td><td colspan="5">' + safeText(cPhone) + '</td></tr>' +
+        '<tr class="header-meta"><td colspan="2">Bölge / İlçe:</td><td colspan="5">' + safeText(dist) + '</td></tr>' +
+        '<tr><td colspan="7"></td></tr>' +
+        '<thead><tr><th style="width:50px;">Sıra</th><th style="width:180px;">Ürün Cinsi</th><th style="width:100px;">Ayar</th><th style="width:80px;">Adet</th><th style="width:100px;">Gram</th><th style="width:140px;">Birim Alış Ref.</th><th style="width:140px;">Piyasa Tutarı</th></tr></thead>' +
+        '<tbody>' + tableRows + '</tbody>' +
+        '<tfoot>' +
+            '<tr><td colspan="7"></td></tr>' +
+            '<tr class="total-row"><td colspan="3" style="text-align:right;">Toplam Adet:</td><td style="text-align:center;">' + totalQ + '</td><td colspan="3"></td></tr>' +
+            '<tr class="total-row"><td colspan="3" style="text-align:right;">Toplam Gram:</td><td colspan="2" style="text-align:center;">' + totalG + '</td><td colspan="2"></td></tr>' +
+            '<tr class="total-row" style="background-color:#fef3c7; font-size:12pt; color:#b45309;"><td colspan="5" style="text-align:right;">GENEL GÖSTERGE TOPLAMI:</td><td colspan="2" style="text-align:right;">' + totalTL + '</td></tr>' +
+        '</tfoot>' +
+    '</table></body></html>';
+
+    const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const filename = "AltinEksper_Degerleme_" + (cName ? cName.replace(/\s+/g, '_') : 'Musteri') + ".xls";
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+function exportExcel(id) {
+    const history = readHistory();
+    const item = history.find(function(x) { return String(x.id) === String(id); });
+    if (!item) { alert("İşlem bulunamadı."); return; }
+
+    const profile = getStoreProfile();
+    const brandName = profile.name || "ALTIN EKSPER";
+    const dateFormatted = new Intl.DateTimeFormat("tr-TR", { dateStyle: "long", timeStyle: "short" }).format(new Date(item.date));
+
+    let totalQ = 0, totalG = 0;
+    let tableRows = '';
+
+    (item.rows || []).forEach(function(row, index) {
+        const q = num(row.qty);
+        const g = num(row.grams);
+        totalQ += q; totalG += g;
+
+        tableRows += '<tr>' +
+            '<td style="text-align:center;">' + (index + 1) + '</td>' +
+            '<td><b>' + safeText(row.productName || "Altın") + '</b></td>' +
+            '<td style="text-align:center;">' + safeText(row.karat ? row.karat + " Ayar" : "—") + '</td>' +
+            '<td style="text-align:center;">' + (q > 0 ? q : "—") + '</td>' +
+            '<td style="text-align:center;">' + (g > 0 ? g + ' g' : '—') + '</td>' +
+            '<td style="text-align:right;">' + safeText(row.unitPrice || "—") + '</td>' +
+            '<td style="text-align:right; font-weight:bold;">' + safeText(row.amount || "₺0,00") + '</td>' +
+        '</tr>';
+    });
+
+    const excelHtml = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">' +
+    '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">' +
+    '<style>table { border-collapse: collapse; width: 100%; font-family: Calibri, sans-serif; font-size: 11pt; } th, td { border: 1px solid #cbd5e1; padding: 6px 10px; } th { background-color: #1e293b; color: #ffffff; font-weight: bold; text-align: center; } .header-meta { background-color: #f1f5f9; font-weight: bold; } .total-row { background-color: #f8fafc; font-weight: bold; }</style>' +
+    '</head><body>' +
+    '<table>' +
+        '<tr><td colspan="7" style="font-size:16pt; font-weight:bold; color:#1e293b; text-align:center;">' + safeText(brandName.toUpperCase()) + ' — RESMİ İŞLEM MAKBUZU</td></tr>' +
+        '<tr><td colspan="7" style="font-size:9pt; color:#64748b; text-align:center;">İşlem No: #' + item.id + ' | Tarih: ' + dateFormatted + '</td></tr>' +
+        '<tr><td colspan="7"></td></tr>' +
+        '<tr class="header-meta"><td colspan="2">Müşteri / Satıcı:</td><td colspan="5">' + safeText(item.customerNote || "Belirtilmedi") + '</td></tr>' +
+        '<tr class="header-meta"><td colspan="2">Telefon:</td><td colspan="5">' + safeText(item.customerPhone || "Belirtilmedi") + '</td></tr>' +
+        '<tr class="header-meta"><td colspan="2">Bölge / İlçe:</td><td colspan="5">' + safeText(item.customerDistrict || "Merkez") + '</td></tr>' +
+        '<tr class="header-meta"><td colspan="2">İşlem Türü:</td><td colspan="5">' + safeText(item.transactionType || "Alış") + '</td></tr>' +
+        '<tr><td colspan="7"></td></tr>' +
+        '<thead><tr><th style="width:50px;">Sıra</th><th style="width:180px;">Ürün Cinsi</th><th style="width:100px;">Ayar</th><th style="width:80px;">Adet</th><th style="width:100px;">Gram</th><th style="width:140px;">Birim Alış</th><th style="width:140px;">Tutar</th></tr></thead>' +
+        '<tbody>' + tableRows + '</tbody>' +
+        '<tfoot>' +
+            '<tr><td colspan="7"></td></tr>' +
+            '<tr class="total-row"><td colspan="3" style="text-align:right;">Toplam Adet:</td><td style="text-align:center;">' + totalQ + '</td><td colspan="3"></td></tr>' +
+            '<tr class="total-row"><td colspan="3" style="text-align:right;">Toplam Gram:</td><td colspan="2" style="text-align:center;">' + totalG.toFixed(2) + ' g</td><td colspan="2"></td></tr>' +
+            '<tr class="total-row" style="background-color:#fef3c7; font-size:12pt; color:#b45309;"><td colspan="5" style="text-align:right;">GENEL TOPLAM:</td><td colspan="2" style="text-align:right;">' + safeText(item.total || "₺0,00") + '</td></tr>' +
+            (item.bestPrice && item.bestPrice !== '— TL' ? '<tr class="total-row" style="background-color:#ecfdf5; color:#047857;"><td colspan="5" style="text-align:right;">Kuyumcu En İyi Teklif:</td><td colspan="2" style="text-align:right;">' + safeText(item.bestPrice) + '</td></tr>' : '') +
+        '</tfoot>' +
+    '</table></body></html>';
+
+    const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const filename = "AltinEksper_Islem_" + (item.customerNote ? item.customerNote.replace(/\s+/g, '_') : item.id) + ".xls";
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+function openDailyReportModal() {
+    const modal = document.getElementById('dailyReportModal');
+    if (!modal) return;
+    const dateInput = document.getElementById('reportDateInput');
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (dateInput) dateInput.value = todayStr;
+    generateDailyReport();
+    modal.style.display = 'flex';
+}
+
+function closeDailyReportModal() {
+    const modal = document.getElementById('dailyReportModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function generateDailyReport() {
+    const dateInput = document.getElementById('reportDateInput');
+    if (!dateInput) return;
+    const dateVal = dateInput.value;
+    if (!dateVal) return;
+
+    const history = readHistory().filter(function(x) { return !x.deleted; });
+    const dayTransactions = history.filter(function(item) {
+        if (!item.date) return false;
+        const itemDateStr = new Date(item.date).toISOString().split('T')[0];
+        return itemDateStr === dateVal;
+    });
+
+    const displayDate = new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(dateVal));
+    const subtitle = document.getElementById('reportDateSubtitle');
+    if (subtitle) subtitle.textContent = displayDate + ' Tarihli Gün Sonu Kasa Özeti';
+
+    let totalBuyGram = 0;
+    let totalBuyTL = 0;
+    const customers = new Set();
+    const productSummary = {};
+
+    dayTransactions.forEach(function(tx) {
+        if (tx.customerNote) customers.add(tx.customerNote.toLowerCase().trim());
+
+        (tx.rows || []).forEach(function(row) {
+            const p = row.product || 'gram';
+            const k = row.karat || '24';
+            const q = num(row.qty);
+            const g = num(row.grams);
+            const w = WEIGHTS[p] || 0;
+            const amountNum = parseFloat(String(row.amount || '').replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
+
+            const rowGram = ['gram', 'bracelet', 'scrap'].includes(p) ? g : (q * w);
+            totalBuyGram += rowGram;
+            totalBuyTL += amountNum;
+
+            const groupKey = (PRODUCTS[p] || p) + '__' + k;
+            if (!productSummary[groupKey]) {
+                productSummary[groupKey] = {
+                    name: PRODUCTS[p] || p,
+                    karat: k,
+                    qty: 0,
+                    grams: 0,
+                    totalTL: 0
+                };
+            }
+            productSummary[groupKey].qty += q;
+            productSummary[groupKey].grams += rowGram;
+            productSummary[groupKey].totalTL += amountNum;
+        });
+    });
+
+    const countEl = document.getElementById('repTxCount');
+    const gramEl = document.getElementById('repTotalBuyGram');
+    const tlEl = document.getElementById('repTotalBuyTL');
+    const custEl = document.getElementById('repUniqueCustomers');
+
+    if (countEl) countEl.textContent = dayTransactions.length;
+    if (gramEl) gramEl.textContent = totalBuyGram.toFixed(2) + ' g';
+    if (tlEl) tlEl.textContent = money(totalBuyTL);
+    if (custEl) custEl.textContent = customers.size;
+
+    const tbody = document.getElementById('reportTableBody');
+    if (!tbody) return;
+    const keys = Object.keys(productSummary);
+
+    if (!keys.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:18px;">Seçilen tarihte gerçekleşmiş işlem bulunmuyor.</td></tr>';
+        currentReportSummary = null;
+        return;
+    }
+
+    tbody.innerHTML = keys.map(function(k) {
+        const item = productSummary[k];
+        return '<tr>' +
+            '<td><b>' + item.name + '</b></td>' +
+            '<td>' + item.karat + ' Ayar</td>' +
+            '<td style="text-align:center; font-weight:600;">' + (item.qty > 0 ? item.qty : '—') + '</td>' +
+            '<td style="text-align:center; font-weight:600;">' + item.grams.toFixed(2) + ' g</td>' +
+            '<td style="text-align:right; font-weight:700; color:#1e293b;">' + money(item.totalTL) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    currentReportSummary = {
+        dateStr: displayDate,
+        txCount: dayTransactions.length,
+        totalGram: totalBuyGram,
+        totalTL: totalBuyTL,
+        customersCount: customers.size,
+        items: Object.values(productSummary)
+    };
+}
+
+function printDailyReportPDF() {
+    if (!currentReportSummary || !currentReportSummary.items.length) {
+        alert("Yazdırılacak işlem verisi bulunamadı.");
+        return;
+    }
+
+    const rep = currentReportSummary;
+    const profile = getStoreProfile();
+    const storeTitle = profile.name ? profile.name.toUpperCase() : 'ALTIN EKSPER';
+
+    const tableRows = rep.items.map(function(it, idx) {
+        return '<tr>' +
+            '<td style="text-align:center;">' + (idx + 1) + '</td>' +
+            '<td><b>' + it.name + '</b></td>' +
+            '<td style="text-align:center;">' + it.karat + ' Ayar</td>' +
+            '<td style="text-align:center; font-weight:600;">' + (it.qty > 0 ? it.qty : '—') + '</td>' +
+            '<td style="text-align:center; font-weight:600;">' + it.grams.toFixed(2) + ' g</td>' +
+            '<td style="text-align:right; font-weight:700;">' + money(it.totalTL) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>' + storeTitle + ' — Gün Sonu Kasa Raporu (' + rep.dateStr + ')</title>' +
+        '<style>@page { size: A4 portrait; margin: 12mm; } body{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color:#1e293b; margin:0; font-size:12.5px; line-height:1.4; } .doc-header{ display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px; margin-bottom:14px; } .brand-title{ font-size:20px; font-weight:800; color:#1e293b; } .grid-summary{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:14px; } .box{ background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px; text-align:center; } .box span{ font-size:11px; color:#64748b; display:block; } .box strong{ font-size:16px; color:#1e293b; display:block; margin-top:2px; } table{ width:100%; border-collapse:collapse; margin-top:10px; } th{ background:#1e293b; color:#fff; font-size:11px; text-transform:uppercase; padding:7px; border:1px solid #1e293b; } td{ border:1px solid #e2e8f0; padding:7px; font-size:12px; } .grand-box{ margin-top:16px; display:flex; justify-content:flex-end; } .grand-table{ width:320px; border:1px solid #cbd5e1; border-radius:6px; background:#f8fafc; } .grand-table td{ border:none; border-bottom:1px solid #e2e8f0; padding:6px 10px; } .grand-table tr:last-child td{ border-bottom:none; background:#1e293b; color:#fff; font-weight:800; font-size:14px; } .signature-section{ margin-top:40px; display:grid; grid-template-columns:1fr 1fr; gap:40px; page-break-inside:avoid; } .sig-box{ border-top:1px solid #94a3b8; text-align:center; padding-top:6px; font-size:11px; color:#475569; }</style></head><body>' +
+        '<div class="doc-header"><div><div class="brand-title">' + storeTitle + '</div><div style="font-size:11px; color:#64748b; font-weight:600;">Resmi Gün Sonu Kasa & Hacim Raporu</div></div><div style="text-align:right; font-size:11px; color:#475569;"><div><strong>Rapor Tarihi:</strong> ' + rep.dateStr + '</div><div><strong>Yazdırma:</strong> ' + new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) + '</div></div></div>' +
+        '<div class="grid-summary"><div class="box"><span>Toplam İşlem</span><strong>' + rep.txCount + '</strong></div><div class="box"><span>Toplam Gram Hacmi</span><strong>' + rep.totalGram.toFixed(2) + ' g</strong></div><div class="box"><span>Toplam Kasa Çıkışı</span><strong>' + money(rep.totalTL) + '</strong></div><div class="box"><span>Müşteri Sayısı</span><strong>' + rep.customersCount + '</strong></div></div>' +
+        '<table><thead><tr><th style="width:30px;">#</th><th>Ürün Grubu</th><th style="width:80px; text-align:center;">Ayar</th><th style="width:70px; text-align:center;">Toplam Adet</th><th style="width:90px; text-align:center;">Toplam Gram</th><th style="width:120px; text-align:right;">Toplam Tutar (₺)</th></tr></thead><tbody>' + tableRows + '</tbody></table>' +
+        '<div class="grand-box"><table class="grand-table"><tr><td style="color:#64748b;">Toplam Gram Hacmi:</td><td style="text-align:right; font-weight:700;">' + rep.totalGram.toFixed(2) + ' g</td></tr><tr><td>GÜN SONU KASA TUTARI:</td><td style="text-align:right; color:#f59e0b;">' + money(rep.totalTL) + '</td></tr></table></div>' +
+        '<div class="signature-section"><div class="sig-box"><strong>Kasa Sorumlusu</strong><br>İmza</div><div class="sig-box"><strong>Mağaza Yetkilisi / Onay</strong><br>Kaşe / İmza</div></div></body></html>';
+
+    safePrintHtml(html);
+}
+
+function openMonthlyReportModal() {
+    const modal = document.getElementById('monthlyReportModal');
+    if (!modal) return;
+    const monthInput = document.getElementById('monthlyDateInput');
+    const now = new Date();
+    if (monthInput) monthInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    generateMonthlyReport();
+    modal.style.display = 'flex';
+}
+
+function closeMonthlyReportModal() {
+    const modal = document.getElementById('monthlyReportModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function generateMonthlyReport() {
+    const monthInput = document.getElementById('monthlyDateInput');
+    if (!monthInput) return;
+    const monthVal = monthInput.value;
+    if (!monthVal) return;
+
+    const parts = monthVal.split('-');
+    const year = parseInt(parts[0]);
+    const month = parseInt(parts[1]);
+    const history = readHistory().filter(function(x) { return !x.deleted; });
+
+    const monthTransactions = history.filter(function(item) {
+        if (!item.date) return false;
+        const d = new Date(item.date);
+        return d.getFullYear() === year && (d.getMonth() + 1) === month;
+    });
+
+    const monthName = new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' }).format(new Date(year, month - 1, 1));
+    const subtitle = document.getElementById('monthlyDateSubtitle');
+    if (subtitle) subtitle.textContent = monthName + ' Dönemi Hacim ve Dağılım Raporu';
+
+    let totalMonthGram = 0;
+    let totalMonthTL = 0;
+    const activeDaysSet = new Set();
+
+    const typeStats = {
+        'Alış': { count: 0, grams: 0, totalTL: 0 },
+        'Satış': { count: 0, grams: 0, totalTL: 0 },
+        'Hurda': { count: 0, grams: 0, totalTL: 0 }
+    };
+
+    const productStats = {};
+
+    monthTransactions.forEach(function(tx) {
+        const dayKey = new Date(tx.date).toISOString().split('T')[0];
+        activeDaysSet.add(dayKey);
+
+        const txType = (tx.transactionType === 'Hurda' || tx.transactionType === 'Hurda Alış') ? 'Hurda' : (tx.transactionType || 'Alış');
+        if (!typeStats[txType]) typeStats[txType] = { count: 0, grams: 0, totalTL: 0 };
+        typeStats[txType].count += 1;
+
+        (tx.rows || []).forEach(function(row) {
+            const p = row.product || 'gram';
+            const k = row.karat || '24';
+            const q = num(row.qty);
+            const g = num(row.grams);
+            const w = WEIGHTS[p] || 0;
+            const amountNum = parseFloat(String(row.amount || '').replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
+
+            const rowGram = ['gram', 'bracelet', 'scrap'].includes(p) ? g : (q * w);
+            totalMonthGram += rowGram;
+            totalMonthTL += amountNum;
+
+            typeStats[txType].grams += rowGram;
+            typeStats[txType].totalTL += amountNum;
+
+            const groupKey = (PRODUCTS[p] || p) + '__' + k;
+            if (!productStats[groupKey]) {
+                productStats[groupKey] = {
+                    name: PRODUCTS[p] || p,
+                    karat: k,
+                    qty: 0,
+                    grams: 0,
+                    totalTL: 0
+                };
+            }
+            productStats[groupKey].qty += q;
+            productStats[groupKey].grams += rowGram;
+            productStats[groupKey].totalTL += amountNum;
+        });
+    });
+
+    const mCountEl = document.getElementById('mRepTxCount');
+    const mGramEl = document.getElementById('mRepTotalGram');
+    const mTlEl = document.getElementById('mRepTotalTL');
+    const mDaysEl = document.getElementById('mRepActiveDays');
+
+    if (mCountEl) mCountEl.textContent = monthTransactions.length;
+    if (mGramEl) mGramEl.textContent = totalMonthGram.toFixed(2) + ' g';
+    if (mTlEl) mTlEl.textContent = money(totalMonthTL);
+    if (mDaysEl) mDaysEl.textContent = activeDaysSet.size + ' Gün';
+
+    const typeTbody = document.getElementById('mReportTypeTableBody');
+    if (typeTbody) {
+        typeTbody.innerHTML = Object.entries(typeStats).map(function(item) {
+            return '<tr>' +
+                '<td><b>' + item[0] + '</b></td>' +
+                '<td style="text-align:center; font-weight:600;">' + item[1].count + '</td>' +
+                '<td style="text-align:center; font-weight:600;">' + item[1].grams.toFixed(2) + ' g</td>' +
+                '<td style="text-align:right; font-weight:700; color:#1e293b;">' + money(item[1].totalTL) + '</td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    const prodTbody = document.getElementById('mReportProductTableBody');
+    if (!prodTbody) return;
+    const pKeys = Object.keys(productStats);
+
+    if (!pKeys.length) {
+        prodTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:18px;">Seçilen ayda işlem bulunmuyor.</td></tr>';
+        currentMonthlySummary = null;
+        return;
+    }
+
+    prodTbody.innerHTML = pKeys.map(function(k) {
+        const it = productStats[k];
+        return '<tr>' +
+            '<td><b>' + it.name + '</b></td>' +
+            '<td>' + it.karat + ' Ayar</td>' +
+            '<td style="text-align:center; font-weight:600;">' + (it.qty > 0 ? it.qty : '—') + '</td>' +
+            '<td style="text-align:center; font-weight:600;">' + it.grams.toFixed(2) + ' g</td>' +
+            '<td style="text-align:right; font-weight:700; color:#1e293b;">' + money(it.totalTL) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    currentMonthlySummary = {
+        monthTitle: monthName,
+        txCount: monthTransactions.length,
+        totalGram: totalMonthGram,
+        totalTL: totalMonthTL,
+        activeDays: activeDaysSet.size,
+        types: typeStats,
+        products: Object.values(productStats)
+    };
+}
+
+function printMonthlyReportPDF() {
+    if (!currentMonthlySummary || !currentMonthlySummary.products.length) {
+        alert("Yazdırılacak aylık veri bulunamadı.");
+        return;
+    }
+
+    const rep = currentMonthlySummary;
+    const profile = getStoreProfile();
+    const storeTitle = profile.name ? profile.name.toUpperCase() : 'ALTIN EKSPER';
+
+    const typeRows = Object.entries(rep.types).map(function(item) {
+        return '<tr>' +
+            '<td><b>' + item[0] + '</b></td>' +
+            '<td style="text-align:center;">' + item[1].count + '</td>' +
+            '<td style="text-align:center;">' + item[1].grams.toFixed(2) + ' g</td>' +
+            '<td style="text-align:right; font-weight:700;">' + money(item[1].totalTL) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    const prodRows = rep.products.map(function(it, idx) {
+        return '<tr>' +
+            '<td style="text-align:center;">' + (idx + 1) + '</td>' +
+            '<td><b>' + it.name + '</b></td>' +
+            '<td style="text-align:center;">' + it.karat + ' Ayar</td>' +
+            '<td style="text-align:center;">' + (it.qty > 0 ? it.qty : '—') + '</td>' +
+            '<td style="text-align:center;">' + it.grams.toFixed(2) + ' g</td>' +
+            '<td style="text-align:right; font-weight:700;">' + money(it.totalTL) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>' + storeTitle + ' — Aylık Faaliyet & Hacim Raporu (' + rep.monthTitle + ')</title>' +
+        '<style>@page { size: A4 portrait; margin: 12mm; } body{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color:#1e293b; margin:0; font-size:12px; line-height:1.4; } .doc-header{ display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px; margin-bottom:12px; } .brand-title{ font-size:20px; font-weight:800; color:#1e293b; } .grid-summary{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:14px; } .box{ background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px; text-align:center; } .box span{ font-size:11px; color:#64748b; display:block; } .box strong{ font-size:15px; color:#1e293b; display:block; margin-top:2px; } table{ width:100%; border-collapse:collapse; margin-top:8px; } th{ background:#1e293b; color:#fff; font-size:11px; text-transform:uppercase; padding:6px; border:1px solid #1e293b; } td{ border:1px solid #e2e8f0; padding:6px; font-size:11.5px; } .grand-box{ margin-top:14px; display:flex; justify-content:flex-end; } .grand-table{ width:320px; border:1px solid #cbd5e1; border-radius:6px; background:#f8fafc; } .grand-table td{ border:none; border-bottom:1px solid #e2e8f0; padding:6px 10px; } .grand-table tr:last-child td{ border-bottom:none; background:#1e293b; color:#fff; font-weight:800; font-size:13px; } .signature-section{ margin-top:30px; display:grid; grid-template-columns:1fr 1fr; gap:40px; page-break-inside:avoid; } .sig-box{ border-top:1px solid #94a3b8; text-align:center; padding-top:6px; font-size:11px; color:#475569; }</style></head><body>' +
+        '<div class="doc-header"><div><div class="brand-title">' + storeTitle + '</div><div style="font-size:11px; color:#64748b; font-weight:600;">Resmi Aylık Faaliyet & Hacim Raporu</div></div><div style="text-align:right; font-size:11px; color:#475569;"><div><strong>Dönem:</strong> ' + rep.monthTitle + '</div><div><strong>Rapor Tarihi:</strong> ' + new Date().toLocaleDateString('tr-TR') + '</div></div></div>' +
+        '<div class="grid-summary"><div class="box"><span>Toplam İşlem</span><strong>' + rep.txCount + '</strong></div><div class="box"><span>Toplam Gram Hacmi</span><strong>' + rep.totalGram.toFixed(2) + ' g</strong></div><div class="box"><span>Toplam Ciro / Hacim</span><strong>' + money(rep.totalTL) + '</strong></div><div class="box"><span>Aktif İşlem Günü</span><strong>' + rep.activeDays + ' Gün</strong></div></div>' +
+        '<h4 style="margin:12px 0 4px; font-size:12.5px;">İşlem Türü Dağılımı</h4><table><thead><tr><th>Tür</th><th style="width:80px; text-align:center;">İşlem</th><th style="width:110px; text-align:center;">Gram</th><th style="width:130px; text-align:right;">Tutar (₺)</th></tr></thead><tbody>' + typeRows + '</tbody></table>' +
+        '<h4 style="margin:14px 0 4px; font-size:12.5px;">Aylık Ürün Dağılım Detayı</h4><table><thead><tr><th style="width:30px;">#</th><th>Ürün Grubu</th><th style="width:70px; text-align:center;">Ayar</th><th style="width:60px; text-align:center;">Adet</th><th style="width:85px; text-align:center;">Gram</th><th style="width:120px; text-align:right;">Tutar (₺)</th></tr></thead><tbody>' + prodRows + '</tbody></table>' +
+        '<div class="grand-box"><table class="grand-table"><tr><td style="color:#64748b;">Dönem Toplam Gramı:</td><td style="text-align:right; font-weight:700;">' + rep.totalGram.toFixed(2) + ' g</td></tr><tr><td>DÖNEM TOPLAM HACMİ:</td><td style="text-align:right; color:#f59e0b;">' + money(rep.totalTL) + '</td></tr></table></div>' +
+        '<div class="signature-section"><div class="sig-box"><strong>Muhasebe / Kasa Yetkilisi</strong><br>İmza</div><div class="sig-box"><strong>Firma Sahibi / Onay</strong><br>Kaşe / İmza</div></div></body></html>';
+
+    safePrintHtml(html);
+}
+
+function exportPDF(id) {
+    const history = readHistory();
+    const item = history.find(function(x) { return String(x.id) === String(id); });
+    if (!item) { alert("İşlem bulunamadı."); return; }
+
+    let totalQty = 0, totalGrams = 0;
+    const productsHtml = (item.rows || []).map(function(row, index) {
+        const qty = num(row.qty);
+        const grams = num(row.grams);
+        totalQty += qty; totalGrams += grams;
+        const photoHtml = row.photo ? ('<div style="margin-top:4px;"><img src="' + row.photo + '" style="width:45px; height:45px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; display:block;"></div>') : '';
+
+        return '<tr>' +
+            '<td style="text-align:center; font-weight:600; color:#64748b;">' + (index + 1) + '</td>' +
+            '<td><strong style="color:#1e293b;">' + safeText(row.productName || 'Altın') + '</strong>' + photoHtml + '</td>' +
+            '<td style="text-align:center;"><span style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:600;">' + safeText(row.karat ? row.karat + ' Ayar' : '—') + '</span></td>' +
+            '<td style="text-align:center; font-weight:600;">' + (qty > 0 ? qty : '—') + '</td>' +
+            '<td style="text-align:center; font-weight:600;">' + (grams > 0 ? grams.toFixed(2) + ' g' : '—') + '</td>' +
+            '<td style="text-align:right; font-size:12px; color:#64748b;">' + safeText(row.unitPrice || '—') + '</td>' +
+            '<td style="text-align:right; font-weight:700; color:#1e293b;">' + safeText(row.amount || '₺0,00') + '</td>' +
+        '</tr>';
+    }).join("");
+
+    const dateFormatted = new Intl.DateTimeFormat("tr-TR", { dateStyle: "long", timeStyle: "short" }).format(new Date(item.date));
+    const bestOfferBlock = (item.bestPrice && item.bestPrice !== '— TL') ? (
+        '<div style="background:#ecfdf5; border:1px solid #10b981; border-radius:6px; padding:10px 14px; margin-top:14px; display:flex; justify-content:space-between; align-items:center;">' +
+            '<span style="color:#065f46; font-weight:700; font-size:12px;">★ ANLAŞMALI EN İYİ NAKİT ALIŞ TEKLİFİ:</span>' +
+            '<span style="color:#047857; font-weight:800; font-size:16px;">' + safeText(item.bestPrice) + '</span>' +
+        '</div>'
+    ) : '';
+
+    const profile = getStoreProfile();
+    const storeTitle = profile.name ? profile.name.toUpperCase() : 'ALTIN EKSPER';
+
+    const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>' + storeTitle + ' — Resmi Değerleme & İşlem Makbuzu #' + item.id + '</title>' +
+        '<style>@page { size: A4 portrait; margin: 12mm; } body{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color:#1e293b; margin:0; font-size:12.5px; line-height:1.4; } .doc-header{ display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px; margin-bottom:12px; } .brand-title{ font-size:20px; font-weight:800; color:#1e293b; letter-spacing:-0.5px; } .meta-badge{ background:#f1f5f9; border:1px solid #cbd5e1; padding:3px 8px; border-radius:4px; font-weight:700; display:inline-block; margin-bottom:4px; font-size:11px; } .info-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px; margin-bottom:12px; font-size:12px; } table{ width:100%; border-collapse:collapse; margin-top:6px; } th{ background:#1e293b; color:#fff; font-size:11px; text-transform:uppercase; padding:6px; border:1px solid #1e293b; } td{ border:1px solid #e2e8f0; padding:6px; font-size:12px; vertical-align:middle; } .summary-card{ margin-top:12px; display:flex; justify-content:flex-end; } .summary-table{ width:300px; border:1px solid #cbd5e1; border-radius:6px; background:#f8fafc; } .summary-table td{ border:none; border-bottom:1px solid #e2e8f0; padding:5px 10px; } .summary-table tr:last-child td{ border-bottom:none; background:#1e293b; color:#fff; font-weight:800; font-size:13px; } .disclaimer{ margin-top:18px; font-size:10px; color:#64748b; border-top:1px dashed #cbd5e1; padding-top:6px; line-height:1.35; } .signature-section{ margin-top:24px; display:grid; grid-template-columns:1fr 1fr; gap:40px; page-break-inside:avoid; } .sig-box{ border-top:1px solid #94a3b8; text-align:center; padding-top:6px; font-size:11px; color:#475569; }</style></head><body>' +
+        '<div class="doc-header"><div><div class="brand-title">' + storeTitle + '</div><div style="font-size:11px; color:#64748b; font-weight:600;">Resmi Altın Değerleme & İşlem Makbuzu</div></div><div style="text-align:right; font-size:11px; color:#475569;"><div class="meta-badge">İŞLEM NO: #' + String(item.id).slice(-6) + '</div><div><strong>Tarih:</strong> ' + dateFormatted + '</div></div></div>' +
+        '<div class="info-grid"><div><strong>Müşteri / Satıcı:</strong> ' + safeText(item.customerNote || "Girilmedi") + '</div><div><strong>İşlem Türü:</strong> ' + safeText(item.transactionType || "Alış") + '</div><div><strong>İletişim Tel:</strong> ' + safeText(item.customerPhone || "Belirtilmedi") + '</div><div><strong>Hedef İlçeler:</strong> ' + safeText(item.customerDistrict || "Merkez") + '</div></div>' +
+        '<table><thead><tr><th style="width:30px;">#</th><th>Ürün Cinsi</th><th style="width:75px; text-align:center;">Ayar</th><th style="width:50px; text-align:center;">Adet</th><th style="width:70px; text-align:center;">Gram</th><th style="width:110px; text-align:right;">Birim Alış</th><th style="width:105px; text-align:right;">Tutar (₺)</th></tr></thead><tbody>' + productsHtml + '</tbody></table>' +
+        '<div class="summary-card"><table class="summary-table"><tr><td style="color:#64748b;">Toplam Adet:</td><td style="text-align:right; font-weight:700;">' + totalQty + '</td></tr><tr><td style="color:#64748b;">Toplam Gram:</td><td style="text-align:right; font-weight:700;">' + totalGrams.toFixed(2) + ' g</td></tr><tr><td>GENEL TOPLAM:</td><td style="text-align:right; color:#f59e0b;">' + safeText(item.total || "₺0,00") + '</td></tr></table></div>' +
+        bestOfferBlock +
+        '<div class="disclaimer"><strong>Resmi Şerh & Bilgilendirme:</strong> İşbu döküm platform üzerinden anlık toptan nakit ALIŞ kurları (0.995 milyem & sarrafiye has çarpanları) referans alınarak düzenlenmiştir. Kesin nakit ödeme tutarı; yetkili kuyumcu tarafından gerçekleştirilen fiziki tartı, mihenk ve ayar incelemesi ile teyit edilir.</div>' +
+        '<div class="signature-section"><div class="sig-box"><strong>Müşteri (Satıcı / Teslim Eden)</strong><br>İmza</div><div class="sig-box"><strong>Yetkili Alıcı Kuyumcu</strong><br>' + (profile.owner ? safeText(profile.owner) : 'Kaşe / İmza') + '</div></div></body></html>';
+
+    safePrintHtml(html);
+}
+
+function openProfileModal() {
+    const p = getStoreProfile();
+    document.getElementById('storeNameInput').value = p.name || '';
+    document.getElementById('storeOwnerInput').value = p.owner || '';
+    document.getElementById('storePhoneInput').value = p.phone || '';
+    document.getElementById('storeCityInput').value = p.city || '';
+    document.getElementById('storePinInput').value = p.pin || '1234';
+    document.getElementById('profileModal').style.display = 'flex';
+}
+
+function closeProfileModal() {
+    document.getElementById('profileModal').style.display = 'none';
+}
+
+function saveStoreProfile() {
+    const p = {
+        name: document.getElementById('storeNameInput').value.trim(),
+        owner: document.getElementById('storeOwnerInput').value.trim(),
+        phone: document.getElementById('storePhoneInput').value.trim(),
+        city: document.getElementById('storeCityInput').value.trim(),
+        pin: document.getElementById('storePinInput').value.trim() || '1234'
+    };
+    setStoreProfile(p);
+    showSaveMessage('Mağaza profili güncellendi.');
+    closeProfileModal();
+}
+
+function downloadFullBackup() {
+    const backupData = {
+        version: "2.0",
+        exportDate: new Date().toISOString(),
+        profile: getStoreProfile(),
+        jewelersDirectory: getDirectoryJewelers(),
+        transactions: readHistory()
+    };
+
+    const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+    const a = document.createElement('a');
+    a.setAttribute("href", str);
+    a.setAttribute("download", 'AltinEksper_Yedek_' + new Date().toISOString().split('T')[0] + '.json');
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+function restoreFromBackupFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (data.transactions && Array.isArray(data.transactions)) {
+                writeHistory(data.transactions);
+                if (data.profile) setStoreProfile(data.profile);
+                if (data.jewelersDirectory) setDirectoryJewelers(data.jewelersDirectory);
+                renderHistory();
+                alert('Yedek başarıyla yüklendi!\nToplam ' + data.transactions.length + ' adet işlem sisteme aktarıldı.');
+                closeProfileModal();
+            } else {
+                alert('Geçersiz yedek dosyası formatı.');
+            }
+        } catch (err) {
+            alert('Yedek dosyası okunurken hata oluştu: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+// BAŞLANGIÇ
+updateHeaderProfile();
+applyModeUI();
+initDistrictSelectors();
+resetWorkbenchClean();
+loadLivePrices();
+setInterval(loadLivePrices, 20000);
+</script>
+
+</body>
+</html>

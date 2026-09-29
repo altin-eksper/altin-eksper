@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Altın Eksper — Sarraf İhale Portalı</title>
+<meta name="theme-color" content="#1e293b">
+
+<style>
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body{
+    margin:0;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background:#f1f5f9;
+    color:#1e293b;
+    padding:12px;
+}
+.header{
+    background:#1e293b;
+    color:#fff;
+    padding:14px;
+    border-radius:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+}
+.card{
+    background:#fff;
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:12px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.06);
+    border:1px solid #e2e8f0;
+}
+.badge-timer{
+    background:#fee2e2;
+    color:#dc2626;
+    font-weight:800;
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:13px;
+}
+.badge-expired{
+    background:#f1f5f9;
+    color:#64748b;
+}
+.item-row{
+    border-bottom:1px solid #f1f5f9;
+    padding:8px 0;
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+}
+.item-row:last-child{ border-bottom:none; }
+label{
+    font-size:12px;
+    font-weight:700;
+    color:#475569;
+    display:block;
+    margin-bottom:4px;
+}
+input, button{
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    font-size:15px;
+    border:1px solid #cbd5e1;
+    margin-bottom:10px;
+    font-family:inherit;
+}
+input:focus{ outline:none; border-color:#f59e0b; }
+.btn-submit{
+    background:#f59e0b;
+    color:#1e293b;
+    font-weight:800;
+    border:none;
+    cursor:pointer;
+    padding:14px;
+}
+.btn-submit:hover{ background:#d97706; color:#fff; }
+.success-box{
+    display:none;
+    background:#ecfdf5;
+    border:1px solid #10b981;
+    color:#065f46;
+    padding:12px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:700;
+    text-align:center;
+    margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <div>
+        <div style="font-weight:800; color:#f59e0b; font-size:18px;">ALTIN EKSPER</div>
+        <div style="font-size:11px; color:#94a3b8;">Sarraf Teklif Giriş Portalı</div>
+    </div>
+    <div id="auctionTimer" class="badge-timer">15:00 Kaldı</div>
+</div>
+
+<div class="card" id="auctionDetailsCard">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
+        <strong id="reqIdLabel" style="font-size:14px; color:#1e293b;">İhale: #......</strong>
+        <span id="districtLabel" style="font-size:12px; color:#0369a1; font-weight:700; background:#e0f2fe; padding:2px 6px; border-radius:4px;">Merkez</span>
+    </div>
+
+    <div style="margin-bottom:10px;">
+        <span style="font-size:11px; color:#64748b; font-weight:700; text-transform:uppercase;">Satılacak Ürünler:</span>
+        <div id="itemsContainer" style="margin-top:4px;"></div>
+    </div>
+
+    <!-- AĞIRLIK VE PİYASA REFERANS DEĞERİ (İLK ÇIKAN FİYAT) -->
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:10px 12px; border-radius:8px; display:flex; flex-direction:column; gap:6px; font-size:13px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:#64748b;">Toplam Portföy Ağırlığı:</span>
+            <strong id="totalGramsLabel" style="color:#1e293b; font-size:14px;">0,00 g</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #cbd5e1; padding-top:6px;">
+            <span style="color:#64748b; font-weight:600;">Piyasa Gösterge Değeri (İlk Fiyat):</span>
+            <strong id="totalRefTLLabel" style="color:#b45309; font-size:16px; font-weight:800;">₺0,00</strong>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="quoteFormCard">
+    <label>Sarraf Kodu / Dükkan Adınız</label>
+    <input type="text" id="jewelerCodeInput" placeholder="Örn: K001 veya Yıldız Sarrafiye">
+
+    <label>Toplam Peşin Nakit Alış Teklifiniz (TL)</label>
+    <input type="number" id="offerPriceInput" placeholder="Örn: 154500" style="font-size:18px; font-weight:800; color:#1e293b;">
+
+    <label>Mağaza Adresi / Şartınız (Opsiyonel)</label>
+    <input type="text" id="offerNoteInput" placeholder="Örn: Işıklar Cad. No:14 (Hemen Nakit)">
+
+    <button type="button" class="btn-submit" onclick="submitJewelerOffer()">
+        🚀 Teklifi Sisteme Gönder
+    </button>
+
+    <div id="successMessage" class="success-box">
+        ✓ Teklifiniz sisteme başarıyla işlendi! En iyi teklif durumunda müşteri randevu fişiyle dükkanınıza yönlendirilecektir.
+    </div>
+</div>
+
+<script>
+const BACKEND_API_URL = 'http://localhost:3000/api';
+let currentRequestData = null;
+let timerInterval = null;
+
+function getUrlRequestId() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id');
+}
+
+async function loadAuctionData() {
+    const reqId = getUrlRequestId();
+    if (!reqId) {
+        showExpiredCard("Geçersiz veya eksik ihale linki.");
+        return;
+    }
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/request/' + reqId);
+        const data = await res.json();
+        if (!data.success || !data.data) {
+            showExpiredCard("Bu ihale sunucuda bulunamadı veya süresi doldu. Lütfen yeni bir talep oluşturup deneyiniz.");
+            return;
+        }
+
+        currentRequestData = data.data;
+        renderAuctionUI();
+        startTimer();
+
+    } catch (e) {
+        showExpiredCard("Sunucuya bağlanılamadı. Node.js terminalinin açık olduğunu kontrol ediniz.");
+    }
+}
+
+function renderAuctionUI() {
+    const req = currentRequestData;
+    document.getElementById('reqIdLabel').textContent = 'İhale: #' + req.requestId;
+    document.getElementById('districtLabel').textContent = req.district || 'Merkez';
+    document.getElementById('totalGramsLabel').textContent = req.totalGrams || '0,00 g';
+    
+    // MÜŞTERİNİN İLK OLUŞTURDUĞU PİYASA GÖSTERGE TUTARI
+    document.getElementById('totalRefTLLabel').textContent = req.totalReferenceTL || '₺0,00';
+
+    const itemsBox = document.getElementById('itemsContainer');
+    itemsBox.innerHTML = (req.items || []).map(function(it, idx) {
+        return '<div class="item-row">' +
+            '<span><b>' + (idx+1) + '.</b> ' + it.productName + ' (' + (it.karat ? it.karat + 'k' : '') + ')</span>' +
+            '<span style="color:#475569; font-weight:600;">' + (it.grams ? it.grams + ' gr' : '') + (it.qty ? it.qty + ' adet' : '') + '</span>' +
+        '</div>';
+    }).join('');
+}
+
+function startTimer() {
+    if (!currentRequestData || !currentRequestData.expiresAt) return;
+    const expireTime = new Date(currentRequestData.expiresAt).getTime();
+
+    function update() {
+        const now = new Date().getTime();
+        const diff = expireTime - now;
+
+        if (diff <= 0) {
+            clearInterval(timerInterval);
+            const timerEl = document.getElementById('auctionTimer');
+            if (timerEl) {
+                timerEl.textContent = 'Süre Doldu';
+                timerEl.className = 'badge-timer badge-expired';
+            }
+            const formCard = document.getElementById('quoteFormCard');
+            if (formCard) {
+                formCard.innerHTML = '<div style="text-align:center; color:#dc2626; font-weight:700; padding:10px;">⏱ Bu ihalenin 15 dakikalık süresi sona ermiştir.</div>';
+            }
+            return;
+        }
+
+        const m = Math.floor(diff / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        const timerEl = document.getElementById('auctionTimer');
+        if (timerEl) {
+            timerEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s + ' Kaldı';
+        }
+    }
+
+    update();
+    timerInterval = setInterval(update, 1000);
+}
+
+function showExpiredCard(msg) {
+    document.body.innerHTML = '<div class="card" style="text-align:center; padding:30px; margin-top:20px;">' +
+        '<h3 style="color:#dc2626; margin-top:0;">İhale Aktif Değil</h3>' +
+        '<p style="font-size:13px; color:#64748b;">' + msg + '</p>' +
+    '</div>';
+}
+
+async function submitJewelerOffer() {
+    const jCode = document.getElementById('jewelerCodeInput').value.trim();
+    const price = parseFloat(document.getElementById('offerPriceInput').value);
+    const note = document.getElementById('offerNoteInput').value.trim();
+
+    if (!jCode) { alert('Lütfen sarraf kodu veya dükkan adınızı yazınız.'); return; }
+    if (!price || price <= 0) { alert('Lütfen geçerli bir teklif tutarı giriniz.'); return; }
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/request/quote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                requestId: currentRequestData.requestId,
+                jewelerCode: jCode,
+                offerPrice: price,
+                note: note
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('successMessage').style.display = 'block';
+            document.querySelector('.btn-submit').style.display = 'none';
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    } catch (e) {
+        alert('Sunucuya ulaşılamadı.');
+    }
+}
+
+loadAuctionData();
+</script>
+
+</body>
+</html>
