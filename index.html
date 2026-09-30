@@ -327,6 +327,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     font-size:12px;
 }
 
+/* HAVUZ KARTI */
 .inbox-card{
     background:#eff6ff;
     border:2px solid #2563eb;
@@ -367,6 +368,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     border-radius:4px;
 }
 
+/* İLÇE SEÇİM ALANI */
 .district-chips{
     display:flex;
     flex-wrap:wrap;
@@ -582,7 +584,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
             </button>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button type="button" class="wa-btn consumer-only-btn" style="background:#25d366; padding:10px 18px; font-size:14px; font-weight:700;" onclick="sendCustomerDirectReportWhatsApp()">
+            <button type="button" id="submitRequestBtn" class="wa-btn consumer-only-btn" style="background:#25d366; padding:10px 18px; font-size:14px; font-weight:700;" onclick="sendCustomerDirectReportWhatsApp()">
                 📲 WhatsApp ile Teklif İste (0536 043 42 07)
             </button>
             <button type="button" class="wa-btn admin-only-btn" style="display:none; background:#0284c7;" onclick="openAuctionDispatchModal()">
@@ -594,6 +596,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         </div>
     </div>
 
+    <!-- KUYUMCU YÖNETİM PANELİ -->
     <div id="adminPanelArea" style="display:none; margin-top:20px; border-top:2px dashed #cbd5e1; padding-top:16px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <span style="font-size:13px; font-weight:800; color:#b45309;">⚙️ KUYUMCU VE PAZAR YERİ YÖNETİM PANELİ</span>
@@ -696,7 +699,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 
 </div>
 
-<!-- REHBER MODALI -->
+<!-- SARRAF REHBERİ MODALI -->
 <div id="directoryModal" class="report-modal">
     <div class="report-modal-content" style="max-width:750px;">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
@@ -907,7 +910,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 <script>
 const ALTIN_EKSPER_PHONE = '905360434207';
 
-// DİNAMİK API URL: CANLIDA OTO ALGILAR (RENDER VEYA LOCALHOST FARK ETMEZ)
+// DİNAMİK API URL: RENDER CANLI ADRESİNİ VEYA LOCALHOST'U OTOMATİK ALGILAR
 const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'http://localhost:3000/api';
 
 const INBOX_STORAGE_KEY = 'altinEksperLiveInbox_v1';
@@ -1303,7 +1306,7 @@ async function renderInboxList() {
 
     let requests = [];
 
-    // Önce canlı sunucudan oku
+    // Önce canlı sunucudaki merkezi veritabanından oku
     try {
         const res = await fetch(BACKEND_API_URL + '/requests');
         if (res.ok) {
@@ -1314,9 +1317,10 @@ async function renderInboxList() {
             }
         }
     } catch (e) {
-        // Sunucu yoksa localden oku
         requests = getLocalInbox();
     }
+
+    if (!requests.length) requests = getLocalInbox();
 
     const nowTime = new Date().getTime();
     const activeRequestsOnly = requests.filter(function(req) {
@@ -1341,7 +1345,7 @@ async function renderInboxList() {
         const s = Math.floor((diff % 60000) / 1000);
         const timerHtml = '<span class="inbox-timer">⏱ ' + m + 'dk ' + s + 'sn Kaldı</span>';
 
-        html += '<div class="inbox-item" id="inbox_card_' + req.requestId + '">' +
+        html += '<div class="inbox-item ' + (currentLoadedRequestId === req.requestId ? 'selected' : '') + '" id="inbox_card_' + req.requestId + '">' +
             '<div style="flex:1;">' +
                 '<div style="display:flex; align-items:center; gap:8px;">' +
                     '<strong style="font-size:15px; color:#1e293b;">#' + req.requestId + ' — ' + safeText(req.customerName) + '</strong>' +
@@ -1996,7 +2000,9 @@ function closeAuctionDispatchModal() {
     if (modal) modal.style.display = 'none';
 }
 
+// 💥 KRİTİK: CANLI SUNUCUYA VE HAVUZA GARANTİLİ YAZMA
 async function sendCustomerDirectReportWhatsApp() {
+    const btn = document.getElementById('submitRequestBtn');
     const cName = document.getElementById('customerNote')?.value.trim() || 'Müşteri';
     const cPhone = document.getElementById('customerPhone')?.value.trim() || 'Belirtilmedi';
     const dist = document.getElementById('customerDistrict')?.value.trim() || 'Merkez';
@@ -2051,24 +2057,35 @@ async function sendCustomerDirectReportWhatsApp() {
     localInbox.unshift(requestPayload);
     setLocalInbox(localInbox);
 
-    // Canlı sunucuya kaydet
+    if (btn) { btn.textContent = '⏳ Havuza Ekleniyor...'; btn.disabled = true; }
+
     try {
-        await fetch(BACKEND_API_URL + '/request/create', {
+        const res = await fetch(BACKEND_API_URL + '/request/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestPayload)
         });
-    } catch (e) {}
+        const resData = await res.json();
+        if (!resData.success) {
+            alert('Sunucu uyarısı: ' + (resData.message || 'Kayıt başarısız'));
+        }
+    } catch (e) {
+        console.warn('Canlı sunucuya ulaşılamadı, yerel hafızaya kaydedildi:', e.message);
+    } finally {
+        if (btn) { btn.textContent = '📲 WhatsApp ile Teklif İste (0536 043 42 07)'; btn.disabled = false; }
+    }
 
+    const portalUrl = window.location.origin + '/kuyumcu.html?id=' + tempId;
     const msg = '🔔 *ALTIN EKSPER — RESMİ SATIŞ TALEBİ*\n\n' +
                 '📋 *Talep No:* #' + tempId + '\n' +
                 '👤 *Müşteri:* ' + cName + '\n' +
                 '📞 *İletişim:* ' + cPhone + '\n' +
                 '📍 *Teklif İstenen İlçeler:* ' + dist + '\n\n' +
                 '📦 *Ürün Listesi:*\n' + productLines + '\n' +
-                '⚖️ *Toplam Ağırlık:* ' + totalG + '\n' +
+                '⚖️️ *Toplam Ağırlık:* ' + totalG + '\n' +
                 '💰 *Piyasa Alış Referansı:* ' + totalTL + '\n\n' +
-                '📌 *Talebin Sistem Tarafından Değerlendirilerek Seçtiğim İlçelerdeki En İyi Kuyumcu Tekliflerinin İletilmesini Rica Ederim.*';
+                '👉 *Kuyumcu Teklif Linki:* ' + portalUrl + '\n\n' +
+                '📌 *Talebin sistem tarafından değerlendirilerek anlaşmalı sarrafların en iyi tekliflerinin iletilmesini rica ederim.*';
 
     const url = 'https://api.whatsapp.com/send?phone=905360434207&text=' + encodeURIComponent(msg);
     window.open(url, '_blank');
@@ -2194,7 +2211,7 @@ function finalizeAppointmentAndNotifyWinner() {
                 '🏪 *Yetkili Anlaşmalı Sarraf:* ' + bestJewelerName + '\n' +
                 '📞 *Sarraf İletişim / Tel:* ' + jewelerPhone + '\n' +
                 '📍 *Mağaza Adresi:* ' + jewelerAddress + '\n' +
-                '🗺️ *Yol Tarifi (Harita):* ' + mapUrl + '\n\n' +
+                '🗺️️ *Yol Tarifi (Harita):* ' + mapUrl + '\n\n' +
                 '🎟️ *İşlem Randevu Kodu:* #' + txId + '\n' +
                 '💰 *Taahhüt Edilen Net Nakit:* ' + netPrice + '\n\n' +
                 '📌 *Bilgilendirme:* Anlaşmalı sarrafımıza rezervasyon bilginiz iletilmiştir. Mağazada fiziki ayar/tartı teyidi sonrasında ödemeniz anında nakit veya IBAN transferiyle eksiksiz yapılacaktır.';
@@ -3242,6 +3259,7 @@ function restoreFromBackupFile(event) {
     reader.readAsText(file);
 }
 
+// BAŞLANGIÇ ÇALIŞTIRICILARI
 updateHeaderProfile();
 applyModeUI();
 initDistrictSelectors();
