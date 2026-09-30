@@ -115,7 +115,6 @@ input:focus{ outline:none; border-color:#f59e0b; }
         <div id="itemsContainer" style="margin-top:4px;"></div>
     </div>
 
-    <!-- AĞIRLIK VE PİYASA REFERANS DEĞERİ (İLK ÇIKAN FİYAT) -->
     <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:10px 12px; border-radius:8px; display:flex; flex-direction:column; gap:6px; font-size:13px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <span style="color:#64748b;">Toplam Portföy Ağırlığı:</span>
@@ -148,7 +147,9 @@ input:focus{ outline:none; border-color:#f59e0b; }
 </div>
 
 <script>
-const BACKEND_API_URL = 'http://localhost:3000/api';
+// DİNAMİK API URL
+const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'http://localhost:3000/api';
+
 let currentRequestData = null;
 let timerInterval = null;
 
@@ -177,7 +178,7 @@ async function loadAuctionData() {
         startTimer();
 
     } catch (e) {
-        showExpiredCard("Sunucuya bağlanılamadı. Node.js terminalinin açık olduğunu kontrol ediniz.");
+        showExpiredCard("Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol ediniz.");
     }
 }
 
@@ -186,8 +187,6 @@ function renderAuctionUI() {
     document.getElementById('reqIdLabel').textContent = 'İhale: #' + req.requestId;
     document.getElementById('districtLabel').textContent = req.district || 'Merkez';
     document.getElementById('totalGramsLabel').textContent = req.totalGrams || '0,00 g';
-    
-    // MÜŞTERİNİN İLK OLUŞTURDUĞU PİYASA GÖSTERGE TUTARI
     document.getElementById('totalRefTLLabel').textContent = req.totalReferenceTL || '₺0,00';
 
     const itemsBox = document.getElementById('itemsContainer');

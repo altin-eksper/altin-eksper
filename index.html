@@ -496,7 +496,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         </div>
     </div>
 
-    <!-- HIZLI ÜRÜN EKLEME (MÜŞTERİ MODUNDA) -->
+    <!-- HIZLI ÜRÜN EKLEME -->
     <div id="quickAddBar" style="margin-top:12px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
         <span style="font-size:12px; font-weight:600; color:#64748b;">Hızlı Ürün Ekle:</span>
         <button type="button" class="secondary" style="padding:5px 10px; font-size:11px;" onclick="addQuickRow('bracelet', 22)">+ 22k Bilezik</button>
@@ -637,7 +637,6 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
                     <button type="button" class="wa-btn" onclick="sendCustomerWhatsApp()">
                         💬 Müşteriye Teklifleri Gönder (WhatsApp)
                     </button>
-                    <!-- KAZANAN KUYUMCUNUN TELEFON VE GOOGLE HARİTA LİNKİNİ MÜŞTERİYE İLETİR -->
                     <button type="button" class="wa-btn" style="background:#0284c7;" onclick="finalizeAppointmentAndNotifyWinner()">
                         📍 Randevu & Konum Fişi İlet
                     </button>
@@ -697,7 +696,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 
 </div>
 
-<!-- MODALLER: REHBER, İHALE DAĞITIM, RAPORLAR, PROFİL -->
+<!-- REHBER MODALI -->
 <div id="directoryModal" class="report-modal">
     <div class="report-modal-content" style="max-width:750px;">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
@@ -737,6 +736,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     </div>
 </div>
 
+<!-- İHALE DAĞITIM PENCERESİ -->
 <div id="auctionDispatchModal" class="report-modal">
     <div class="report-modal-content" style="max-width:620px;">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
@@ -756,6 +756,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     </div>
 </div>
 
+<!-- GÜNLÜK RAPOR MODALI -->
 <div id="dailyReportModal" class="report-modal">
     <div class="report-modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
@@ -797,6 +798,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     </div>
 </div>
 
+<!-- AYLIK RAPOR MODALI -->
 <div id="monthlyReportModal" class="report-modal">
     <div class="report-modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
@@ -851,6 +853,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     </div>
 </div>
 
+<!-- MAĞAZA PROFİLİ MODALI -->
 <div id="profileModal" class="report-modal">
     <div class="report-modal-content" style="max-width:550px;">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
@@ -903,7 +906,10 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 
 <script>
 const ALTIN_EKSPER_PHONE = '905360434207';
-const BACKEND_API_URL = 'http://localhost:3000/api';
+
+// DİNAMİK API URL: CANLIDA OTO ALGILAR (RENDER VEYA LOCALHOST FARK ETMEZ)
+const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'http://localhost:3000/api';
+
 const INBOX_STORAGE_KEY = 'altinEksperLiveInbox_v1';
 const DIRECTORY_STORAGE_KEY = 'altinEksperJewelersDir_v1';
 const MILYEM_24K = 0.995;
@@ -1205,7 +1211,7 @@ function toggleAppMode() {
             resetWorkbenchClean();
             renderInboxList();
             if (inboxPollInterval) clearInterval(inboxPollInterval);
-            inboxPollInterval = setInterval(renderInboxList, 4000);
+            inboxPollInterval = setInterval(renderInboxList, 3000);
         } else if (enteredPin !== null) {
             alert("Hatalı PIN kodu girdiniz!");
         }
@@ -1295,22 +1301,22 @@ function clearAllInboxRequests() {
 async function renderInboxList() {
     if (!isKuyumcuMode) return;
 
-    let requests = getLocalInbox();
+    let requests = [];
 
+    // Önce canlı sunucudan oku
     try {
         const res = await fetch(BACKEND_API_URL + '/requests');
         if (res.ok) {
             const data = await res.json();
-            if (data.requests && data.requests.length) {
-                const serverReqs = data.requests;
-                serverReqs.forEach(function(sr) {
-                    if (!requests.some(function(lr) { return String(lr.requestId) === String(sr.requestId); })) {
-                        requests.unshift(sr);
-                    }
-                });
+            if (data.requests) {
+                requests = data.requests;
+                setLocalInbox(requests);
             }
         }
-    } catch (e) {}
+    } catch (e) {
+        // Sunucu yoksa localden oku
+        requests = getLocalInbox();
+    }
 
     const nowTime = new Date().getTime();
     const activeRequestsOnly = requests.filter(function(req) {
@@ -1319,22 +1325,17 @@ async function renderInboxList() {
         return (expireTime - nowTime) > 0;
     });
 
-    if (activeRequestsOnly.length !== requests.length) {
-        requests = activeRequestsOnly;
-        setLocalInbox(requests);
-    }
-
     const container = document.getElementById('inboxList');
     const countBadge = document.getElementById('inboxCount');
-    if (countBadge) countBadge.textContent = requests.length;
+    if (countBadge) countBadge.textContent = activeRequestsOnly.length;
 
-    if (!requests.length) {
+    if (!activeRequestsOnly.length) {
         container.innerHTML = '<div style="text-align:center; color:#64748b; font-size:13px; padding:10px;">Henüz aktif bir müşteri talebi bulunmuyor.</div>';
         return;
     }
 
     let html = '';
-    requests.forEach(function(req) {
+    activeRequestsOnly.forEach(function(req) {
         const diff = new Date(req.expiresAt).getTime() - nowTime;
         const m = Math.floor(diff / 60000);
         const s = Math.floor((diff % 60000) / 1000);
@@ -1387,7 +1388,7 @@ function startLiveQuotePolling(requestId) {
                 }
             }
         } catch (e) {}
-    }, 3000);
+    }, 2500);
 }
 
 function stopLiveQuotePolling() {
@@ -1426,9 +1427,21 @@ function syncQuotesWithServer(serverQuotes) {
     }
 }
 
-function selectCustomerRequest(requestId) {
-    const requests = getLocalInbox();
-    const req = requests.find(function(r) { return String(r.requestId) === String(requestId); });
+async function selectCustomerRequest(requestId) {
+    let req = null;
+    try {
+        const res = await fetch(BACKEND_API_URL + '/request/' + requestId);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.data) req = data.data;
+        }
+    } catch (e) {}
+
+    if (!req) {
+        const requests = getLocalInbox();
+        req = requests.find(function(r) { return String(r.requestId) === String(requestId); });
+    }
+
     if (!req) { alert('Talep bulunamadı veya süresi dolduğu için silinmiş olabilir.'); return; }
 
     currentEditingId = null;
@@ -1941,7 +1954,7 @@ function openAuctionDispatchModal() {
 
     const profile = getStoreProfile();
     const brand = profile.name || 'Altın Eksper';
-    const portalUrl = window.location.href.replace('index.html', 'kuyumcu.html') + '?id=' + reqId;
+    const portalUrl = window.location.origin + '/kuyumcu.html?id=' + reqId;
 
     const auctionMsg = '🚨 *' + brand.toUpperCase() + ' — YENİ NAKİT ALIŞ İHALESİ*\n\n' +
         '🏷 *İhale Takip Kodu:* #' + reqId + '\n' +
@@ -2038,12 +2051,13 @@ async function sendCustomerDirectReportWhatsApp() {
     localInbox.unshift(requestPayload);
     setLocalInbox(localInbox);
 
+    // Canlı sunucuya kaydet
     try {
-        fetch(BACKEND_API_URL + '/request/create', {
+        await fetch(BACKEND_API_URL + '/request/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestPayload)
-        }).catch(function() {});
+        });
     } catch (e) {}
 
     const msg = '🔔 *ALTIN EKSPER — RESMİ SATIŞ TALEBİ*\n\n' +
@@ -2078,7 +2092,7 @@ function copyKuyumcuTemplate() {
     const profile = getStoreProfile();
     const title = profile.name ? ('🔔 *' + profile.name.toUpperCase() + ' — ANLIK NAKİT ALIŞ TALEBİ*') : '🔔 *ALTIN EKSPER — ANLIK NAKİT ALIŞ TALEBİ*';
     const tempId = currentLoadedRequestId || String(Date.now()).slice(-4);
-    const portalUrl = window.location.href.replace('index.html', 'kuyumcu.html') + '?id=' + tempId;
+    const portalUrl = window.location.origin + '/kuyumcu.html?id=' + tempId;
 
     const msg = title + '\n\n' +
                 '📍 *Bölge / İlçe:* ' + dist + '\n' +
@@ -2130,7 +2144,6 @@ function sendCustomerWhatsApp() {
     }
 }
 
-/* YENİ: KAZANAN SARRAFIN TELEFONU VE GOOGLE MAPS HARİTA LİNKİNİ EKSİKSİZ İLETEN RANDEVU FONKSİYONU */
 function finalizeAppointmentAndNotifyWinner() {
     const cName = document.getElementById('customerNote').value.trim() || 'Değerli Müşterimiz';
     const cPhone = document.getElementById('customerPhone').value.replace(/[^0-9]/g, '');
@@ -2155,7 +2168,6 @@ function finalizeAppointmentAndNotifyWinner() {
     const txId = currentLoadedRequestId || (currentEditingId ? currentEditingId.slice(-6) : String(Date.now()).slice(-6));
     const jewelerCode = bestJewelerName.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
 
-    // Rehberden dükkan telefonunu ve net adresini çek
     const directory = getDirectoryJewelers();
     const matchedJeweler = directory.find(function(j) {
         return j.code === jewelerCode || bestJewelerName.includes(j.name);
@@ -2165,7 +2177,6 @@ function finalizeAppointmentAndNotifyWinner() {
     const jewelerAddress = (matchedJeweler && matchedJeweler.address) ? matchedJeweler.address : bestJewelerNote;
     const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(jewelerAddress);
 
-    // 1. Kazanan sarrafa sunucudan tebrik/randevu bildirimi gönder
     if (currentLoadedRequestId) {
         fetch(BACKEND_API_URL + '/request/notify-winner', {
             method: 'POST',
@@ -2179,7 +2190,6 @@ function finalizeAppointmentAndNotifyWinner() {
         }).catch(function() {});
     }
 
-    // 2. Müşteriye tam detaylı konum, telefon ve harita fişi oluştur
     const msg = 'Sayın *' + cName + '*, işleminiz onaylandı! 🎉\n\n' +
                 '🏪 *Yetkili Anlaşmalı Sarraf:* ' + bestJewelerName + '\n' +
                 '📞 *Sarraf İletişim / Tel:* ' + jewelerPhone + '\n' +
@@ -3232,7 +3242,6 @@ function restoreFromBackupFile(event) {
     reader.readAsText(file);
 }
 
-// BAŞLANGIÇ
 updateHeaderProfile();
 applyModeUI();
 initDistrictSelectors();
