@@ -6,21 +6,19 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Tüm kaynaklara izin ver
 app.use(cors());
 app.use(express.json());
-
-// Statik dosyaları doğrudan sun
 app.use(express.static(path.join(__dirname)));
 
 const DB_FILE = path.join(__dirname, 'database.json');
 
+// Kuyumcular ve Özel PIN Kodları
 const DEFAULT_JEWELERS = [
-    { code: 'K001', name: 'Yıldız Sarrafiye', district: 'Muratpaşa', phone: '905320000001', address: 'Işıklar Cad. No:14 Muratpaşa / Antalya', active: true },
-    { code: 'K002', name: 'Akdeniz Kuyumculuk', district: 'Kepez', phone: '905320000002', address: 'Dokuma Çallı Meydanı No:5 Kepez / Antalya', active: true },
-    { code: 'K003', name: 'Toros Altın', district: 'Konyaaltı', phone: '905320000003', address: 'Atatürk Bulvarı No:88 Konyaaltı / Antalya', active: true },
-    { code: 'K004', name: 'Alanya Sarraf', district: 'Alanya', phone: '905320000004', address: 'Hükümet Cad. No:22 Alanya / Antalya', active: true },
-    { code: 'K005', name: 'Manavgat Mücevherat', district: 'Manavgat', phone: '905320000005', address: 'Antalya Cad. No:45 Manavgat / Antalya', active: true }
+    { code: 'K001', pin: '1453', name: 'Yıldız Sarrafiye', district: 'Muratpaşa', phone: '905320000001', address: 'Işıklar Cad. No:14 Muratpaşa / Antalya', active: true },
+    { code: 'K002', pin: '2026', name: 'Akdeniz Kuyumculuk', district: 'Kepez', phone: '905320000002', address: 'Dokuma Çallı Meydanı No:5 Kepez / Antalya', active: true },
+    { code: 'K003', pin: '0707', name: 'Toros Altın', district: 'Konyaaltı', phone: '905320000003', address: 'Atatürk Bulvarı No:88 Konyaaltı / Antalya', active: true },
+    { code: 'K004', pin: '1923', name: 'Alanya Sarraf', district: 'Alanya', phone: '905320000004', address: 'Hükümet Cad. No:22 Alanya / Antalya', active: true },
+    { code: 'K005', pin: '1234', name: 'Manavgat Mücevherat', district: 'Manavgat', phone: '905320000005', address: 'Antalya Cad. No:45 Manavgat / Antalya', active: true }
 ];
 
 function readDatabase() {
@@ -31,9 +29,11 @@ function readDatabase() {
             return initialData;
         }
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        if (!parsed.jewelers || !parsed.jewelers.length) parsed.jewelers = DEFAULT_JEWELERS;
+        return parsed;
     } catch (e) {
-        console.error('❌ Veritabanı okuma hatası:', e.message);
+        console.error('Veritabanı okuma hatası:', e.message);
         return { requests: {}, jewelers: DEFAULT_JEWELERS };
     }
 }
@@ -42,25 +42,52 @@ function writeDatabase(data) {
     try {
         fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
     } catch (e) {
-        console.error('❌ Veritabanı kaydetme hatası:', e.message);
+        console.error('Veritabanı kaydetme hatası:', e.message);
     }
 }
 
-// Ana Sayfa Yönlendirmesi (Render İçin Zorunlu)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Canlılık / Sağlık Kontrolü
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', time: new Date().toISOString() });
 });
 
-/* 1. TALEP OLUŞTURMA & OTOMATİK İHALE FIRLATMA */
+/* KUYUMCU ŞİFRE / PIN DOĞRULAMA ROTASI */
+app.post('/api/jeweler/auth', (req, res) => {
+    const { code, pin } = req.body;
+    const db = readDatabase();
+    const jeweler = (db.jewelers || []).find(j => 
+        (j.code.toUpperCase() === (code || '').toUpperCase().trim() || 
+         j.name.toLowerCase().includes((code || '').toLowerCase().trim())) && 
+        j.active
+    );
+
+    if (!jeweler) {
+        return res.status(404).json({ success: false, message: 'Kayıtlı sarraf bulunamadı.' });
+    }
+
+    if (jeweler.pin !== String(pin).trim()) {
+        return res.status(401).json({ success: false, message: 'Hatalı sarraf PIN kodu!' });
+    }
+
+    res.json({
+        success: true,
+        jeweler: {
+            code: jeweler.code,
+            name: jeweler.name,
+            district: jeweler.district,
+            address: jeweler.address,
+            phone: jeweler.phone
+        }
+    });
+});
+
+/* TALEP OLUŞTURMA */
 app.post('/api/request/create', (req, res) => {
     try {
         const { requestId, customerName, customerPhone, district, totalGrams, totalReferenceTL, items } = req.body;
-
         if (!requestId || !items || !items.length) {
             return res.status(400).json({ success: false, message: 'Geçersiz talep verisi.' });
         }
@@ -85,17 +112,14 @@ app.post('/api/request/create', (req, res) => {
 
         db.requests[requestId] = newRequest;
         writeDatabase(db);
-
-        console.log(`✅ [HAVUZA YAZILDI]: #${requestId} - ${customerName} (${totalGrams})`);
-
+        console.log(`✅ [HAVUZA DÜŞTÜ]: #${requestId} - ${customerName}`);
         res.json({ success: true, requestId, expiresAt });
     } catch (err) {
-        console.error('Kayıt Hatası:', err);
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-/* 2. TÜM TALEPLERİ LİSTELEME (HAVUZ İÇİN) */
+/* TÜM TALEPLER */
 app.get('/api/requests', (req, res) => {
     try {
         const db = readDatabase();
@@ -106,7 +130,7 @@ app.get('/api/requests', (req, res) => {
     }
 });
 
-/* 3. TEK TALEP DETAYI */
+/* TEK TALEP DETAYI */
 app.get('/api/request/:id', (req, res) => {
     try {
         const db = readDatabase();
@@ -118,15 +142,21 @@ app.get('/api/request/:id', (req, res) => {
     }
 });
 
-/* 4. KUYUMCU TEKLİFİNİ ALMA */
+/* KUYUMCU TEKLİFİNİ DOĞRULAYIP ALMA */
 app.post('/api/request/quote', (req, res) => {
     try {
-        const { requestId, jewelerCode, offerPrice, note } = req.body;
+        const { requestId, jewelerCode, pin, offerPrice, note } = req.body;
         const db = readDatabase();
         const requestSession = db.requests[requestId];
 
         if (!requestSession) {
             return res.status(404).json({ success: false, message: 'Talep bulunamadı veya süresi doldu.' });
+        }
+
+        // Şifre kontrolü
+        const jeweler = (db.jewelers || []).find(j => j.code.toUpperCase() === (jewelerCode || '').toUpperCase().trim());
+        if (jeweler && pin && jeweler.pin !== String(pin).trim()) {
+            return res.status(401).json({ success: false, message: 'Geçersiz kuyumcu şifresi!' });
         }
 
         const priceNum = parseFloat(offerPrice) || 0;
@@ -151,8 +181,7 @@ app.post('/api/request/quote', (req, res) => {
 
         requestSession.quotes.sort((a, b) => b.offerPrice - a.offerPrice);
         writeDatabase(db);
-
-        console.log(`💰 [TEKLİF GELDİ]: #${requestId} - ${jewelerCode} -> ${priceNum} TL`);
+        console.log(`💰 [TEKLİF İŞLENDİ]: #${requestId} - ${jewelerCode} (${priceNum} TL)`);
 
         res.json({ success: true, bestQuote: requestSession.quotes[0], quotes: requestSession.quotes });
     } catch (err) {
@@ -160,7 +189,7 @@ app.post('/api/request/quote', (req, res) => {
     }
 });
 
-/* 5. KAZANAN KUYUMCUYA RANDEVU BİLDİRİMİ */
+/* KAZANAN SARRAFA BİLDİRİM */
 app.post('/api/request/notify-winner', (req, res) => {
     const { requestId, winnerCode, agreedPrice, customerName } = req.body;
     console.log(`🏁 [KAZANAN SARRAF]: #${requestId} -> ${winnerCode} (${agreedPrice} TL)`);
