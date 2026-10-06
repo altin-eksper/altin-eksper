@@ -396,12 +396,113 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     font-weight:700;
 }
 
+/* ==================== 📱 MOBİL DİKEY EKRAN KART DÜZENİ ==================== */
 @media(max-width:800px){
     .market-grid, .form-grid, .report-grid{ grid-template-columns:1fr 1fr; }
     .quote-row{ grid-template-columns:1fr 1fr; }
     .ledger-summary{ grid-template-columns:1fr; }
     .date-group-header{ flex-direction:column; align-items:flex-start; gap:4px; }
-    table{ font-size:12px; display:block; overflow-x:auto; }
+
+    /* Mobilde tabloyu blok kart sistemine dönüştür */
+    table, thead, tbody, tfoot, tr, th, td {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    /* Üst başlık satırını mobilde gizle */
+    thead tr {
+        display: none !important;
+    }
+
+    /* Her bir ürün satırını ferah, belirgin bir karta çevir */
+    #rows > tr {
+        background: #ffffff !important;
+        border: 2px solid #cbd5e1 !important;
+        border-radius: 10px !important;
+        padding: 12px 14px !important;
+        margin-bottom: 14px !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    #rows > tr > td {
+        padding: 0 !important;
+        border: none !important;
+        width: 100% !important;
+    }
+
+    /* Ürün seçimi (tam genişlik) */
+    #rows > tr > td select.product {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        padding: 10px !important;
+        height: auto !important;
+    }
+
+    /* Ayar seçimi */
+    #rows > tr > td select.karat {
+        font-size: 14px !important;
+        padding: 8px 10px !important;
+    }
+
+    /* Adet ve Gram giriş alanları */
+    #rows > tr > td input.qty,
+    #rows > tr > td input.grams {
+        font-size: 15px !important;
+        padding: 8px 10px !important;
+    }
+
+    /* Birim Alış Referans Etiketi */
+    #rows > tr > td.unit-price {
+        display: inline-block !important;
+        width: auto !important;
+        font-size: 12px !important;
+        padding: 5px 8px !important;
+        background: #f1f5f9 !important;
+        border-radius: 4px !important;
+        align-self: flex-start !important;
+    }
+
+    /* Satır Tutarı */
+    #rows > tr > td.amount {
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        color: #b45309 !important;
+        padding: 4px 0 !important;
+    }
+
+    /* Silme Butonu - Alt satırda sağa yaslı */
+    #rows > tr > td:last-child {
+        border-top: 1px dashed #e2e8f0 !important;
+        padding-top: 8px !important;
+        margin-top: 4px !important;
+        text-align: right !important;
+    }
+
+    #rows > tr > td:last-child button.danger {
+        width: auto !important;
+        padding: 6px 16px !important;
+        font-size: 12px !important;
+    }
+
+    /* Mobilde Genel Toplam Bölümü */
+    tfoot tr {
+        background: #f8fafc !important;
+        border: 2px solid #1e293b !important;
+        border-radius: 10px !important;
+        padding: 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+    }
+
+    tfoot td {
+        padding: 2px 0 !important;
+        border: none !important;
+        text-align: center !important;
+    }
 }
 </style>
 </head>
@@ -617,7 +718,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1.2fr 1fr 1.6fr 40px; gap:8px; font-size:11px; font-weight:700; color:#64748b; margin-bottom:4px;">
+            <div style="grid-template-columns:1.2fr 1fr 1.6fr 40px; gap:8px; font-size:11px; font-weight:700; color:#64748b; margin-bottom:4px;" class="desktop-quote-header">
                 <div>Kuyumcu (Rehberden Seçilebilir)</div>
                 <div>Verilen Teklif (TL)</div>
                 <div>Mağaza Adresi / Harita Linki</div>
@@ -1306,7 +1407,6 @@ async function renderInboxList() {
 
     let requests = [];
 
-    // Önce canlı sunucudaki merkezi veritabanından oku
     try {
         const res = await fetch(BACKEND_API_URL + '/requests');
         if (res.ok) {
@@ -2000,7 +2100,7 @@ function closeAuctionDispatchModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// 💥 KRİTİK: CANLI SUNUCUYA VE HAVUZA GARANTİLİ YAZMA
+// CANLI SUNUCUYA VE HAVUZA GARANTİLİ YAZMA
 async function sendCustomerDirectReportWhatsApp() {
     const btn = document.getElementById('submitRequestBtn');
     const cName = document.getElementById('customerNote')?.value.trim() || 'Müşteri';
@@ -2082,7 +2182,7 @@ async function sendCustomerDirectReportWhatsApp() {
                 '📞 *İletişim:* ' + cPhone + '\n' +
                 '📍 *Teklif İstenen İlçeler:* ' + dist + '\n\n' +
                 '📦 *Ürün Listesi:*\n' + productLines + '\n' +
-                '⚖️️ *Toplam Ağırlık:* ' + totalG + '\n' +
+                '⚖ *Toplam Ağırlık:* ' + totalG + '\n' +
                 '💰 *Piyasa Alış Referansı:* ' + totalTL + '\n\n' +
                 '👉 *Kuyumcu Teklif Linki:* ' + portalUrl + '\n\n' +
                 '📌 *Talebin sistem tarafından değerlendirilerek anlaşmalı sarrafların en iyi tekliflerinin iletilmesini rica ederim.*';
@@ -2211,7 +2311,7 @@ function finalizeAppointmentAndNotifyWinner() {
                 '🏪 *Yetkili Anlaşmalı Sarraf:* ' + bestJewelerName + '\n' +
                 '📞 *Sarraf İletişim / Tel:* ' + jewelerPhone + '\n' +
                 '📍 *Mağaza Adresi:* ' + jewelerAddress + '\n' +
-                '🗺️️ *Yol Tarifi (Harita):* ' + mapUrl + '\n\n' +
+                '🗺 *Yol Tarifi (Harita):* ' + mapUrl + '\n\n' +
                 '🎟️ *İşlem Randevu Kodu:* #' + txId + '\n' +
                 '💰 *Taahhüt Edilen Net Nakit:* ' + netPrice + '\n\n' +
                 '📌 *Bilgilendirme:* Anlaşmalı sarrafımıza rezervasyon bilginiz iletilmiştir. Mağazada fiziki ayar/tartı teyidi sonrasında ödemeniz anında nakit veya IBAN transferiyle eksiksiz yapılacaktır.';
@@ -2830,7 +2930,8 @@ function openDailyReportModal() {
 
 function closeDailyReportModal() {
     const modal = document.getElementById('dailyReportModal');
-    if (modal) modal.style.display = 'none';
+    if (!modal) return;
+    modal.style.display = 'none';
 }
 
 function generateDailyReport() {
@@ -2971,7 +3072,8 @@ function openMonthlyReportModal() {
 
 function closeMonthlyReportModal() {
     const modal = document.getElementById('monthlyReportModal');
-    if (modal) modal.style.display = 'none';
+    if (!modal) return;
+    modal.style.display = 'none';
 }
 
 function generateMonthlyReport() {
