@@ -396,7 +396,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     font-weight:700;
 }
 
-/* ==================== 📱 MOBİL DİKEY EKRAN KART DÜZENİ (KOMPAKT & İNCE) ==================== */
+/* ==================== 📱 MOBİL DİKEY EKRAN KART DÜZENİ ==================== */
 @media(max-width:800px){
     .market-grid, .form-grid, .report-grid{ grid-template-columns:1fr 1fr; }
     .quote-row{ grid-template-columns:1fr 1fr; }
@@ -409,7 +409,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     }
     thead tr { display: none !important; }
 
-    /* İnce, şık ve az yer kaplayan mobil ürün kartı */
+    /* İnce, şık ve kompakt ürün kartı */
     #rows > tr {
         background: #ffffff !important;
         border: 1.5px solid #cbd5e1 !important;
@@ -427,7 +427,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         border: none !important;
     }
 
-    /* 1. SATIR: Ürün Adı (sol %60) ve Ayar (sağ %40) yan yana */
+    /* 1. SATIR: Ürün Adı (sol %60) ve Ayar (sağ %40) */
     #rows > tr > td:nth-child(1) {
         width: calc(60% - 3px) !important;
         order: 1 !important;
@@ -437,7 +437,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         order: 2 !important;
     }
 
-    /* 2. SATIR: Adet (sol %50) ve Gram (sağ %50) yan yana */
+    /* 2. SATIR: Adet (sol %50) ve Gram (sağ %50) */
     #rows > tr > td:nth-child(3) {
         width: calc(50% - 3px) !important;
         order: 3 !important;
@@ -447,7 +447,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         order: 4 !important;
     }
 
-    /* 3. SATIR: Fazlalık yapan birim etiketini mobilde gizle, Tutar ve Sil tek hizada */
+    /* 3. SATIR: Tutar ve Sil tek hizada */
     #rows > tr > td:nth-child(5) {
         display: none !important;
     }
@@ -463,7 +463,6 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         text-align: right !important;
     }
 
-    /* Kompakt kutu yükseklikleri */
     #rows > tr select, 
     #rows > tr input {
         padding: 6px 8px !important;
@@ -489,7 +488,6 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         font-size: 11px !important;
     }
 
-    /* Mobilde Toplam Alanı */
     tfoot tr {
         background: #f8fafc !important;
         border: 1.5px solid #1e293b !important;
@@ -589,14 +587,17 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
             <input id="customerPhone" placeholder="05XX XXX XX XX" type="tel">
         </div>
         <div>
-            <label>Teklif İstediğiniz İlçeler (Antalya)</label>
-            <div class="district-chips" id="districtChipsContainer"></div>
-            <div style="display:flex; gap:4px; margin-top:4px;" id="districtAddWrapper">
-                <select id="districtAddSelect" style="padding:4px 8px; font-size:12px;" onchange="onDistrictSelectAdd(this)">
-                    <option value="">+ Başka İlçe Ekle...</option>
+            <label>Teklif İstediğiniz İl ve İlçeler</label>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+                <select id="provinceSelect" onchange="onProvinceSelect(this)">
+                    <option value="">İl</option>
+                </select>
+                <select id="districtSelect" onchange="onDistrictSelect(this)" disabled>
+                    <option value="">İlçe</option>
                 </select>
             </div>
-            <input type="hidden" id="customerDistrict" value="Muratpaşa, Kepez">
+            <div class="district-chips" id="districtChipsContainer"></div>
+            <input type="hidden" id="customerDistrict" value="">
         </div>
     </div>
 
@@ -807,7 +808,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
             <div>
                 <h3 style="margin:0; font-size:18px; color:#1e293b;">📖 Anlaşmalı Sarraf Rehberi</h3>
-                <span style="font-size:12px; color:#64748b;">İhale dağıtımı yapılacak tüm Antalya sarrafları.</span>
+                <span style="font-size:12px; color:#64748b;">İhale dağıtımı yapılacak tüm sarraflar.</span>
             </div>
             <button type="button" class="secondary" style="padding:4px 8px;" onclick="closeDirectoryModal()">✕</button>
         </div>
@@ -817,7 +818,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
             <div style="display:grid; grid-template-columns:100px 1.2fr 1fr 1fr; gap:8px; margin-bottom:8px;">
                 <input id="dirNewCode" placeholder="Kod (K001)">
                 <input id="dirNewName" placeholder="Kuyumcu Ünvanı">
-                <select id="dirNewDistrict"></select>
+                <input id="dirNewDistrict" placeholder="İlçe (Örn. Kepez)">
                 <input id="dirNewPhone" placeholder="WhatsApp Tel">
             </div>
             <div style="display:grid; grid-template-columns:1fr 100px; gap:8px;">
@@ -1011,78 +1012,33 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 
 <script>
 const ALTIN_EKSPER_PHONE = '905360434207';
-
-// DİNAMİK API URL: RENDER CANLI ADRESİNİ VEYA LOCALHOST'U OTOMATİK ALGILAR
 const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'http://localhost:3000/api';
 
 const INBOX_STORAGE_KEY = 'altinEksperLiveInbox_v1';
 const DIRECTORY_STORAGE_KEY = 'altinEksperJewelersDir_v1';
 const MILYEM_24K = 0.995;
 
-const ANTALYA_DISTRICTS = [
-    'Muratpaşa', 'Kepez', 'Konyaaltı', 'Alanya', 'Manavgat',
-    'Serik', 'Kumluca', 'Kaş', 'Korkuteli', 'Gazipaşa',
-    'Finike', 'Kemer', 'Elmalı', 'Döşemealtı', 'Aksu',
-    'Demre', 'Akseki', 'Gündoğmuş', 'İbradı'
-];
-
-const DEFAULT_SELECTED_DISTRICTS = ['Muratpaşa', 'Kepez', 'Konyaaltı'];
-
 const COIN_HAS_MULTIPLIERS = {
-    quarter: 1.59,
-    half: 3.18,
-    full: 6.36,
-    resat: 6.56,
-    ataLira: 6.56,
-    gremse: 15.90,
-    resatBesli: 32.70,
-    ataBesli: 32.70,
-    resat25: 16.35,
-    ata25: 16.35
+    quarter: 1.59, half: 3.18, full: 6.36, resat: 6.56, ataLira: 6.56,
+    gremse: 15.90, resatBesli: 32.70, ataBesli: 32.70, resat25: 16.35, ata25: 16.35
 };
 
 const WEIGHTS = {
-    quarter: 1.754,
-    half: 3.508,
-    full: 7.016,
-    resat: 7.216,
-    ataLira: 7.216,
-    gremse: 17.54,
-    resatBesli: 36.08,
-    ataBesli: 36.08,
-    resat25: 18.04,
-    ata25: 18.04
+    quarter: 1.754, half: 3.508, full: 7.016, resat: 7.216, ataLira: 7.216,
+    gremse: 17.54, resatBesli: 36.08, ataBesli: 36.08, resat25: 18.04, ata25: 18.04
 };
 
 const PRODUCTS = {
-    gram: 'Gram Altın',
-    bracelet: 'Bilezik',
-    scrap: 'Hurda Altın',
-    quarter: 'Çeyrek Altın',
-    half: 'Yarım Altın',
-    full: 'Tam Altın',
-    resat: 'Reşat Altın',
-    ataLira: 'Ata Lira',
-    gremse: 'Gremse',
-    resatBesli: 'Reşat Beşli',
-    ataBesli: 'Ata Beşli',
-    resat25: "Reşat 2,5'luk",
-    ata25: "Ata 2,5'luk"
+    gram: 'Gram Altın', bracelet: 'Bilezik', scrap: 'Hurda Altın', quarter: 'Çeyrek Altın',
+    half: 'Yarım Altın', full: 'Tam Altın', resat: 'Reşat Altın', ataLira: 'Ata Lira',
+    gremse: 'Gremse', resatBesli: 'Reşat Beşli', ataBesli: 'Ata Beşli', resat25: "Reşat 2,5'luk", ata25: "Ata 2,5'luk"
 };
 
 const PRICES = { gram: 6725, quarter: 10692.75, half: 21385.50, full: 42771.00 };
 
-let rowId = 0;
-let quoteId = 0;
-let currentEditingId = null;
-let currentLoadedRequestId = null;
-let currentHistoryTab = 'active';
-let currentReportSummary = null;
-let currentMonthlySummary = null;
-let isKuyumcuMode = false;
-let isInboxCollapsed = false;
-let inboxPollInterval = null;
-let quotesLivePollInterval = null;
+let rowId = 0, quoteId = 0, currentEditingId = null, currentLoadedRequestId = null;
+let currentHistoryTab = 'active', currentReportSummary = null, currentMonthlySummary = null;
+let isKuyumcuMode = false, isInboxCollapsed = false, inboxPollInterval = null, quotesLivePollInterval = null;
 
 function money(n) {
     return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 2 }).format(Number(n) || 0);
@@ -1103,13 +1059,7 @@ function optionsFor(product) {
     if (product === 'gram') return '<option value="24">24 Ayar</option><option value="22">22 Ayar</option>';
     if (product === 'bracelet') return '<option value="22">22 Ayar</option><option value="14">14 Ayar</option>';
     if (product === 'scrap') {
-        return '<option value="24">24 Ayar</option>' +
-               '<option value="22">22 Ayar</option>' +
-               '<option value="18">18 Ayar</option>' +
-               '<option value="14">14 Ayar</option>' +
-               '<option value="10">10 Ayar</option>' +
-               '<option value="9">9 Ayar</option>' +
-               '<option value="8">8 Ayar</option>';
+        return '<option value="24">24 Ayar</option><option value="22">22 Ayar</option><option value="18">18 Ayar</option><option value="14">14 Ayar</option><option value="10">10 Ayar</option><option value="9">9 Ayar</option><option value="8">8 Ayar</option>';
     }
     return '<option value="22">22 Ayar</option>';
 }
@@ -1124,7 +1074,6 @@ function gramPriceForKarat(karat) {
     const k = num(karat);
     const baseGramBuy = PRICES.gram;
     if (!baseGramBuy || baseGramBuy <= 0) return 0;
-
     switch (k) {
         case 24: return baseGramBuy;
         case 22: return baseGramBuy * (22 / 24);
@@ -1174,19 +1123,13 @@ function updateAllPrices(hasGramPrice) {
 
 async function loadLivePrices() {
     const status = document.getElementById('liveStatus');
-    if (status) { 
-        status.textContent = '● Kurlar güncelleniyor...'; 
-        status.className = 'live-status'; 
-    }
-
+    if (status) { status.textContent = '● Kurlar güncelleniyor...'; status.className = 'live-status'; }
     let calculatedGram = 0;
-
     try {
         const resUsd = await fetch('https://open.er-api.com/v6/latest/USD', { cache: 'no-store' });
         if (resUsd.ok) {
             const dataUsd = await resUsd.json();
             const usdTry = dataUsd?.rates?.TRY;
-
             const resGold = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT', { cache: 'no-store' });
             if (resGold.ok) {
                 const dataGold = await resGold.json();
@@ -1214,40 +1157,49 @@ async function loadLivePrices() {
     }
 }
 
-function initDistrictSelectors() {
-    const chipsBox = document.getElementById('districtChipsContainer');
-    if (chipsBox) {
-        chipsBox.innerHTML = '';
-        DEFAULT_SELECTED_DISTRICTS.forEach(function(d) {
-            addDistrictChipElement(d, true);
-        });
-    }
-
-    const addSelect = document.getElementById('districtAddSelect');
-    if (addSelect) {
-        addSelect.innerHTML = '<option value="">+ Başka İlçe Ekle...</option>';
-        ANTALYA_DISTRICTS.forEach(function(d) {
-            addSelect.innerHTML += '<option value="' + d + '">' + d + '</option>';
-        });
-    }
-
-    const dirDistSelect = document.getElementById('dirNewDistrict');
-    if (dirDistSelect) {
-        dirDistSelect.innerHTML = '';
-        ANTALYA_DISTRICTS.forEach(function(d) {
-            dirDistSelect.innerHTML += '<option value="' + d + '">' + d + '</option>';
-        });
-    }
-
-    updateCustomerDistrictInput();
+// ==================== İL & İLÇE DROPDOWN MANTIĞI ====================
+function initCityDropdowns() {
+    const pSel = document.getElementById('provinceSelect');
+    if (!pSel) return;
+    pSel.innerHTML = '<option value="">İl</option>';
+    Object.keys(TURKEY_CITIES_DATA).forEach(function(city) {
+        pSel.innerHTML += '<option value="' + city + '">' + city + '</option>';
+    });
 }
 
-function addDistrictChipElement(districtName, isActive) {
+function onProvinceSelect(el) {
+    const dSel = document.getElementById('districtSelect');
+    const city = el.value;
+    if (!dSel) return;
+
+    dSel.innerHTML = '<option value="">İlçe</option>';
+    if (!city || !TURKEY_CITIES_DATA[city]) {
+        dSel.disabled = true;
+        return;
+    }
+
+    TURKEY_CITIES_DATA[city].forEach(function(dist) {
+        dSel.innerHTML += '<option value="' + dist + '">' + dist + '</option>';
+    });
+    dSel.disabled = false;
+}
+
+function onDistrictSelect(el) {
+    const dist = el.value;
+    const city = document.getElementById('provinceSelect')?.value;
+    if (!dist) return;
+
+    const label = city ? (city + ' - ' + dist) : dist;
+    addDistrictChipElement(label, true);
+    el.value = '';
+}
+
+function addDistrictChipElement(districtLabel, isActive) {
     const chipsBox = document.getElementById('districtChipsContainer');
     if (!chipsBox) return;
 
     const existing = Array.from(chipsBox.querySelectorAll('.district-chip')).find(function(c) {
-        return c.dataset.name === districtName;
+        return c.dataset.name === districtLabel;
     });
     if (existing) {
         if (isActive) existing.classList.add('active');
@@ -1256,8 +1208,8 @@ function addDistrictChipElement(districtName, isActive) {
 
     const span = document.createElement('span');
     span.className = 'district-chip' + (isActive ? ' active' : '');
-    span.dataset.name = districtName;
-    span.innerHTML = districtName + ' <b style="font-size:10px; margin-left:3px;" onclick="removeDistrictChip(event, this)">×</b>';
+    span.dataset.name = districtLabel;
+    span.innerHTML = districtLabel + ' <b style="font-size:10px; margin-left:3px;" onclick="removeDistrictChip(event, this)">×</b>';
     span.addEventListener('click', function(e) {
         if (e.target.tagName !== 'B') {
             span.classList.toggle('active');
@@ -1275,19 +1227,12 @@ function removeDistrictChip(event, bElement) {
     updateCustomerDistrictInput();
 }
 
-function onDistrictSelectAdd(selectEl) {
-    const val = selectEl.value;
-    if (!val) return;
-    addDistrictChipElement(val, true);
-    selectEl.value = '';
-}
-
 function updateCustomerDistrictInput() {
     const selected = [];
     document.querySelectorAll('.district-chip.active').forEach(function(el) {
         selected.push(el.dataset.name || el.textContent.replace('×','').trim());
     });
-    const finalVal = selected.length ? selected.join(', ') : 'Merkez';
+    const finalVal = selected.length ? selected.join(', ') : '';
     const input = document.getElementById('customerDistrict');
     if (input) input.value = finalVal;
 }
@@ -1296,11 +1241,8 @@ function setDistrictChipsFromText(text) {
     const arr = (text || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
     const chipsBox = document.getElementById('districtChipsContainer');
     if (!chipsBox) return;
-
     chipsBox.innerHTML = '';
-    arr.forEach(function(d) {
-        addDistrictChipElement(d, true);
-    });
+    arr.forEach(function(d) { addDistrictChipElement(d, true); });
     updateCustomerDistrictInput();
 }
 
@@ -1339,7 +1281,6 @@ function applyModeUI() {
     const adminButtons = document.querySelectorAll('.admin-only-btn');
     const consumerButtons = document.querySelectorAll('.consumer-only-btn');
     const quickAddBar = document.getElementById('quickAddBar');
-    const districtAddWrapper = document.getElementById('districtAddWrapper');
 
     if (isKuyumcuMode) {
         btn.textContent = "👤 Müşteri Moduna Dön";
@@ -1351,9 +1292,7 @@ function applyModeUI() {
         txTypeBox.style.display = "block";
         inboxCard.style.display = "block";
         headerTag.textContent = "Profesyonel Kuyumcu Tezgâh & Operasyon Paneli";
-        
         if (quickAddBar) quickAddBar.style.display = "none";
-        if (districtAddWrapper) districtAddWrapper.style.display = "none";
         consumerButtons.forEach(function(b) { b.style.display = "none"; });
         adminButtons.forEach(function(b) { b.style.display = "inline-block"; });
     } else {
@@ -1366,9 +1305,7 @@ function applyModeUI() {
         txTypeBox.style.display = "none";
         inboxCard.style.display = "none";
         headerTag.textContent = "Altınını Değerinde Sat — Güvenilir Sarraf Teklifleri";
-
         if (quickAddBar) quickAddBar.style.display = "flex";
-        if (districtAddWrapper) districtAddWrapper.style.display = "flex";
         consumerButtons.forEach(function(b) { b.style.display = "inline-block"; });
         adminButtons.forEach(function(b) { b.style.display = "none"; });
     }
@@ -1378,21 +1315,14 @@ function toggleInboxCollapse() {
     const listEl = document.getElementById('inboxList');
     const btn = document.getElementById('toggleInboxCollapseBtn');
     if (!listEl || !btn) return;
-
     isInboxCollapsed = !isInboxCollapsed;
-    if (isInboxCollapsed) {
-        listEl.style.display = 'none';
-        btn.textContent = '▼ Havuzu Göster';
-    } else {
-        listEl.style.display = 'block';
-        btn.textContent = '▲ Havuzu Gizle';
-    }
+    listEl.style.display = isInboxCollapsed ? 'none' : 'block';
+    btn.textContent = isInboxCollapsed ? '▼ Havuzu Göster' : '▲ Havuzu Gizle';
 }
 
 function getLocalInbox() {
     try { return JSON.parse(localStorage.getItem(INBOX_STORAGE_KEY) || '[]'); } catch (e) { return []; }
 }
-
 function setLocalInbox(list) {
     try { localStorage.setItem(INBOX_STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
 }
@@ -1405,29 +1335,22 @@ function clearAllInboxRequests() {
 
 async function renderInboxList() {
     if (!isKuyumcuMode) return;
-
     let requests = [];
-
     try {
         const res = await fetch(BACKEND_API_URL + '/requests');
         if (res.ok) {
             const data = await res.json();
-            if (data.requests) {
-                requests = data.requests;
-                setLocalInbox(requests);
-            }
+            if (data.requests) { requests = data.requests; setLocalInbox(requests); }
         }
     } catch (e) {
         requests = getLocalInbox();
     }
-
     if (!requests.length) requests = getLocalInbox();
 
     const nowTime = new Date().getTime();
     const activeRequestsOnly = requests.filter(function(req) {
         if (!req.expiresAt) return true;
-        const expireTime = new Date(req.expiresAt).getTime();
-        return (expireTime - nowTime) > 0;
+        return (new Date(req.expiresAt).getTime() - nowTime) > 0;
     });
 
     const container = document.getElementById('inboxList');
@@ -1488,19 +1411,14 @@ function startLiveQuotePolling(requestId) {
             const res = await fetch(BACKEND_API_URL + '/request/' + requestId);
             if (res.ok) {
                 const data = await res.json();
-                if (data.success && data.data && data.data.quotes) {
-                    syncQuotesWithServer(data.data.quotes);
-                }
+                if (data.success && data.data && data.data.quotes) syncQuotesWithServer(data.data.quotes);
             }
         } catch (e) {}
     }, 2500);
 }
 
 function stopLiveQuotePolling() {
-    if (quotesLivePollInterval) {
-        clearInterval(quotesLivePollInterval);
-        quotesLivePollInterval = null;
-    }
+    if (quotesLivePollInterval) { clearInterval(quotesLivePollInterval); quotesLivePollInterval = null; }
     const syncBadge = document.getElementById('liveSyncBadge');
     if (syncBadge) syncBadge.style.display = 'none';
 }
@@ -1527,9 +1445,7 @@ function syncQuotesWithServer(serverQuotes) {
         }
     });
 
-    if (hasChange) {
-        evaluateBestQuote();
-    }
+    if (hasChange) evaluateBestQuote();
 }
 
 async function selectCustomerRequest(requestId) {
@@ -1546,7 +1462,6 @@ async function selectCustomerRequest(requestId) {
         const requests = getLocalInbox();
         req = requests.find(function(r) { return String(r.requestId) === String(requestId); });
     }
-
     if (!req) { alert('Talep bulunamadı veya süresi dolduğu için silinmiş olabilir.'); return; }
 
     currentEditingId = null;
@@ -1554,7 +1469,7 @@ async function selectCustomerRequest(requestId) {
 
     document.getElementById('customerNote').value = req.customerName || '';
     document.getElementById('customerPhone').value = req.customerPhone || '';
-    setDistrictChipsFromText(req.district || 'Muratpaşa, Kepez');
+    setDistrictChipsFromText(req.district || '');
     document.getElementById('transactionType').value = 'Alış';
     document.getElementById('commissionMargin').value = '';
 
@@ -1574,7 +1489,6 @@ async function selectCustomerRequest(requestId) {
 
     const qc = document.getElementById('quotesContainer');
     qc.innerHTML = '';
-    
     if (req.quotes && req.quotes.length > 0) {
         req.quotes.forEach(function(q) {
             addQuoteRow(q.jewelerCode || q.name, q.offerPrice || q.price, q.note);
@@ -1592,7 +1506,6 @@ async function selectCustomerRequest(requestId) {
     if (targetCard) targetCard.classList.add('selected');
 
     startLiveQuotePolling(requestId);
-
     window.scrollTo({ top: 380, behavior: 'smooth' });
     showSaveMessage('✓ #' + requestId + ' nolu talep yüklendi. Canlı teklif akışı dinleniyor...');
 }
@@ -1605,17 +1518,14 @@ function resetWorkbenchClean() {
     document.getElementById('saveAsNewBtn').style.display = 'none';
     document.getElementById('customerNote').value = '';
     document.getElementById('customerPhone').value = '';
-    setDistrictChipsFromText('Muratpaşa, Kepez, Konyaaltı');
+    setDistrictChipsFromText('');
     document.getElementById('transactionType').value = 'Alış';
     document.getElementById('commissionMargin').value = '';
     document.getElementById('rows').innerHTML = '';
     document.getElementById('quotesContainer').innerHTML = '';
     document.querySelectorAll('.inbox-item').forEach(function(el) { el.classList.remove('selected'); });
     
-    if (!isKuyumcuMode) {
-        addRow('gram');
-    }
-    
+    if (!isKuyumcuMode) addRow('gram');
     addQuoteRow('K001');
     addQuoteRow('K002');
     evaluateBestQuote();
@@ -1689,7 +1599,6 @@ function addRow(product) {
 function handlePhotoUpload(event, inputElement) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = function(e) {
         const tr = inputElement.closest('tr');
@@ -1715,9 +1624,7 @@ function removePhoto(btnElement) {
 function viewPhoto(src) {
     if (!src) return;
     const win = window.open("");
-    if (win) {
-        win.document.write('<img src="' + src + '" style="max-width:100%; height:auto; display:block; margin:20px auto;">');
-    }
+    if (win) win.document.write('<img src="' + src + '" style="max-width:100%; height:auto; display:block; margin:20px auto;">');
 }
 
 function configureRow(tr) {
@@ -1784,9 +1691,7 @@ function calculateRow(tr) {
     const qty = num(tr.querySelector('.qty').value);
     const grams = num(tr.querySelector('.grams').value);
 
-    let amount = 0;
-    let countedGram = 0;
-    let countedQty = 0;
+    let amount = 0, countedGram = 0, countedQty = 0;
 
     if (product === 'gram' || product === 'bracelet' || product === 'scrap') {
         const gramPrice = gramPriceForKarat(karat);
@@ -1815,7 +1720,6 @@ function calculateRow(tr) {
 
 function calculate() {
     let total = 0, gram = 0, qty = 0;
-
     document.querySelectorAll('#rows > tr').forEach(function(tr) {
         const result = calculateRow(tr);
         total += result.amount;
@@ -1861,7 +1765,6 @@ function openDirectoryModal() {
     const modal = document.getElementById('directoryModal');
     if (modal) modal.style.display = 'flex';
 }
-
 function closeDirectoryModal() {
     const modal = document.getElementById('directoryModal');
     if (modal) modal.style.display = 'none';
@@ -1871,7 +1774,6 @@ function renderDirectoryTable() {
     const tbody = document.getElementById('directoryTableBody');
     if (!tbody) return;
     const list = getDirectoryJewelers();
-
     tbody.innerHTML = list.map(function(j, i) {
         return '<tr>' +
             '<td><b>' + safeText(j.code) + '</b></td>' +
@@ -1886,17 +1788,17 @@ function renderDirectoryTable() {
 function addDirectoryJeweler() {
     const code = document.getElementById('dirNewCode').value.trim() || ('K00' + (getDirectoryJewelers().length + 1));
     const name = document.getElementById('dirNewName').value.trim();
-    const dist = document.getElementById('dirNewDistrict').value;
+    const dist = document.getElementById('dirNewDistrict').value.trim();
     const phone = document.getElementById('dirNewPhone').value.trim();
-    const addr = document.getElementById('dirNewAddress').value.trim() || (dist + ' / Antalya');
+    const addr = document.getElementById('dirNewAddress').value.trim() || dist;
 
     if (!name) { alert('Lütfen kuyumcu ünvanını yazınız.'); return; }
-
     const list = getDirectoryJewelers();
     list.push({ code: code, name: name, district: dist, phone: phone, address: addr });
     setDirectoryJewelers(list);
 
     document.getElementById('dirNewName').value = '';
+    document.getElementById('dirNewDistrict').value = '';
     document.getElementById('dirNewPhone').value = '';
     document.getElementById('dirNewAddress').value = '';
     renderDirectoryTable();
@@ -1939,21 +1841,16 @@ function addQuoteRow(name, price, note) {
 function onQuoteSelectJeweler(selectEl) {
     const opt = selectEl.options[selectEl.selectedIndex];
     if (!opt || !opt.value) return;
-
     const row = selectEl.closest('.quote-row');
     const nameInput = row.querySelector('.quote-name');
     const noteInput = row.querySelector('.quote-note');
-
     nameInput.value = opt.value + ' (' + opt.dataset.name + ')';
-    if (opt.dataset.address) {
-        noteInput.value = opt.dataset.address;
-    }
+    if (opt.dataset.address) noteInput.value = opt.dataset.address;
     evaluateBestQuote();
 }
 
 function handleQuoteInput(inputEl) {
     evaluateBestQuote();
-
     const row = inputEl.closest('.quote-row');
     if (!row) return;
 
@@ -1966,12 +1863,7 @@ function handleQuoteInput(inputEl) {
             fetch(BACKEND_API_URL + '/request/quote', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    requestId: currentLoadedRequestId,
-                    jewelerCode: jCode,
-                    offerPrice: oPrice,
-                    note: oNote
-                })
+                body: JSON.stringify({ requestId: currentLoadedRequestId, jewelerCode: jCode, offerPrice: oPrice, note: oNote })
             }).catch(function() {});
         } catch (e) {}
 
@@ -1980,11 +1872,8 @@ function handleQuoteInput(inputEl) {
         if (targetReq) {
             targetReq.quotes = targetReq.quotes || [];
             const exIdx = targetReq.quotes.findIndex(function(q) { return q.jewelerCode === jCode; });
-            if (exIdx !== -1) {
-                targetReq.quotes[exIdx] = { jewelerCode: jCode, offerPrice: oPrice, note: oNote };
-            } else {
-                targetReq.quotes.push({ jewelerCode: jCode, offerPrice: oPrice, note: oNote });
-            }
+            if (exIdx !== -1) targetReq.quotes[exIdx] = { jewelerCode: jCode, offerPrice: oPrice, note: oNote };
+            else targetReq.quotes.push({ jewelerCode: jCode, offerPrice: oPrice, note: oNote });
             setLocalInbox(requests);
         }
     }
@@ -2019,19 +1908,17 @@ function evaluateBestQuote() {
 function copyDirectWhatsAppLink() {
     const profile = getStoreProfile();
     const phone = profile.phone || ALTIN_EKSPER_PHONE;
-    const msg = 'Merhaba ' + (profile.name ? profile.name : 'Altın Eksper') + ', altınlarımı satmak ve kuyumculardan alış teklifi almak istiyorum.\n\n1. Ürün: \n2. Ürün: \nİlçe: \n(Ürün fotoğraflarını bu mesaja ekleyebilirsiniz)';
+    const msg = 'Merhaba ' + (profile.name ? profile.name : 'Altın Eksper') + ', altınlarımı satmak ve kuyumculardan alış teklifi almak istiyorum.\n\n1. Ürün: \n2. Ürün: \nİl/İlçe: \n(Ürün fotoğraflarını bu mesaja ekleyebilirsiniz)';
     const link = 'https://wa.me/' + phone.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg);
     navigator.clipboard.writeText(link).then(function() { alert('Müşteri teklif alma linki kopyalandı!'); });
 }
 
 function openAuctionDispatchModal() {
-    const distText = document.getElementById('customerDistrict')?.value || 'Merkez';
+    const distText = document.getElementById('customerDistrict')?.value || 'Genel';
     const totalG = document.getElementById('totalGrams')?.textContent || '0,00 g';
     const reqId = currentLoadedRequestId || String(Date.now()).slice(-6);
 
-    let productLines = '';
-    let hasPhoto = false;
-
+    let productLines = '', hasPhoto = false;
     document.querySelectorAll('#rows > tr').forEach(function(tr, i) {
         const pName = PRODUCTS[tr.querySelector('.product').value];
         const k = tr.querySelector('.karat').value;
@@ -2041,20 +1928,16 @@ function openAuctionDispatchModal() {
         productLines += (i+1) + '. ' + pName + ' (' + k + ' Ayar) - ' + (g ? g + ' gr ' : '') + (q ? q + ' adet' : '') + '\n';
     });
 
-    if (!productLines) {
-        alert('Lütfen önce satılacak ürünleri ekleyin veya listeden bir talep seçin.');
-        return;
-    }
+    if (!productLines) { alert('Lütfen önce satılacak ürünleri ekleyin.'); return; }
 
     const selectedDistricts = distText.split(',').map(function(s) { return s.trim().toLowerCase(); });
     const allJewelers = getDirectoryJewelers();
-    
     let matching = allJewelers.filter(function(j) {
-        return selectedDistricts.some(function(sd) { return j.district.toLowerCase().includes(sd); });
+        return selectedDistricts.some(function(sd) { return (j.district || '').toLowerCase().includes(sd); });
     });
     if (!matching.length) matching = allJewelers;
 
-    document.getElementById('auctionDispatchSubtitle').textContent = 'Talep No: #' + reqId + ' • Hedef İlçeler: ' + distText;
+    document.getElementById('auctionDispatchSubtitle').textContent = 'Talep No: #' + reqId + ' • Hedef Bölge: ' + distText;
     const container = document.getElementById('matchingJewelersList');
 
     const profile = getStoreProfile();
@@ -2063,13 +1946,12 @@ function openAuctionDispatchModal() {
 
     const auctionMsg = '🚨 *' + brand.toUpperCase() + ' — YENİ NAKİT ALIŞ İHALESİ*\n\n' +
         '🏷 *İhale Takip Kodu:* #' + reqId + '\n' +
-        '📍 *Talep Edilen İlçeler:* ' + distText + '\n' +
+        '📍 *Talep Edilen Bölge:* ' + distText + '\n' +
         '⚖️ *Toplam Ağırlık:* ' + totalG + '\n\n' +
         '📦 *Ürün Kalemleri:*\n' + productLines + '\n' +
         '📷 *Görsel Durumu:* ' + (hasPhoto ? 'Ürün Görseli Sistemde Mevcut 📷' : 'Görsel Bulunmuyor') + '\n\n' +
         '⏱ *Kalan Teklif Süresi:* 15 Dakika\n\n' +
-        '👉 *Teklifinizi girmek için lütfen aşağıdaki linke dokununuz:*\n' +
-        portalUrl;
+        '👉 *Teklifinizi girmek için lütfen aşağıdaki linke dokununuz:*\n' + portalUrl;
 
     container.innerHTML = matching.map(function(j) {
         const phoneClean = (j.phone || '').replace(/[^0-9]/g, '');
@@ -2095,13 +1977,11 @@ function openAuctionDispatchModal() {
     const modal = document.getElementById('auctionDispatchModal');
     if (modal) modal.style.display = 'flex';
 }
-
 function closeAuctionDispatchModal() {
     const modal = document.getElementById('auctionDispatchModal');
     if (modal) modal.style.display = 'none';
 }
 
-// CANLI SUNUCUYA VE HAVUZA GARANTİLİ YAZMA
 async function sendCustomerDirectReportWhatsApp() {
     const btn = document.getElementById('submitRequestBtn');
     const cName = document.getElementById('customerNote')?.value.trim() || 'Müşteri';
@@ -2122,36 +2002,22 @@ async function sendCustomerDirectReportWhatsApp() {
         const amt = tr.querySelector('.amount').textContent;
 
         payloadItems.push({
-            index: i + 1,
-            productCode: pCode,
-            productName: pName,
-            karat: k,
-            grams: g,
-            qty: q,
-            amount: amt
+            index: i + 1, productCode: pCode, productName: pName,
+            karat: k, grams: g, qty: q, amount: amt
         });
 
         productLines += (i+1) + '. ' + pName + ' (' + k + 'k) — ' + (g ? g+' gr ' : '') + (q ? q+' adet ' : '') + '[' + amt + ']\n';
     });
 
-    if (!payloadItems.length) {
-        alert('Lütfen önce satılacak ürünleri ekleyin.');
-        return;
-    }
+    if (!payloadItems.length) { alert('Lütfen önce satılacak ürünleri ekleyin.'); return; }
 
     const tempId = String(Date.now()).slice(-6);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
     const requestPayload = {
-        requestId: tempId,
-        customerName: cName,
-        customerPhone: cPhone,
-        district: dist,
-        totalGrams: totalG,
-        totalReferenceTL: totalTL,
-        items: payloadItems,
-        createdAt: new Date().toISOString(),
-        expiresAt: expiresAt
+        requestId: tempId, customerName: cName, customerPhone: cPhone,
+        district: dist, totalGrams: totalG, totalReferenceTL: totalTL,
+        items: payloadItems, createdAt: new Date().toISOString(), expiresAt: expiresAt
     };
 
     const localInbox = getLocalInbox();
@@ -2161,17 +2027,12 @@ async function sendCustomerDirectReportWhatsApp() {
     if (btn) { btn.textContent = '⏳ Havuza Ekleniyor...'; btn.disabled = true; }
 
     try {
-        const res = await fetch(BACKEND_API_URL + '/request/create', {
+        await fetch(BACKEND_API_URL + '/request/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestPayload)
         });
-        const resData = await res.json();
-        if (!resData.success) {
-            alert('Sunucu uyarısı: ' + (resData.message || 'Kayıt başarısız'));
-        }
     } catch (e) {
-        console.warn('Canlı sunucuya ulaşılamadı, yerel hafızaya kaydedildi:', e.message);
     } finally {
         if (btn) { btn.textContent = '📲 WhatsApp ile Teklif İste (0536 043 42 07)'; btn.disabled = false; }
     }
@@ -2181,15 +2042,14 @@ async function sendCustomerDirectReportWhatsApp() {
                 '📋 *Talep No:* #' + tempId + '\n' +
                 '👤 *Müşteri:* ' + cName + '\n' +
                 '📞 *İletişim:* ' + cPhone + '\n' +
-                '📍 *Teklif İstenen İlçeler:* ' + dist + '\n\n' +
+                '📍 *Teklif İstenen Bölge:* ' + dist + '\n\n' +
                 '📦 *Ürün Listesi:*\n' + productLines + '\n' +
                 '⚖ *Toplam Ağırlık:* ' + totalG + '\n' +
                 '💰 *Piyasa Alış Referansı:* ' + totalTL + '\n\n' +
                 '👉 *Kuyumcu Teklif Linki:* ' + portalUrl + '\n\n' +
                 '📌 *Talebin sistem tarafından değerlendirilerek anlaşmalı sarrafların en iyi tekliflerinin iletilmesini rica ederim.*';
 
-    const url = 'https://api.whatsapp.com/send?phone=905360434207&text=' + encodeURIComponent(msg);
-    window.open(url, '_blank');
+    window.open('https://api.whatsapp.com/send?phone=905360434207&text=' + encodeURIComponent(msg), '_blank');
 }
 
 function copyKuyumcuTemplate() {
@@ -2206,7 +2066,6 @@ function copyKuyumcuTemplate() {
     });
 
     if (!productLines) { alert('Lütfen önce ürün ekleyin.'); return; }
-
     const profile = getStoreProfile();
     const title = profile.name ? ('🔔 *' + profile.name.toUpperCase() + ' — ANLIK NAKİT ALIŞ TALEBİ*') : '🔔 *ALTIN EKSPER — ANLIK NAKİT ALIŞ TALEBİ*';
     const tempId = currentLoadedRequestId || String(Date.now()).slice(-4);
@@ -2277,20 +2136,14 @@ function finalizeAppointmentAndNotifyWinner() {
         }
     });
 
-    if (max <= 0) {
-        alert('Lütfen önce bir kuyumcu teklifi belirleyin.');
-        return;
-    }
+    if (max <= 0) { alert('Lütfen önce bir kuyumcu teklifi belirleyin.'); return; }
 
     const netPrice = money(Math.max(0, max - commission));
     const txId = currentLoadedRequestId || (currentEditingId ? currentEditingId.slice(-6) : String(Date.now()).slice(-6));
     const jewelerCode = bestJewelerName.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
 
     const directory = getDirectoryJewelers();
-    const matchedJeweler = directory.find(function(j) {
-        return j.code === jewelerCode || bestJewelerName.includes(j.name);
-    });
-    
+    const matchedJeweler = directory.find(function(j) { return j.code === jewelerCode || bestJewelerName.includes(j.name); });
     const jewelerPhone = matchedJeweler ? matchedJeweler.phone : 'Belirtilmedi';
     const jewelerAddress = (matchedJeweler && matchedJeweler.address) ? matchedJeweler.address : bestJewelerNote;
     const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(jewelerAddress);
@@ -2299,12 +2152,7 @@ function finalizeAppointmentAndNotifyWinner() {
         fetch(BACKEND_API_URL + '/request/notify-winner', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                requestId: currentLoadedRequestId,
-                winnerCode: jewelerCode,
-                agreedPrice: max,
-                customerName: cName
-            })
+            body: JSON.stringify({ requestId: currentLoadedRequestId, winnerCode: jewelerCode, agreedPrice: max, customerName: cName })
         }).catch(function() {});
     }
 
@@ -2321,9 +2169,7 @@ function finalizeAppointmentAndNotifyWinner() {
         let p = cPhone.startsWith('0') ? '90' + cPhone.substring(1) : (cPhone.length === 10 ? '90' + cPhone : cPhone);
         window.open('https://api.whatsapp.com/send?phone=' + p + '&text=' + encodeURIComponent(msg), '_blank');
     } else {
-        navigator.clipboard.writeText(msg).then(function() {
-            alert('Müşteri randevu, telefon ve konum metni kopyalandı! Kazanan sarrafa da bildirim yollandı.');
-        });
+        navigator.clipboard.writeText(msg).then(function() { alert('Müşteri randevu, telefon ve konum metni kopyalandı! Kazanan sarrafa da bildirim yollandı.'); });
     }
 }
 
@@ -2338,10 +2184,7 @@ const PROFILE_KEY = 'altinEksperStoreProfile_v1';
 function readHistory() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { return []; } }
 function writeHistory(list) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {} }
 
-function getStoreProfile() {
-    try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}'); } catch (e) { return {}; }
-}
-
+function getStoreProfile() { try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}'); } catch (e) { return {}; } }
 function setStoreProfile(prof) {
     try { localStorage.setItem(PROFILE_KEY, JSON.stringify(prof)); } catch (e) {}
     updateHeaderProfile();
@@ -2368,12 +2211,9 @@ function saveTransaction(forceAsNew) {
         else totalGramNum += (q * w);
 
         return {
-            product: p,
-            productName: PRODUCTS[p],
-            karat: tr.querySelector('.karat').value,
-            qty: tr.querySelector('.qty').value,
-            grams: tr.querySelector('.grams').value,
-            photo: tr.dataset.photo || '',
+            product: p, productName: PRODUCTS[p],
+            karat: tr.querySelector('.karat').value, qty: tr.querySelector('.qty').value,
+            grams: tr.querySelector('.grams').value, photo: tr.dataset.photo || '',
             unitPrice: tr.querySelector('.unit-price').textContent,
             amount: tr.querySelector('.amount').textContent
         };
@@ -2385,11 +2225,7 @@ function saveTransaction(forceAsNew) {
     }
 
     const quotes = Array.from(document.querySelectorAll('.quote-row')).map(function(r) {
-        return {
-            name: r.querySelector('.quote-name').value,
-            price: r.querySelector('.quote-price').value,
-            note: r.querySelector('.quote-note').value
-        };
+        return { name: r.querySelector('.quote-name').value, price: r.querySelector('.quote-price').value, note: r.querySelector('.quote-note').value };
     });
 
     const history = readHistory();
@@ -2397,8 +2233,7 @@ function saveTransaction(forceAsNew) {
     const targetId = isUpdate ? currentEditingId : String(Date.now());
 
     const itemData = {
-        id: targetId,
-        date: new Date().toISOString(),
+        id: targetId, date: new Date().toISOString(),
         transactionType: document.getElementById('transactionType').value,
         customerNote: document.getElementById('customerNote').value.trim(),
         customerPhone: document.getElementById('customerPhone')?.value.trim() || '',
@@ -2407,9 +2242,7 @@ function saveTransaction(forceAsNew) {
         totalGramsRaw: totalGramNum,
         bestPrice: document.getElementById('bestQuoteLabel').textContent,
         commission: document.getElementById('commissionMargin')?.value || '0',
-        quotes: quotes,
-        deleted: false,
-        rows: rows
+        quotes: quotes, deleted: false, rows: rows
     };
 
     if (isUpdate) {
@@ -2458,9 +2291,7 @@ function recoverFromTrash(id) {
 }
 
 function permanentlyDelete(id) {
-    const confirmDelete = confirm('DİKKAT: Bu işlem kalıcı olarak yok edilecek ve geri getirilemeyecektir.\n\nSilmek istediğinizden emin misiniz?');
-    if (!confirmDelete) return;
-
+    if (!confirm('DİKKAT: Bu işlem kalıcı olarak yok edilecek. Silmek istediğinizden emin misiniz?')) return;
     const history = readHistory();
     writeHistory(history.filter(function(x) { return String(x.id) !== String(id); }));
     showSaveMessage('İşlem kalıcı olarak silindi.');
@@ -2471,10 +2302,7 @@ function clearAllDeleted() {
     const history = readHistory();
     const trashCount = history.filter(function(x) { return x.deleted; }).length;
     if (trashCount === 0) return;
-
-    const confirmClear = confirm('UYARI: Çöp kutusundaki ' + trashCount + ' adet işlem tamamen yok edilecektir.\n\nBu işlem geri alınamaz. Onaylıyor musunuz?');
-    if (!confirmClear) return;
-
+    if (!confirm('UYARI: Çöp kutusundaki ' + trashCount + ' adet işlem tamamen yok edilecektir. Onaylıyor musunuz?')) return;
     writeHistory(history.filter(function(x) { return !x.deleted; }));
     showSaveMessage('Çöp kutusu tamamen boşaltıldı.');
     renderHistory();
@@ -2501,7 +2329,6 @@ function renderHistory() {
     document.getElementById('trashCount').textContent = trashList.length;
 
     const targetList = currentHistoryTab === 'active' ? activeList : trashList;
-
     let sumGram = 0, sumTL = 0;
     targetList.forEach(function(item) {
         sumGram += (item.totalGramsRaw || 0);
@@ -2526,7 +2353,6 @@ function renderHistory() {
 
         const matchesSearch = !searchVal || (name.includes(searchVal) || phone.includes(searchVal) || dist.includes(searchVal) || dateStr.includes(searchVal));
         const matchesType = !typeFilter || type === typeFilter;
-
         return matchesSearch && matchesType;
     });
 
@@ -2545,9 +2371,7 @@ function renderHistory() {
 
     let html = '';
     for (const [dateKey, items] of Object.entries(groups)) {
-        let groupGram = 0;
-        let groupTL = 0;
-
+        let groupGram = 0, groupTL = 0;
         items.forEach(function(it) {
             groupGram += (it.totalGramsRaw || 0);
             groupTL += parseFloat(String(it.total).replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
@@ -2584,10 +2408,7 @@ function renderHistory() {
 
             return '<div class="history-item">' +
                 '<div style="display:flex; justify-content:space-between; align-items:flex-start;">' +
-                    '<div>' +
-                        '<strong>' + safeText(item.customerNote || 'Müşteri adı girilmedi') + phoneInfo + distInfo + '</strong>' +
-                        deletedTimeBadge +
-                    '</div>' +
+                    '<div><strong>' + safeText(item.customerNote || 'Müşteri adı girilmedi') + phoneInfo + distInfo + '</strong>' + deletedTimeBadge + '</div>' +
                     '<span style="font-size:11px; font-weight:700; color:#64748b; background:#f1f5f9; padding:2px 6px; border-radius:4px;">' + timeStr + '</span>' +
                 '</div>' +
                 '<div style="font-size:11px; color:#64748b; margin:2px 0 6px;">İşlem: <b>' + safeText(item.transactionType) + '</b></div>' +
@@ -2601,15 +2422,11 @@ function renderHistory() {
         html += '<div class="date-group-card">' +
             '<div class="date-group-header">' +
                 '<span>📅 ' + dateKey + ' (' + items.length + ' İşlem)</span>' +
-                '<div class="date-group-summary">' +
-                    '<span>Hacim: <b>' + groupGram.toFixed(2) + ' g</b></span>' +
-                    '<span>Toplam: <b>' + money(groupTL) + '</b></span>' +
-                '</div>' +
+                '<div class="date-group-summary"><span>Hacim: <b>' + groupGram.toFixed(2) + ' g</b></span><span>Toplam: <b>' + money(groupTL) + '</b></span></div>' +
             '</div>' +
             '<div>' + itemsHtml + '</div>' +
         '</div>';
     }
-
     listElement.innerHTML = html;
 }
 
@@ -2617,12 +2434,10 @@ function restoreRows(savedRows) {
     if (!Array.isArray(savedRows) || savedRows.length === 0) return;
     const rowsContainer = document.getElementById('rows');
     rowsContainer.innerHTML = '';
-
     savedRows.forEach(function(savedRow) {
         addRow(savedRow.product || 'gram');
         const tr = rowsContainer.lastElementChild;
         if (!tr) return;
-
         const productEl = tr.querySelector('.product');
         const karatEl = tr.querySelector('.karat');
         const qtyEl = tr.querySelector('.qty');
@@ -2661,11 +2476,10 @@ function restoreTransaction(id) {
     if (item.transactionType) document.getElementById('transactionType').value = item.transactionType;
     if (item.customerNote) document.getElementById('customerNote').value = item.customerNote;
     if (item.customerPhone) document.getElementById('customerPhone').value = item.customerPhone;
-    setDistrictChipsFromText(item.customerDistrict || 'Muratpaşa, Kepez');
+    setDistrictChipsFromText(item.customerDistrict || '');
     if (item.commission) document.getElementById('commissionMargin').value = item.commission;
 
     restoreRows(item.rows);
-
     const qc = document.getElementById('quotesContainer');
     qc.innerHTML = '';
     if (Array.isArray(item.quotes) && item.quotes.length > 0) {
@@ -2678,13 +2492,11 @@ function restoreTransaction(id) {
 
     const historyCard = document.getElementById('historyCard');
     if (historyCard) historyCard.style.display = 'none';
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showSaveMessage('İşlem düzenlenmek üzere yüklendi.');
 }
 
 function showSaveMessage(text, error) {
-    error = !!error;
     const element = document.getElementById('saveMessage');
     element.textContent = text;
     element.style.color = error ? '#ef4444' : '#10b981';
@@ -2705,10 +2517,7 @@ function safePrintHtml(fullHtml) {
             win.document.open();
             win.document.write(fullHtml);
             win.document.close();
-            setTimeout(function() {
-                win.focus();
-                win.print();
-            }, 400);
+            setTimeout(function() { win.focus(); win.print(); }, 400);
             return;
         }
     } catch (e) {}
@@ -2729,19 +2538,13 @@ function safePrintHtml(fullHtml) {
     doc.open();
     doc.write(fullHtml);
     doc.close();
-    setTimeout(function() {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-    }, 400);
+    setTimeout(function() { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 400);
 }
 
 function exportCustomerLivePDF() {
     calculate();
     const rows = Array.from(document.querySelectorAll('#rows > tr'));
-    if (!rows.length) {
-        alert("Lütfen önce listenize en az bir altın ürünü ekleyin.");
-        return;
-    }
+    if (!rows.length) { alert("Lütfen önce listenize en az bir altın ürünü ekleyin."); return; }
 
     const cName = document.getElementById('customerNote')?.value.trim() || 'Değerli Müşterimiz';
     const cPhone = document.getElementById('customerPhone')?.value.trim() || 'Belirtilmedi';
@@ -2787,10 +2590,7 @@ function exportCustomerLivePDF() {
 function exportCustomerLiveExcel() {
     calculate();
     const rows = Array.from(document.querySelectorAll('#rows > tr'));
-    if (!rows.length) {
-        alert("Lütfen önce listenize en az bir altın ürünü ekleyin.");
-        return;
-    }
+    if (!rows.length) { alert("Lütfen önce listenize en az bir altın ürünü ekleyin."); return; }
 
     const cName = document.getElementById('customerNote')?.value.trim() || 'Değerli Müşterimiz';
     const cPhone = document.getElementById('customerPhone')?.value.trim() || 'Belirtilmedi';
@@ -2928,11 +2728,9 @@ function openDailyReportModal() {
     generateDailyReport();
     modal.style.display = 'flex';
 }
-
 function closeDailyReportModal() {
     const modal = document.getElementById('dailyReportModal');
-    if (!modal) return;
-    modal.style.display = 'none';
+    if (modal) modal.style.display = 'none';
 }
 
 function generateDailyReport() {
@@ -2944,22 +2742,18 @@ function generateDailyReport() {
     const history = readHistory().filter(function(x) { return !x.deleted; });
     const dayTransactions = history.filter(function(item) {
         if (!item.date) return false;
-        const itemDateStr = new Date(item.date).toISOString().split('T')[0];
-        return itemDateStr === dateVal;
+        return new Date(item.date).toISOString().split('T')[0] === dateVal;
     });
 
     const displayDate = new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long' }).format(new Date(dateVal));
     const subtitle = document.getElementById('reportDateSubtitle');
     if (subtitle) subtitle.textContent = displayDate + ' Tarihli Gün Sonu Kasa Özeti';
 
-    let totalBuyGram = 0;
-    let totalBuyTL = 0;
-    const customers = new Set();
-    const productSummary = {};
+    let totalBuyGram = 0, totalBuyTL = 0;
+    const customers = new Set(), productSummary = {};
 
     dayTransactions.forEach(function(tx) {
         if (tx.customerNote) customers.add(tx.customerNote.toLowerCase().trim());
-
         (tx.rows || []).forEach(function(row) {
             const p = row.product || 'gram';
             const k = row.karat || '24';
@@ -2967,20 +2761,13 @@ function generateDailyReport() {
             const g = num(row.grams);
             const w = WEIGHTS[p] || 0;
             const amountNum = parseFloat(String(row.amount || '').replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
-
             const rowGram = ['gram', 'bracelet', 'scrap'].includes(p) ? g : (q * w);
             totalBuyGram += rowGram;
             totalBuyTL += amountNum;
 
             const groupKey = (PRODUCTS[p] || p) + '__' + k;
             if (!productSummary[groupKey]) {
-                productSummary[groupKey] = {
-                    name: PRODUCTS[p] || p,
-                    karat: k,
-                    qty: 0,
-                    grams: 0,
-                    totalTL: 0
-                };
+                productSummary[groupKey] = { name: PRODUCTS[p] || p, karat: k, qty: 0, grams: 0, totalTL: 0 };
             }
             productSummary[groupKey].qty += q;
             productSummary[groupKey].grams += rowGram;
@@ -2988,15 +2775,10 @@ function generateDailyReport() {
         });
     });
 
-    const countEl = document.getElementById('repTxCount');
-    const gramEl = document.getElementById('repTotalBuyGram');
-    const tlEl = document.getElementById('repTotalBuyTL');
-    const custEl = document.getElementById('repUniqueCustomers');
-
-    if (countEl) countEl.textContent = dayTransactions.length;
-    if (gramEl) gramEl.textContent = totalBuyGram.toFixed(2) + ' g';
-    if (tlEl) tlEl.textContent = money(totalBuyTL);
-    if (custEl) custEl.textContent = customers.size;
+    document.getElementById('repTxCount').textContent = dayTransactions.length;
+    document.getElementById('repTotalBuyGram').textContent = totalBuyGram.toFixed(2) + ' g';
+    document.getElementById('repTotalBuyTL').textContent = money(totalBuyTL);
+    document.getElementById('repUniqueCustomers').textContent = customers.size;
 
     const tbody = document.getElementById('reportTableBody');
     if (!tbody) return;
@@ -3020,21 +2802,14 @@ function generateDailyReport() {
     }).join('');
 
     currentReportSummary = {
-        dateStr: displayDate,
-        txCount: dayTransactions.length,
-        totalGram: totalBuyGram,
-        totalTL: totalBuyTL,
-        customersCount: customers.size,
+        dateStr: displayDate, txCount: dayTransactions.length,
+        totalGram: totalBuyGram, totalTL: totalBuyTL, customersCount: customers.size,
         items: Object.values(productSummary)
     };
 }
 
 function printDailyReportPDF() {
-    if (!currentReportSummary || !currentReportSummary.items.length) {
-        alert("Yazdırılacak işlem verisi bulunamadı.");
-        return;
-    }
-
+    if (!currentReportSummary || !currentReportSummary.items.length) { alert("Yazdırılacak işlem verisi bulunamadı."); return; }
     const rep = currentReportSummary;
     const profile = getStoreProfile();
     const storeTitle = profile.name ? profile.name.toUpperCase() : 'ALTIN EKSPER';
@@ -3070,7 +2845,6 @@ function openMonthlyReportModal() {
     generateMonthlyReport();
     modal.style.display = 'flex';
 }
-
 function closeMonthlyReportModal() {
     const modal = document.getElementById('monthlyReportModal');
     if (!modal) return;
@@ -3079,13 +2853,9 @@ function closeMonthlyReportModal() {
 
 function generateMonthlyReport() {
     const monthInput = document.getElementById('monthlyDateInput');
-    if (!monthInput) return;
-    const monthVal = monthInput.value;
-    if (!monthVal) return;
-
-    const parts = monthVal.split('-');
-    const year = parseInt(parts[0]);
-    const month = parseInt(parts[1]);
+    if (!monthInput || !monthInput.value) return;
+    const parts = monthInput.value.split('-');
+    const year = parseInt(parts[0]), month = parseInt(parts[1]);
     const history = readHistory().filter(function(x) { return !x.deleted; });
 
     const monthTransactions = history.filter(function(item) {
@@ -3098,83 +2868,47 @@ function generateMonthlyReport() {
     const subtitle = document.getElementById('monthlyDateSubtitle');
     if (subtitle) subtitle.textContent = monthName + ' Dönemi Hacim ve Dağılım Raporu';
 
-    let totalMonthGram = 0;
-    let totalMonthTL = 0;
-    const activeDaysSet = new Set();
-
-    const typeStats = {
-        'Alış': { count: 0, grams: 0, totalTL: 0 },
-        'Satış': { count: 0, grams: 0, totalTL: 0 },
-        'Hurda': { count: 0, grams: 0, totalTL: 0 }
-    };
-
-    const productStats = {};
+    let totalMonthGram = 0, totalMonthTL = 0;
+    const activeDaysSet = new Set(), typeStats = { 'Alış': { count: 0, grams: 0, totalTL: 0 }, 'Satış': { count: 0, grams: 0, totalTL: 0 }, 'Hurda': { count: 0, grams: 0, totalTL: 0 } }, productStats = {};
 
     monthTransactions.forEach(function(tx) {
-        const dayKey = new Date(tx.date).toISOString().split('T')[0];
-        activeDaysSet.add(dayKey);
-
+        activeDaysSet.add(new Date(tx.date).toISOString().split('T')[0]);
         const txType = (tx.transactionType === 'Hurda' || tx.transactionType === 'Hurda Alış') ? 'Hurda' : (tx.transactionType || 'Alış');
         if (!typeStats[txType]) typeStats[txType] = { count: 0, grams: 0, totalTL: 0 };
         typeStats[txType].count += 1;
 
         (tx.rows || []).forEach(function(row) {
-            const p = row.product || 'gram';
-            const k = row.karat || '24';
-            const q = num(row.qty);
-            const g = num(row.grams);
-            const w = WEIGHTS[p] || 0;
+            const p = row.product || 'gram', k = row.karat || '24', q = num(row.qty), g = num(row.grams), w = WEIGHTS[p] || 0;
             const amountNum = parseFloat(String(row.amount || '').replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
-
             const rowGram = ['gram', 'bracelet', 'scrap'].includes(p) ? g : (q * w);
             totalMonthGram += rowGram;
             totalMonthTL += amountNum;
-
             typeStats[txType].grams += rowGram;
             typeStats[txType].totalTL += amountNum;
 
             const groupKey = (PRODUCTS[p] || p) + '__' + k;
-            if (!productStats[groupKey]) {
-                productStats[groupKey] = {
-                    name: PRODUCTS[p] || p,
-                    karat: k,
-                    qty: 0,
-                    grams: 0,
-                    totalTL: 0
-                };
-            }
+            if (!productStats[groupKey]) productStats[groupKey] = { name: PRODUCTS[p] || p, karat: k, qty: 0, grams: 0, totalTL: 0 };
             productStats[groupKey].qty += q;
             productStats[groupKey].grams += rowGram;
             productStats[groupKey].totalTL += amountNum;
         });
     });
 
-    const mCountEl = document.getElementById('mRepTxCount');
-    const mGramEl = document.getElementById('mRepTotalGram');
-    const mTlEl = document.getElementById('mRepTotalTL');
-    const mDaysEl = document.getElementById('mRepActiveDays');
-
-    if (mCountEl) mCountEl.textContent = monthTransactions.length;
-    if (mGramEl) mGramEl.textContent = totalMonthGram.toFixed(2) + ' g';
-    if (mTlEl) mTlEl.textContent = money(totalMonthTL);
-    if (mDaysEl) mDaysEl.textContent = activeDaysSet.size + ' Gün';
+    document.getElementById('mRepTxCount').textContent = monthTransactions.length;
+    document.getElementById('mRepTotalGram').textContent = totalMonthGram.toFixed(2) + ' g';
+    document.getElementById('mRepTotalTL').textContent = money(totalMonthTL);
+    document.getElementById('mRepActiveDays').textContent = activeDaysSet.size + ' Gün';
 
     const typeTbody = document.getElementById('mReportTypeTableBody');
     if (typeTbody) {
         typeTbody.innerHTML = Object.entries(typeStats).map(function(item) {
-            return '<tr>' +
-                '<td><b>' + item[0] + '</b></td>' +
-                '<td style="text-align:center; font-weight:600;">' + item[1].count + '</td>' +
-                '<td style="text-align:center; font-weight:600;">' + item[1].grams.toFixed(2) + ' g</td>' +
-                '<td style="text-align:right; font-weight:700; color:#1e293b;">' + money(item[1].totalTL) + '</td>' +
-            '</tr>';
+            return '<tr><td><b>' + item[0] + '</b></td><td style="text-align:center; font-weight:600;">' + item[1].count + '</td><td style="text-align:center; font-weight:600;">' + item[1].grams.toFixed(2) + ' g</td><td style="text-align:right; font-weight:700; color:#1e293b;">' + money(item[1].totalTL) + '</td></tr>';
         }).join('');
     }
 
     const prodTbody = document.getElementById('mReportProductTableBody');
     if (!prodTbody) return;
     const pKeys = Object.keys(productStats);
-
     if (!pKeys.length) {
         prodTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:18px;">Seçilen ayda işlem bulunmuyor.</td></tr>';
         currentMonthlySummary = null;
@@ -3183,54 +2917,28 @@ function generateMonthlyReport() {
 
     prodTbody.innerHTML = pKeys.map(function(k) {
         const it = productStats[k];
-        return '<tr>' +
-            '<td><b>' + it.name + '</b></td>' +
-            '<td>' + it.karat + ' Ayar</td>' +
-            '<td style="text-align:center; font-weight:600;">' + (it.qty > 0 ? it.qty : '—') + '</td>' +
-            '<td style="text-align:center; font-weight:600;">' + it.grams.toFixed(2) + ' g</td>' +
-            '<td style="text-align:right; font-weight:700; color:#1e293b;">' + money(it.totalTL) + '</td>' +
-        '</tr>';
+        return '<tr><td><b>' + it.name + '</b></td><td>' + it.karat + ' Ayar</td><td style="text-align:center; font-weight:600;">' + (it.qty > 0 ? it.qty : '—') + '</td><td style="text-align:center; font-weight:600;">' + it.grams.toFixed(2) + ' g</td><td style="text-align:right; font-weight:700; color:#1e293b;">' + money(it.totalTL) + '</td></tr>';
     }).join('');
 
     currentMonthlySummary = {
-        monthTitle: monthName,
-        txCount: monthTransactions.length,
-        totalGram: totalMonthGram,
-        totalTL: totalMonthTL,
-        activeDays: activeDaysSet.size,
-        types: typeStats,
-        products: Object.values(productStats)
+        monthTitle: monthName, txCount: monthTransactions.length,
+        totalGram: totalMonthGram, totalTL: totalMonthTL, activeDays: activeDaysSet.size,
+        types: typeStats, products: Object.values(productStats)
     };
 }
 
 function printMonthlyReportPDF() {
-    if (!currentMonthlySummary || !currentMonthlySummary.products.length) {
-        alert("Yazdırılacak aylık veri bulunamadı.");
-        return;
-    }
-
+    if (!currentMonthlySummary || !currentMonthlySummary.products.length) { alert("Yazdırılacak aylık veri bulunamadı."); return; }
     const rep = currentMonthlySummary;
     const profile = getStoreProfile();
     const storeTitle = profile.name ? profile.name.toUpperCase() : 'ALTIN EKSPER';
 
     const typeRows = Object.entries(rep.types).map(function(item) {
-        return '<tr>' +
-            '<td><b>' + item[0] + '</b></td>' +
-            '<td style="text-align:center;">' + item[1].count + '</td>' +
-            '<td style="text-align:center;">' + item[1].grams.toFixed(2) + ' g</td>' +
-            '<td style="text-align:right; font-weight:700;">' + money(item[1].totalTL) + '</td>' +
-            '</tr>';
+        return '<tr><td><b>' + item[0] + '</b></td><td style="text-align:center;">' + item[1].count + '</td><td style="text-align:center;">' + item[1].grams.toFixed(2) + ' g</td><td style="text-align:right; font-weight:700;">' + money(item[1].totalTL) + '</td></tr>';
     }).join('');
 
     const prodRows = rep.products.map(function(it, idx) {
-        return '<tr>' +
-            '<td style="text-align:center;">' + (idx + 1) + '</td>' +
-            '<td><b>' + it.name + '</b></td>' +
-            '<td style="text-align:center;">' + it.karat + ' Ayar</td>' +
-            '<td style="text-align:center;">' + (it.qty > 0 ? it.qty : '—') + '</td>' +
-            '<td style="text-align:center;">' + it.grams.toFixed(2) + ' g</td>' +
-            '<td style="text-align:right; font-weight:700;">' + money(it.totalTL) + '</td>' +
-        '</tr>';
+        return '<tr><td style="text-align:center;">' + (idx + 1) + '</td><td><b>' + it.name + '</b></td><td style="text-align:center;">' + it.karat + ' Ayar</td><td style="text-align:center;">' + (it.qty > 0 ? it.qty : '—') + '</td><td style="text-align:center;">' + it.grams.toFixed(2) + ' g</td><td style="text-align:right; font-weight:700;">' + money(it.totalTL) + '</td></tr>';
     }).join('');
 
     const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>' + storeTitle + ' — Aylık Faaliyet & Hacim Raporu (' + rep.monthTitle + ')</title>' +
@@ -3252,11 +2960,9 @@ function exportPDF(id) {
 
     let totalQty = 0, totalGrams = 0;
     const productsHtml = (item.rows || []).map(function(row, index) {
-        const qty = num(row.qty);
-        const grams = num(row.grams);
+        const qty = num(row.qty), grams = num(row.grams);
         totalQty += qty; totalGrams += grams;
         const photoHtml = row.photo ? ('<div style="margin-top:4px;"><img src="' + row.photo + '" style="width:45px; height:45px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; display:block;"></div>') : '';
-
         return '<tr>' +
             '<td style="text-align:center; font-weight:600; color:#64748b;">' + (index + 1) + '</td>' +
             '<td><strong style="color:#1e293b;">' + safeText(row.productName || 'Altın') + '</strong>' + photoHtml + '</td>' +
@@ -3282,7 +2988,7 @@ function exportPDF(id) {
     const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>' + storeTitle + ' — Resmi Değerleme & İşlem Makbuzu #' + item.id + '</title>' +
         '<style>@page { size: A4 portrait; margin: 12mm; } body{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color:#1e293b; margin:0; font-size:12.5px; line-height:1.4; } .doc-header{ display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px; margin-bottom:12px; } .brand-title{ font-size:20px; font-weight:800; color:#1e293b; letter-spacing:-0.5px; } .meta-badge{ background:#f1f5f9; border:1px solid #cbd5e1; padding:3px 8px; border-radius:4px; font-weight:700; display:inline-block; margin-bottom:4px; font-size:11px; } .info-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px; margin-bottom:12px; font-size:12px; } table{ width:100%; border-collapse:collapse; margin-top:6px; } th{ background:#1e293b; color:#fff; font-size:11px; text-transform:uppercase; padding:6px; border:1px solid #1e293b; } td{ border:1px solid #e2e8f0; padding:6px; font-size:12px; vertical-align:middle; } .summary-card{ margin-top:12px; display:flex; justify-content:flex-end; } .summary-table{ width:300px; border:1px solid #cbd5e1; border-radius:6px; background:#f8fafc; } .summary-table td{ border:none; border-bottom:1px solid #e2e8f0; padding:5px 10px; } .summary-table tr:last-child td{ border-bottom:none; background:#1e293b; color:#fff; font-weight:800; font-size:13px; } .disclaimer{ margin-top:18px; font-size:10px; color:#64748b; border-top:1px dashed #cbd5e1; padding-top:6px; line-height:1.35; } .signature-section{ margin-top:24px; display:grid; grid-template-columns:1fr 1fr; gap:40px; page-break-inside:avoid; } .sig-box{ border-top:1px solid #94a3b8; text-align:center; padding-top:6px; font-size:11px; color:#475569; }</style></head><body>' +
         '<div class="doc-header"><div><div class="brand-title">' + storeTitle + '</div><div style="font-size:11px; color:#64748b; font-weight:600;">Resmi Altın Değerleme & İşlem Makbuzu</div></div><div style="text-align:right; font-size:11px; color:#475569;"><div class="meta-badge">İŞLEM NO: #' + String(item.id).slice(-6) + '</div><div><strong>Tarih:</strong> ' + dateFormatted + '</div></div></div>' +
-        '<div class="info-grid"><div><strong>Müşteri / Satıcı:</strong> ' + safeText(item.customerNote || "Girilmedi") + '</div><div><strong>İşlem Türü:</strong> ' + safeText(item.transactionType || "Alış") + '</div><div><strong>İletişim Tel:</strong> ' + safeText(item.customerPhone || "Belirtilmedi") + '</div><div><strong>Hedef İlçeler:</strong> ' + safeText(item.customerDistrict || "Merkez") + '</div></div>' +
+        '<div class="info-grid"><div><strong>Müşteri / Satıcı:</strong> ' + safeText(item.customerNote || "Girilmedi") + '</div><div><strong>İşlem Türü:</strong> ' + safeText(item.transactionType || "Alış") + '</div><div><strong>İletişim Tel:</strong> ' + safeText(item.customerPhone || "Belirtilmedi") + '</div><div><strong>Hedef Bölge:</strong> ' + safeText(item.customerDistrict || "Merkez") + '</div></div>' +
         '<table><thead><tr><th style="width:30px;">#</th><th>Ürün Cinsi</th><th style="width:75px; text-align:center;">Ayar</th><th style="width:50px; text-align:center;">Adet</th><th style="width:70px; text-align:center;">Gram</th><th style="width:110px; text-align:right;">Birim Alış</th><th style="width:105px; text-align:right;">Tutar (₺)</th></tr></thead><tbody>' + productsHtml + '</tbody></table>' +
         '<div class="summary-card"><table class="summary-table"><tr><td style="color:#64748b;">Toplam Adet:</td><td style="text-align:right; font-weight:700;">' + totalQty + '</td></tr><tr><td style="color:#64748b;">Toplam Gram:</td><td style="text-align:right; font-weight:700;">' + totalGrams.toFixed(2) + ' g</td></tr><tr><td>GENEL TOPLAM:</td><td style="text-align:right; color:#f59e0b;">' + safeText(item.total || "₺0,00") + '</td></tr></table></div>' +
         bestOfferBlock +
@@ -3301,10 +3007,7 @@ function openProfileModal() {
     document.getElementById('storePinInput').value = p.pin || '1234';
     document.getElementById('profileModal').style.display = 'flex';
 }
-
-function closeProfileModal() {
-    document.getElementById('profileModal').style.display = 'none';
-}
+function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
 
 function saveStoreProfile() {
     const p = {
@@ -3321,13 +3024,9 @@ function saveStoreProfile() {
 
 function downloadFullBackup() {
     const backupData = {
-        version: "2.0",
-        exportDate: new Date().toISOString(),
-        profile: getStoreProfile(),
-        jewelersDirectory: getDirectoryJewelers(),
-        transactions: readHistory()
+        version: "2.0", exportDate: new Date().toISOString(),
+        profile: getStoreProfile(), jewelersDirectory: getDirectoryJewelers(), transactions: readHistory()
     };
-
     const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
     const a = document.createElement('a');
     a.setAttribute("href", str);
@@ -3340,7 +3039,6 @@ function downloadFullBackup() {
 function restoreFromBackupFile(event) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
@@ -3352,24 +3050,22 @@ function restoreFromBackupFile(event) {
                 renderHistory();
                 alert('Yedek başarıyla yüklendi!\nToplam ' + data.transactions.length + ' adet işlem sisteme aktarıldı.');
                 closeProfileModal();
-            } else {
-                alert('Geçersiz yedek dosyası formatı.');
-            }
-        } catch (err) {
-            alert('Yedek dosyası okunurken hata oluştu: ' + err.message);
-        }
+            } else { alert('Geçersiz yedek dosyası formatı.'); }
+        } catch (err) { alert('Yedek dosyası okunurken hata oluştu: ' + err.message); }
     };
     reader.readAsText(file);
 }
 
-// BAŞLANGIÇ ÇALIŞTIRICILARI
+// BAŞLANGIÇ
 updateHeaderProfile();
 applyModeUI();
-initDistrictSelectors();
 resetWorkbenchClean();
 loadLivePrices();
 setInterval(loadLivePrices, 20000);
 </script>
+
+<!-- 81 İL & İLÇE MOTORU BAĞLANTISI -->
+<script src="cities.js"></script>
 
 </body>
 </html>
