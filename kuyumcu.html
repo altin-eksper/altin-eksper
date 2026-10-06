@@ -79,14 +79,6 @@ input:focus{ outline:none; border-color:#f59e0b; }
     padding:14px;
 }
 .btn-submit:hover{ background:#d97706; color:#fff; }
-.btn-login{
-    background:#1e293b;
-    color:#fff;
-    font-weight:700;
-    border:none;
-    cursor:pointer;
-    padding:12px;
-}
 .success-box{
     display:none;
     background:#ecfdf5;
@@ -99,26 +91,6 @@ input:focus{ outline:none; border-color:#f59e0b; }
     text-align:center;
     margin-top:10px;
 }
-.auth-box{
-    background:#f8fafc;
-    border:1.5px solid #cbd5e1;
-    border-radius:8px;
-    padding:14px;
-    margin-bottom:12px;
-}
-.verified-badge{
-    background:#ecfdf5;
-    color:#047857;
-    border:1px solid #10b981;
-    padding:6px 10px;
-    border-radius:6px;
-    font-size:12px;
-    font-weight:700;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:10px;
-}
 </style>
 </head>
 
@@ -127,7 +99,7 @@ input:focus{ outline:none; border-color:#f59e0b; }
 <div class="header">
     <div>
         <div style="font-weight:800; color:#f59e0b; font-size:18px;">ALTIN EKSPER</div>
-        <div style="font-size:11px; color:#94a3b8;">Yetkili Sarraf Teklif Portalı</div>
+        <div style="font-size:11px; color:#94a3b8;">Sarraf Teklif Giriş Portalı</div>
     </div>
     <div id="auctionTimer" class="badge-timer">15:00 Kaldı</div>
 </div>
@@ -155,122 +127,35 @@ input:focus{ outline:none; border-color:#f59e0b; }
     </div>
 </div>
 
-<!-- 🔐 GÜVENLİK ADIMI: KUYUMCU ŞİFRE / PIN GİRİŞ KARTI -->
-<div class="card" id="authCard">
-    <div id="loginFormSection" class="auth-box">
-        <label>Sarraf Kodu veya Dükkan Adı</label>
-        <input type="text" id="authCodeInput" placeholder="Örn: K001">
+<div class="card" id="quoteFormCard">
+    <label>Sarraf Kodu / Dükkan Adınız</label>
+    <input type="text" id="jewelerCodeInput" placeholder="Örn: K001 veya Yıldız Sarrafiye">
 
-        <label>Özel Sarraf PIN / Şifreniz</label>
-        <input type="password" id="authPinInput" placeholder="PIN Kodunuz (Örn: 1453)">
+    <label>Toplam Peşin Nakit Alış Teklifiniz (TL)</label>
+    <input type="number" id="offerPriceInput" placeholder="Örn: 154500" style="font-size:18px; font-weight:800; color:#1e293b;">
 
-        <button type="button" class="btn-login" onclick="loginJeweler()">
-            🔐 Şifre ile Doğrula & Giriş Yap
-        </button>
-        <div id="authErrorMsg" style="color:#dc2626; font-size:12px; font-weight:700; display:none; margin-top:4px;"></div>
-    </div>
+    <label>Mağaza Adresi / Şartınız (Opsiyonel)</label>
+    <input type="text" id="offerNoteInput" placeholder="Örn: Işıklar Cad. No:14 (Hemen Nakit)">
 
-    <div id="verifiedJewelerSection" style="display:none;">
-        <div class="verified-badge">
-            <span id="verifiedJewelerName">✓ Doğrulandı: Yıldız Sarrafiye (K001)</span>
-            <a href="javascript:void(0)" onclick="logoutJeweler()" style="color:#dc2626; font-size:11px; text-decoration:none;">Çıkış</a>
-        </div>
-    </div>
+    <button type="button" class="btn-submit" onclick="submitJewelerOffer()">
+        🚀 Teklifi Sisteme Gönder
+    </button>
 
-    <!-- TEKLİF FORMU (GİRİŞ YAPINCA AÇILIR) -->
-    <div id="offerInputSection" style="display:none;">
-        <label>Toplam Peşin Nakit Alış Teklifiniz (TL)</label>
-        <input type="number" id="offerPriceInput" placeholder="Örn: 154500" style="font-size:18px; font-weight:800; color:#1e293b;">
-
-        <label>Mağaza Adresi / Koşulunuz (Opsiyonel)</label>
-        <input type="text" id="offerNoteInput" placeholder="Örn: Işıklar Cad. No:14 (Hemen Nakit)">
-
-        <button type="button" class="btn-submit" onclick="submitJewelerOffer()">
-            🚀 Teklifi Sisteme Gönder
-        </button>
-
-        <div id="successMessage" class="success-box">
-            ✓ Teklifiniz sisteme başarıyla işlendi! En iyi teklif durumunda müşteri randevu fişiyle dükkanınıza yönlendirilecektir.
-        </div>
+    <div id="successMessage" class="success-box">
+        ✓ Teklifiniz sisteme başarıyla işlendi! En iyi teklif durumunda müşteri randevu fişiyle dükkanınıza yönlendirilecektir.
     </div>
 </div>
 
 <script>
+// DİNAMİK API URL
 const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'http://localhost:3000/api';
 
 let currentRequestData = null;
 let timerInterval = null;
-let verifiedJeweler = null;
 
 function getUrlRequestId() {
     const params = new URLSearchParams(window.location.search);
     return params.get('id');
-}
-
-// Kayıtlı oturumu kontrol et
-function checkStoredAuth() {
-    try {
-        const stored = localStorage.getItem('altinEksperJewelerAuth');
-        if (stored) {
-            verifiedJeweler = JSON.parse(stored);
-            showOfferSection();
-        }
-    } catch (e) {}
-}
-
-async function loginJeweler() {
-    const code = document.getElementById('authCodeInput').value.trim();
-    const pin = document.getElementById('authPinInput').value.trim();
-    const errEl = document.getElementById('authErrorMsg');
-
-    if (!code || !pin) {
-        errEl.textContent = 'Lütfen sarraf kodunu ve şifrenizi giriniz.';
-        errEl.style.display = 'block';
-        return;
-    }
-
-    try {
-        const res = await fetch(BACKEND_API_URL + '/api/jeweler/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, pin })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            verifiedJeweler = { ...data.jeweler, pin };
-            localStorage.setItem('altinEksperJewelerAuth', JSON.stringify(verifiedJeweler));
-            errEl.style.display = 'none';
-            showOfferSection();
-        } else {
-            errEl.textContent = data.message || 'Hatalı kod veya şifre!';
-            errEl.style.display = 'block';
-        }
-    } catch (e) {
-        errEl.textContent = 'Sunucuya bağlanılamadı.';
-        errEl.style.display = 'block';
-    }
-}
-
-function showOfferSection() {
-    if (!verifiedJeweler) return;
-    document.getElementById('loginFormSection').style.display = 'none';
-    document.getElementById('verifiedJewelerSection').style.display = 'block';
-    document.getElementById('verifiedJewelerName').textContent = '✓ ' + verifiedJeweler.name + ' (' + verifiedJeweler.code + ')';
-    
-    if (verifiedJeweler.address) {
-        document.getElementById('offerNoteInput').value = verifiedJeweler.address;
-    }
-    
-    document.getElementById('offerInputSection').style.display = 'block';
-}
-
-function logoutJeweler() {
-    localStorage.removeItem('altinEksperJewelerAuth');
-    verifiedJeweler = null;
-    document.getElementById('loginFormSection').style.display = 'block';
-    document.getElementById('verifiedJewelerSection').style.display = 'none';
-    document.getElementById('offerInputSection').style.display = 'none';
 }
 
 async function loadAuctionData() {
@@ -281,18 +166,19 @@ async function loadAuctionData() {
     }
 
     try {
-        const res = await fetch(BACKEND_API_URL + '/api/request/' + reqId);
+        const res = await fetch(BACKEND_API_URL + '/request/' + reqId);
         const data = await res.json();
         if (!data.success || !data.data) {
-            showExpiredCard("Bu ihale sunucuda bulunamadı veya süresi doldu.");
+            showExpiredCard("Bu ihale sunucuda bulunamadı veya süresi doldu. Lütfen yeni bir talep oluşturup deneyiniz.");
             return;
         }
 
         currentRequestData = data.data;
         renderAuctionUI();
         startTimer();
+
     } catch (e) {
-        showExpiredCard("Sunucuya bağlanılamadı.");
+        showExpiredCard("Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol ediniz.");
     }
 }
 
@@ -327,9 +213,9 @@ function startTimer() {
                 timerEl.textContent = 'Süre Doldu';
                 timerEl.className = 'badge-timer badge-expired';
             }
-            const authCard = document.getElementById('authCard');
-            if (authCard) {
-                authCard.innerHTML = '<div style="text-align:center; color:#dc2626; font-weight:700; padding:10px;">⏱ Bu ihalenin 15 dakikalık süresi sona ermiştir.</div>';
+            const formCard = document.getElementById('quoteFormCard');
+            if (formCard) {
+                formCard.innerHTML = '<div style="text-align:center; color:#dc2626; font-weight:700; padding:10px;">⏱ Bu ihalenin 15 dakikalık süresi sona ermiştir.</div>';
             }
             return;
         }
@@ -354,27 +240,20 @@ function showExpiredCard(msg) {
 }
 
 async function submitJewelerOffer() {
-    if (!verifiedJeweler) {
-        alert('Lütfen önce şifrenizle giriş yapınız.');
-        return;
-    }
-
+    const jCode = document.getElementById('jewelerCodeInput').value.trim();
     const price = parseFloat(document.getElementById('offerPriceInput').value);
     const note = document.getElementById('offerNoteInput').value.trim();
 
-    if (!price || price <= 0) {
-        alert('Lütfen geçerli bir teklif tutarı giriniz.');
-        return;
-    }
+    if (!jCode) { alert('Lütfen sarraf kodu veya dükkan adınızı yazınız.'); return; }
+    if (!price || price <= 0) { alert('Lütfen geçerli bir teklif tutarı giriniz.'); return; }
 
     try {
-        const res = await fetch(BACKEND_API_URL + '/api/request/quote', {
+        const res = await fetch(BACKEND_API_URL + '/request/quote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 requestId: currentRequestData.requestId,
-                jewelerCode: verifiedJeweler.code,
-                pin: verifiedJeweler.pin,
+                jewelerCode: jCode,
                 offerPrice: price,
                 note: note
             })
@@ -392,8 +271,6 @@ async function submitJewelerOffer() {
     }
 }
 
-// Başlangıç kontrolleri
-checkStoredAuth();
 loadAuctionData();
 </script>
 
