@@ -396,108 +396,109 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     font-weight:700;
 }
 
-/* ==================== 📱 MOBİL DİKEY EKRAN KART DÜZENİ ==================== */
+/* ==================== 📱 MOBİL DİKEY EKRAN KART DÜZENİ (KOMPAKT & İNCE) ==================== */
 @media(max-width:800px){
     .market-grid, .form-grid, .report-grid{ grid-template-columns:1fr 1fr; }
     .quote-row{ grid-template-columns:1fr 1fr; }
     .ledger-summary{ grid-template-columns:1fr; }
     .date-group-header{ flex-direction:column; align-items:flex-start; gap:4px; }
 
-    /* Mobilde tabloyu blok kart sistemine dönüştür */
     table, thead, tbody, tfoot, tr, th, td {
         display: block !important;
         width: 100% !important;
     }
+    thead tr { display: none !important; }
 
-    /* Üst başlık satırını mobilde gizle */
-    thead tr {
-        display: none !important;
-    }
-
-    /* Her bir ürün satırını ferah, belirgin bir karta çevir */
+    /* İnce, şık ve az yer kaplayan mobil ürün kartı */
     #rows > tr {
         background: #ffffff !important;
-        border: 2px solid #cbd5e1 !important;
-        border-radius: 10px !important;
-        padding: 12px 14px !important;
-        margin-bottom: 14px !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        padding: 8px 10px !important;
+        margin-bottom: 8px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
         display: flex !important;
-        flex-direction: column !important;
-        gap: 8px !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
     }
 
     #rows > tr > td {
         padding: 0 !important;
         border: none !important;
-        width: 100% !important;
     }
 
-    /* Ürün seçimi (tam genişlik) */
-    #rows > tr > td select.product {
-        font-size: 15px !important;
-        font-weight: 700 !important;
-        padding: 10px !important;
-        height: auto !important;
+    /* 1. SATIR: Ürün Adı (sol %60) ve Ayar (sağ %40) yan yana */
+    #rows > tr > td:nth-child(1) {
+        width: calc(60% - 3px) !important;
+        order: 1 !important;
+    }
+    #rows > tr > td:nth-child(2) {
+        width: calc(40% - 3px) !important;
+        order: 2 !important;
     }
 
-    /* Ayar seçimi */
-    #rows > tr > td select.karat {
-        font-size: 14px !important;
-        padding: 8px 10px !important;
+    /* 2. SATIR: Adet (sol %50) ve Gram (sağ %50) yan yana */
+    #rows > tr > td:nth-child(3) {
+        width: calc(50% - 3px) !important;
+        order: 3 !important;
+    }
+    #rows > tr > td:nth-child(4) {
+        width: calc(50% - 3px) !important;
+        order: 4 !important;
     }
 
-    /* Adet ve Gram giriş alanları */
-    #rows > tr > td input.qty,
-    #rows > tr > td input.grams {
-        font-size: 15px !important;
-        padding: 8px 10px !important;
+    /* 3. SATIR: Fazlalık yapan birim etiketini mobilde gizle, Tutar ve Sil tek hizada */
+    #rows > tr > td:nth-child(5) {
+        display: none !important;
     }
-
-    /* Birim Alış Referans Etiketi */
-    #rows > tr > td.unit-price {
-        display: inline-block !important;
-        width: auto !important;
-        font-size: 12px !important;
-        padding: 5px 8px !important;
-        background: #f1f5f9 !important;
-        border-radius: 4px !important;
-        align-self: flex-start !important;
+    #rows > tr > td:nth-child(6) {
+        width: calc(75% - 3px) !important;
+        order: 5 !important;
+        display: flex !important;
+        align-items: center !important;
     }
-
-    /* Satır Tutarı */
-    #rows > tr > td.amount {
-        font-size: 18px !important;
-        font-weight: 800 !important;
-        color: #b45309 !important;
-        padding: 4px 0 !important;
-    }
-
-    /* Silme Butonu - Alt satırda sağa yaslı */
-    #rows > tr > td:last-child {
-        border-top: 1px dashed #e2e8f0 !important;
-        padding-top: 8px !important;
-        margin-top: 4px !important;
+    #rows > tr > td:nth-child(7) {
+        width: calc(25% - 3px) !important;
+        order: 6 !important;
         text-align: right !important;
     }
 
-    #rows > tr > td:last-child button.danger {
-        width: auto !important;
-        padding: 6px 16px !important;
-        font-size: 12px !important;
+    /* Kompakt kutu yükseklikleri */
+    #rows > tr select, 
+    #rows > tr input {
+        padding: 6px 8px !important;
+        font-size: 13px !important;
+        height: 36px !important;
+        border-radius: 6px !important;
+    }
+    #rows > tr select.product {
+        font-weight: 700 !important;
     }
 
-    /* Mobilde Genel Toplam Bölümü */
+    #rows > tr > td.amount {
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        color: #b45309 !important;
+        line-height: 1 !important;
+    }
+
+    #rows > tr button.danger {
+        width: 100% !important;
+        padding: 6px 0 !important;
+        height: 32px !important;
+        font-size: 11px !important;
+    }
+
+    /* Mobilde Toplam Alanı */
     tfoot tr {
         background: #f8fafc !important;
-        border: 2px solid #1e293b !important;
-        border-radius: 10px !important;
-        padding: 12px !important;
+        border: 1.5px solid #1e293b !important;
+        border-radius: 8px !important;
+        padding: 8px 10px !important;
         display: flex !important;
         flex-direction: column !important;
-        gap: 6px !important;
+        gap: 4px !important;
     }
-
     tfoot td {
         padding: 2px 0 !important;
         border: none !important;
@@ -718,7 +719,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
                 </div>
             </div>
 
-            <div style="grid-template-columns:1.2fr 1fr 1.6fr 40px; gap:8px; font-size:11px; font-weight:700; color:#64748b; margin-bottom:4px;" class="desktop-quote-header">
+            <div style="display:grid; grid-template-columns:1.2fr 1fr 1.6fr 40px; gap:8px; font-size:11px; font-weight:700; color:#64748b; margin-bottom:4px;">
                 <div>Kuyumcu (Rehberden Seçilebilir)</div>
                 <div>Verilen Teklif (TL)</div>
                 <div>Mağaza Adresi / Harita Linki</div>
@@ -3015,7 +3016,7 @@ function generateDailyReport() {
             '<td style="text-align:center; font-weight:600;">' + (item.qty > 0 ? item.qty : '—') + '</td>' +
             '<td style="text-align:center; font-weight:600;">' + item.grams.toFixed(2) + ' g</td>' +
             '<td style="text-align:right; font-weight:700; color:#1e293b;">' + money(item.totalTL) + '</td>' +
-        '</tr>';
+            '</tr>';
     }).join('');
 
     currentReportSummary = {
@@ -3218,7 +3219,7 @@ function printMonthlyReportPDF() {
             '<td style="text-align:center;">' + item[1].count + '</td>' +
             '<td style="text-align:center;">' + item[1].grams.toFixed(2) + ' g</td>' +
             '<td style="text-align:right; font-weight:700;">' + money(item[1].totalTL) + '</td>' +
-        '</tr>';
+            '</tr>';
     }).join('');
 
     const prodRows = rep.products.map(function(it, idx) {
