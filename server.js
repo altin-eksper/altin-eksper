@@ -10,7 +10,9 @@ app.use(express.json());
 
 // Statik frontend dosyalarını (index.html, cities.js vb.) sun
 app.use(express.static(__dirname));
-
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 // ================= META WHATSAPP CLOUD API AYARLARI =================
 const WHATSAPP_CONFIG = {
     phoneNumberId: '1293164497207661',
