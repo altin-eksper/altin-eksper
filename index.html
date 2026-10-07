@@ -2077,10 +2077,13 @@ function openLiveAuctionModal(reqId, cName, cPhone, expiresAtIso) {
         try {
             const res = await fetch(BACKEND_API_URL + '/request/' + reqId);
             const data = await res.json();
-            if (data.success && data.data) {
+            console.log(`[Müşteri Teklif Sorgusu #${reqId}]:`, data);
+            if (data.success && data.data && data.data.quotes && data.data.quotes.length > 0) {
                 renderCustomerLiveQuotes(data.data, cName, cPhone);
             }
-        } catch (err) {}
+        } catch (err) {
+            console.error('Sorgu hatası:', err);
+        }
     }, 3000);
 }
 
