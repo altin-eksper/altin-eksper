@@ -12,7 +12,7 @@ app.use(express.static(__dirname));
 // ================= META WHATSAPP CLOUD API AYARLARI =================
 const WHATSAPP_CONFIG = {
     phoneNumberId: '1293164497207661',
-    accessToken: 'EAAY3ClF5SXgBSo9afxI4QgTtWJYcv8jY2IIefuLnPKFdqck3WbTqW4brEtrDfrNIgGKCkqPfQFAOcT6sFhmP1y9ZCxaYWW1T8a5VwApyoiwN5H51UQtFo9nhRp2Q4d8mamUmU7WBZBTzJKz46RGpJvwfktJhJ2IBD6rrloIhZBJFVoeLLkhPjSNaWVn9aHEfSJvJlwaMKB9rmQ5IwpW6LIuC8XPjXr0u0Cu7lwnVssZCQO7odWpk72tHueZCZAfOCH4dDzYeqo23ZCjp18qFLZAZBXHvV',
+    accessToken: 'EAAY3ClF5SXgBSgKOGZAf4f2hIzEYFjjbLMmOpQ790tWqSYKnFCrCpKUgp8It3BAAPZCXhIGpIXWHlz0MhOd2ZCeE7tWxyOlUc9rGH0QbOyFpnvNZCIZAbtpVOa4NOZBg9DKrWUOd6MfqXPttArAyeAkzUc6dN9GyfmWWSR0eBoJnt95qMdR65QDRtHZC4hOWzi47QZDZD',
     apiVersion: 'v21.0'
 };
 
@@ -122,8 +122,13 @@ app.post('/api/request/create', async (req, res) => {
             `• ${it.productName} (${it.karat}k) - ${it.grams ? it.grams + 'g' : ''} ${it.qty ? it.qty + ' adet' : ''}`
         ).join('\n');
 
-        // Sarraflara gidecek resmi ihale çağrısı mesajı
-        const jewelerNotification = 
+        // Eşleşen sarraflara WhatsApp bildirimi fırlat
+        console.log(`[Dağıtım]: ${targetDistrict} bölgesinde ${matchedJewelers.length} sarrafa ihale iletiliyor...`);
+        for (const jeweler of matchedJewelers) {
+            // Her sarrafa kendi ID'sini içeren özel teklif verme linki üretilir
+            const offerLink = `https://altin-eksper.onrender.com/kuyumcu.html?req=${reqData.requestId}&jeweler=${jeweler.id}`;
+
+            const jewelerNotification = 
 `🔔 *ALTIN EKSPER — BÖLGENİZDE YENİ İHALE!*
 
 Sayın Sarraf İş Ortağımız, bölgenizde nakit altın satmak isteyen yeni bir müşteri ihalesi başladı.
@@ -137,14 +142,10 @@ Sayın Sarraf İş Ortağımız, bölgenizde nakit altın satmak isteyen yeni bi
 ${itemsList}
 
 ⏱ *Kalan Teklif Süresi:* 15 Dakika
-📲 Hemen teklifinizi iletmek veya panele girmek için yanıtlayınız.`;
+👉 *Hemen Teklif Verin:* ${offerLink}`;
 
-        // Eşleşen sarraflara WhatsApp bildirimi fırlat
-        console.log(`[Dağıtım]: ${targetDistrict} bölgesinde ${matchedJewelers.length} sarrafa ihale iletiliyor...`);
-        for (const jeweler of matchedJewelers) {
             await sendWhatsAppMessage(jeweler.phone, jewelerNotification);
         }
-
         // Müşteriye bilgi teyidi (Varsa)
         if (reqData.customerPhone) {
             const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz ${targetDistrict} bölgesindeki kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
