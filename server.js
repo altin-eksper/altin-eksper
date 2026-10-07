@@ -196,22 +196,32 @@ app.post('/api/request/quote', (req, res) => {
 
 // 5. Kazanan Sarraf & Randevu Bildirimi
 app.post('/api/request/notify-winner', async (req, res) => {
-    const { requestId, winnerCode, agreedPrice, customerName, jewelerPhone } = req.body;
+    try {
+        const { requestId, jewelerCode, agreedPrice, customerName, customerPhone } = req.body;
 
-    if (jewelerPhone) {
+        // Sarraf rehberinden sarrafın telefonunu bul (yoksa test numaranıza fırlatır)
+        const targetJeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerCode || j.name === jewelerCode);
+        const jewelerPhone = targetJeweler ? targetJeweler.phone : '905399321893';
+
         const winnerMessage = 
 `🎉 *TEBRİKLER! İHALE SİZDE KALDI*
 
-🏷 *Talep No:* #${requestId}
-👤 *Müşteri:* ${customerName}
-💰 *Kabul Edilen Teklif:* ${agreedPrice} ₺
+Sayın İş Ortağımız, verdiğiniz teklif müşteri tarafından onaylandı!
 
-Müşteriye mağazanız için randevu kodu verildi. İşlemi mağazanızda tamamlayabilirsiniz.`;
+🏷 *İhale No:* #${requestId}
+👤 *Müşteri Adı:* ${customerName || 'Müşteri'}
+💰 *Anlaşılan Tutar:* ${Number(agreedPrice).toLocaleString('tr-TR')} ₺
+
+📌 *Müşteri İletişim:* ${customerPhone || 'Girilmedi'}
+Müşteriye mağazanız için randevu kodu tanımlandı. Müşteri kısa süre içinde dükkanınıza gelecektir.`;
 
         await sendWhatsAppMessage(jewelerPhone, winnerMessage);
-    }
 
-    res.json({ success: true, message: 'Kazanan sarrafa bildirim gönderildi.' });
+        res.json({ success: true, message: 'Kazanan sarrafa WhatsApp randevu bildirimi başarıyla iletildi.' });
+    } catch (err) {
+        console.error('Notify winner error:', err);
+        res.status(500).json({ success: false, message: 'Bildirim gönderilemedi.' });
+    }
 });
 
 app.listen(PORT, () => {
