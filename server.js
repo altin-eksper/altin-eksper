@@ -1,11 +1,15 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json());
+
+// Statik frontend dosyalarını (index.html, cities.js vb.) sun
+app.use(express.static(__dirname));
 
 // ================= META WHATSAPP CLOUD API AYARLARI =================
 const WHATSAPP_CONFIG = {
@@ -49,7 +53,7 @@ async function sendWhatsAppMessage(toPhone, messageText) {
     }
 }
 
-// Bellek İçi Talep Deposu (Canlı Havuz)
+// Canlı Talep Havuzu
 let requestsPool = [];
 
 // Süresi dolan (15 dk) talepleri otomatik temizleme
@@ -57,6 +61,11 @@ setInterval(() => {
     const now = Date.now();
     requestsPool = requestsPool.filter(r => !r.expiresAt || new Date(r.expiresAt).getTime() > now);
 }, 30000);
+
+// Ana Sayfa Yönlendirmesi
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // 1. Yeni Müşteri Satış Talebi Oluşturma & WhatsApp Bildirimi
 app.post('/api/request/create', async (req, res) => {
@@ -69,7 +78,6 @@ app.post('/api/request/create', async (req, res) => {
         reqData.quotes = [];
         requestsPool.unshift(reqData);
 
-        // WhatsApp İhale Metnini Derle
         const itemsList = (reqData.items || []).map(it => 
             `• ${it.productName} (${it.karat}k) - ${it.grams ? it.grams + 'g' : ''} ${it.qty ? it.qty + ' adet' : ''}`
         ).join('\n');
@@ -89,7 +97,6 @@ ${itemsList}
 ⏱ *Kalan Teklif Süresi:* 15 Dakika
 👉 İhaleyi incelemek ve teklif vermek için panele giriş yapınız.`;
 
-        // Test numaranıza (veya müşteriye/sarrafa) otomatik bildirim gönder
         if (reqData.customerPhone) {
             await sendWhatsAppMessage(reqData.customerPhone, messageBody);
         }
@@ -115,7 +122,7 @@ app.get('/api/request/:id', (req, res) => {
     res.json({ success: true, data: found });
 });
 
-// 4. Sarraf Teklifi Ekleme / Güncelleme
+// 4. Sarraf Teklifi Ekleme
 app.post('/api/request/quote', (req, res) => {
     const { requestId, jewelerCode, offerPrice, note } = req.body;
     const target = requestsPool.find(r => String(r.requestId) === String(requestId));
@@ -132,7 +139,7 @@ app.post('/api/request/quote', (req, res) => {
     res.json({ success: true, quotes: target.quotes });
 });
 
-// 5. Kazanan Sarraf & Randevu Bildirimi
+// 5. Kazanan Sarraf Bildirimi
 app.post('/api/request/notify-winner', async (req, res) => {
     const { requestId, winnerCode, agreedPrice, customerName, jewelerPhone } = req.body;
 
@@ -144,7 +151,7 @@ app.post('/api/request/notify-winner', async (req, res) => {
 👤 *Müşteri:* ${customerName}
 💰 *Kabul Edilen Teklif:* ${agreedPrice} ₺
 
-Müşteriye mağaza adresiniz ve randevu kodu iletildi. Müşteri mağazanıza geldiğinde tartım/ayar kontrolü sonrası ödemeyi tamamlayabilirsiniz.`;
+Müşteriye randevu kodu iletildi. Kontroller sonrası işlemi tamamlayabilirsiniz.`;
 
         await sendWhatsAppMessage(jewelerPhone, winnerMessage);
     }
