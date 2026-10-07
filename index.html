@@ -409,7 +409,6 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     }
     thead tr { display: none !important; }
 
-    /* İnce, şık ve kompakt ürün kartı */
     #rows > tr {
         background: #ffffff !important;
         border: 1.5px solid #cbd5e1 !important;
@@ -427,41 +426,13 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         border: none !important;
     }
 
-    /* 1. SATIR: Ürün Adı (sol %60) ve Ayar (sağ %40) */
-    #rows > tr > td:nth-child(1) {
-        width: calc(60% - 3px) !important;
-        order: 1 !important;
-    }
-    #rows > tr > td:nth-child(2) {
-        width: calc(40% - 3px) !important;
-        order: 2 !important;
-    }
-
-    /* 2. SATIR: Adet (sol %50) ve Gram (sağ %50) */
-    #rows > tr > td:nth-child(3) {
-        width: calc(50% - 3px) !important;
-        order: 3 !important;
-    }
-    #rows > tr > td:nth-child(4) {
-        width: calc(50% - 3px) !important;
-        order: 4 !important;
-    }
-
-    /* 3. SATIR: Tutar ve Sil tek hizada */
-    #rows > tr > td:nth-child(5) {
-        display: none !important;
-    }
-    #rows > tr > td:nth-child(6) {
-        width: calc(75% - 3px) !important;
-        order: 5 !important;
-        display: flex !important;
-        align-items: center !important;
-    }
-    #rows > tr > td:nth-child(7) {
-        width: calc(25% - 3px) !important;
-        order: 6 !important;
-        text-align: right !important;
-    }
+    #rows > tr > td:nth-child(1) { width: calc(60% - 3px) !important; order: 1 !important; }
+    #rows > tr > td:nth-child(2) { width: calc(40% - 3px) !important; order: 2 !important; }
+    #rows > tr > td:nth-child(3) { width: calc(50% - 3px) !important; order: 3 !important; }
+    #rows > tr > td:nth-child(4) { width: calc(50% - 3px) !important; order: 4 !important; }
+    #rows > tr > td:nth-child(5) { display: none !important; }
+    #rows > tr > td:nth-child(6) { width: calc(75% - 3px) !important; order: 5 !important; display: flex !important; align-items: center !important; }
+    #rows > tr > td:nth-child(7) { width: calc(25% - 3px) !important; order: 6 !important; text-align: right !important; }
 
     #rows > tr select, 
     #rows > tr input {
@@ -470,9 +441,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         height: 36px !important;
         border-radius: 6px !important;
     }
-    #rows > tr select.product {
-        font-weight: 700 !important;
-    }
+    #rows > tr select.product { font-weight: 700 !important; }
 
     #rows > tr > td.amount {
         font-size: 16px !important;
@@ -802,6 +771,37 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 
 </div>
 
+<!-- MÜŞTERİ CANLI İHALE & TEKLİF İZLEME MODALI -->
+<div id="liveAuctionModal" class="report-modal">
+    <div class="report-modal-content" style="max-width:560px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
+            <div>
+                <h3 style="margin:0; font-size:18px; color:#1e293b;">🔔 Canlı Teklif Havuzu</h3>
+                <span style="font-size:12px; color:#64748b;" id="liveModalReqInfo">İhale No: #...</span>
+            </div>
+            <div id="liveModalTimer" style="background:#fee2e2; color:#dc2626; font-weight:800; padding:4px 8px; border-radius:6px; font-size:12px;">
+                15:00 Kaldı
+            </div>
+        </div>
+
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; margin:12px 0; font-size:12px; color:#1e3a8a;">
+            💡 Talebiniz bölgedeki kuyumculara WhatsApp üzerinden ulaştırıldı. Sarrafların verdiği teklifler aşağıdaki listede <b>anlık</b> olarak görünecektir. En iyi teklifi seçip onaylayabilirsiniz.
+        </div>
+
+        <div id="liveModalQuotesList" style="min-height:140px; margin-bottom:12px;">
+            <div style="text-align:center; color:#64748b; padding:30px 10px; font-size:13px;">
+                ⏱ Sarrafların teklifleri bekleniyor...
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end;">
+            <button type="button" class="secondary" style="font-size:12px; padding:6px 14px;" onclick="closeLiveAuctionModal()">
+                Kapat
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- SARRAF REHBERİ MODALI -->
 <div id="directoryModal" class="report-modal">
     <div class="report-modal-content" style="max-width:750px;">
@@ -1012,7 +1012,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 
 <script>
 const ALTIN_EKSPER_PHONE = '905360434207';
-const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'http://localhost:3000/api';
+const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'http://localhost:10000/api';
 
 const INBOX_STORAGE_KEY = 'altinEksperLiveInbox_v1';
 const DIRECTORY_STORAGE_KEY = 'altinEksperJewelersDir_v1';
@@ -1039,6 +1039,7 @@ const PRICES = { gram: 6725, quarter: 10692.75, half: 21385.50, full: 42771.00 }
 let rowId = 0, quoteId = 0, currentEditingId = null, currentLoadedRequestId = null;
 let currentHistoryTab = 'active', currentReportSummary = null, currentMonthlySummary = null;
 let isKuyumcuMode = false, isInboxCollapsed = false, inboxPollInterval = null, quotesLivePollInterval = null;
+let customerModalPollInterval = null, customerModalTimerInterval = null;
 
 function money(n) {
     return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 2 }).format(Number(n) || 0);
@@ -1160,7 +1161,7 @@ async function loadLivePrices() {
 // ==================== İL & İLÇE DROPDOWN MANTIĞI ====================
 function initCityDropdowns() {
     const pSel = document.getElementById('provinceSelect');
-    if (!pSel) return;
+    if (!pSel || typeof TURKEY_CITIES_DATA === 'undefined') return;
     pSel.innerHTML = '<option value="">İl</option>';
     Object.keys(TURKEY_CITIES_DATA).forEach(function(city) {
         pSel.innerHTML += '<option value="' + city + '">' + city + '</option>';
@@ -1170,7 +1171,7 @@ function initCityDropdowns() {
 function onProvinceSelect(el) {
     const dSel = document.getElementById('districtSelect');
     const city = el.value;
-    if (!dSel) return;
+    if (!dSel || typeof TURKEY_CITIES_DATA === 'undefined') return;
 
     dSel.innerHTML = '<option value="">İlçe</option>';
     if (!city || !TURKEY_CITIES_DATA[city]) {
@@ -1746,11 +1747,9 @@ function getDirectoryJewelers() {
     } catch (e) {}
 
     const defaults = [
-        { code: 'K001', name: 'Yıldız Sarrafiye', district: 'Muratpaşa', phone: '05320000001', address: 'Işıklar Cad. No:14 Muratpaşa / Antalya' },
-        { code: 'K002', name: 'Akdeniz Kuyumculuk', district: 'Kepez', phone: '05320000002', address: 'Dokuma Çallı Meydanı No:5 Kepez / Antalya' },
-        { code: 'K003', name: 'Toros Altın', district: 'Konyaaltı', phone: '05320000003', address: 'Atatürk Bulvarı No:88 Konyaaltı / Antalya' },
-        { code: 'K004', name: 'Alanya Sarraf', district: 'Alanya', phone: '05320000004', address: 'Hükümet Cad. No:22 Alanya / Antalya' },
-        { code: 'K005', name: 'Manavgat Mücevherat', district: 'Manavgat', phone: '05320000005', address: 'Antalya Cad. No:45 Manavgat / Antalya' }
+        { code: 'SARRAF_01', name: 'Güneş Sarrafiye', district: 'Muratpaşa', phone: '05399321893', address: 'Işıklar Cad. No:14 Muratpaşa / Antalya' },
+        { code: 'SARRAF_02', name: 'Karat Mücevherat', district: 'Kepez', phone: '05399321893', address: 'Dokuma Çallı Meydanı No:5 Kepez / Antalya' },
+        { code: 'SARRAF_03', name: 'Akdeniz Kuyumculuk', district: 'Muratpaşa', phone: '05399321893', address: 'Atatürk Bulvarı No:88 Muratpaşa / Antalya' }
     ];
     setDirectoryJewelers(defaults);
     return defaults;
@@ -1786,7 +1785,7 @@ function renderDirectoryTable() {
 }
 
 function addDirectoryJeweler() {
-    const code = document.getElementById('dirNewCode').value.trim() || ('K00' + (getDirectoryJewelers().length + 1));
+    const code = document.getElementById('dirNewCode').value.trim() || ('SARRAF_0' + (getDirectoryJewelers().length + 1));
     const name = document.getElementById('dirNewName').value.trim();
     const dist = document.getElementById('dirNewDistrict').value.trim();
     const phone = document.getElementById('dirNewPhone').value.trim();
@@ -1854,7 +1853,7 @@ function handleQuoteInput(inputEl) {
     const row = inputEl.closest('.quote-row');
     if (!row) return;
 
-    const jCode = row.querySelector('.quote-name')?.value || 'K001';
+    const jCode = row.querySelector('.quote-name')?.value || 'SARRAF_01';
     const oPrice = num(row.querySelector('.quote-price')?.value);
     const oNote = row.querySelector('.quote-note')?.value || '';
 
@@ -1942,7 +1941,7 @@ function openAuctionDispatchModal() {
 
     const profile = getStoreProfile();
     const brand = profile.name || 'Altın Eksper';
-    const portalUrl = window.location.origin + '/kuyumcu.html?id=' + reqId;
+    const portalUrl = window.location.origin + '/kuyumcu.html?req=' + reqId;
 
     const auctionMsg = '🚨 *' + brand.toUpperCase() + ' — YENİ NAKİT ALIŞ İHALESİ*\n\n' +
         '🏷 *İhale Takip Kodu:* #' + reqId + '\n' +
@@ -1982,10 +1981,11 @@ function closeAuctionDispatchModal() {
     if (modal) modal.style.display = 'none';
 }
 
+// ==================== MÜŞTERİ TALEP GÖNDERME & CANLI TAKİP ====================
 async function sendCustomerDirectReportWhatsApp() {
     const btn = document.getElementById('submitRequestBtn');
     const cName = document.getElementById('customerNote')?.value.trim() || 'Müşteri';
-    const cPhone = document.getElementById('customerPhone')?.value.trim() || 'Belirtilmedi';
+    const cPhone = document.getElementById('customerPhone')?.value.trim() || '';
     const dist = document.getElementById('customerDistrict')?.value.trim() || 'Merkez';
     const totalTL = document.getElementById('grandTotal')?.textContent || '0,00 ₺';
     const totalG = document.getElementById('totalGrams')?.textContent || '0,00 g';
@@ -2016,7 +2016,7 @@ async function sendCustomerDirectReportWhatsApp() {
 
     const requestPayload = {
         requestId: tempId, customerName: cName, customerPhone: cPhone,
-        district: dist, totalGrams: totalG, totalReferenceTL: totalTL,
+        city: 'Antalya', district: dist, totalGrams: totalG, totalReferenceTL: totalTL,
         items: payloadItems, createdAt: new Date().toISOString(), expiresAt: expiresAt
     };
 
@@ -2024,32 +2024,123 @@ async function sendCustomerDirectReportWhatsApp() {
     localInbox.unshift(requestPayload);
     setLocalInbox(localInbox);
 
-    if (btn) { btn.textContent = '⏳ Havuza Ekleniyor...'; btn.disabled = true; }
+    if (btn) { btn.textContent = '⏳ Sarraflara İletiliyor...'; btn.disabled = true; }
 
     try {
-        await fetch(BACKEND_API_URL + '/request/create', {
+        const res = await fetch(BACKEND_API_URL + '/request/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestPayload)
         });
+        const data = await res.json();
+        console.log('İhale backend sonucu:', data);
     } catch (e) {
+        console.error('API isteği hatası:', e);
     } finally {
         if (btn) { btn.textContent = '📲 WhatsApp ile Teklif İste (0536 043 42 07)'; btn.disabled = false; }
     }
 
-    const portalUrl = window.location.origin + '/kuyumcu.html?id=' + tempId;
-    const msg = '🔔 *ALTIN EKSPER — RESMİ SATIŞ TALEBİ*\n\n' +
-                '📋 *Talep No:* #' + tempId + '\n' +
-                '👤 *Müşteri:* ' + cName + '\n' +
-                '📞 *İletişim:* ' + cPhone + '\n' +
-                '📍 *Teklif İstenen Bölge:* ' + dist + '\n\n' +
-                '📦 *Ürün Listesi:*\n' + productLines + '\n' +
-                '⚖ *Toplam Ağırlık:* ' + totalG + '\n' +
-                '💰 *Piyasa Alış Referansı:* ' + totalTL + '\n\n' +
-                '👉 *Kuyumcu Teklif Linki:* ' + portalUrl + '\n\n' +
-                '📌 *Talebin sistem tarafından değerlendirilerek anlaşmalı sarrafların en iyi tekliflerinin iletilmesini rica ederim.*';
+    // Canlı İhale & Teklif Takip Modalını Ekrana Aç ve 3 Saniyede Bir Dinle
+    openLiveAuctionModal(tempId, cName, cPhone, expiresAt);
+}
 
-    window.open('https://api.whatsapp.com/send?phone=905360434207&text=' + encodeURIComponent(msg), '_blank');
+function openLiveAuctionModal(reqId, cName, cPhone, expiresAtIso) {
+    const modal = document.getElementById('liveAuctionModal');
+    const reqInfo = document.getElementById('liveModalReqInfo');
+    const timerEl = document.getElementById('liveModalTimer');
+    const listEl = document.getElementById('liveModalQuotesList');
+
+    if (reqInfo) reqInfo.textContent = 'İhale No: #' + reqId + ' • Müşteri: ' + safeText(cName);
+    if (listEl) listEl.innerHTML = '<div style="text-align:center; color:#64748b; padding:30px 10px; font-size:13px;">⏱ Bölgenizdeki sarraflara WhatsApp iletildi, ilk teklifler bekleniyor...</div>';
+    if (modal) modal.style.display = 'flex';
+
+    if (customerModalTimerInterval) clearInterval(customerModalTimerInterval);
+    const expireTime = new Date(expiresAtIso).getTime();
+
+    function updateModalTimer() {
+        const diff = expireTime - Date.now();
+        if (diff <= 0) {
+            clearInterval(customerModalTimerInterval);
+            if (timerEl) { timerEl.textContent = 'Süre Doldu'; timerEl.style.background = '#e2e8f0'; timerEl.style.color = '#64748b'; }
+            return;
+        }
+        const m = Math.floor(diff / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        if (timerEl) timerEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s + ' Kaldı';
+    }
+    updateModalTimer();
+    customerModalTimerInterval = setInterval(updateModalTimer, 1000);
+
+    // Teklifleri her 3 saniyede bir sorgula
+    if (customerModalPollInterval) clearInterval(customerModalPollInterval);
+    customerModalPollInterval = setInterval(async () => {
+        try {
+            const res = await fetch(BACKEND_API_URL + '/request/' + reqId);
+            const data = await res.json();
+            if (data.success && data.data) {
+                renderCustomerLiveQuotes(data.data, cName, cPhone);
+            }
+        } catch (err) {}
+    }, 3000);
+}
+
+function renderCustomerLiveQuotes(reqData, cName, cPhone) {
+    const listEl = document.getElementById('liveModalQuotesList');
+    if (!listEl) return;
+
+    const quotes = reqData.quotes || [];
+    if (quotes.length === 0) return;
+
+    quotes.sort((a, b) => (Number(b.offerPrice) || 0) - (Number(a.offerPrice) || 0));
+
+    listEl.innerHTML = quotes.map((q, idx) => {
+        const isBest = idx === 0;
+        return '<div style="background:#fff; border:1.5px solid ' + (isBest ? '#10b981' : '#cbd5e1') + '; border-radius:8px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.05);">' +
+            '<div>' +
+                '<strong style="color:#1e293b; font-size:14px;">' + safeText(q.jewelerCode) + '</strong>' +
+                (isBest ? '<span style="background:#d1fae5; color:#065f46; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; margin-left:6px;">EN İYİ TEKLİF</span>' : '') +
+                '<div style="font-size:11px; color:#64748b; margin-top:2px;">' + safeText(q.note || 'Özel şart belirtilmedi') + '</div>' +
+            '</div>' +
+            '<div style="text-align:right;">' +
+                '<div style="font-size:17px; font-weight:800; color:#0f766e;">' + Number(q.offerPrice).toLocaleString('tr-TR') + ' ₺</div>' +
+                '<button type="button" onclick="acceptCustomerOffer(\'' + reqData.requestId + '\', \'' + safeText(q.jewelerCode) + '\', ' + q.offerPrice + ', \'' + safeText(cName) + '\', \'' + safeText(cPhone) + '\')" ' +
+                        'style="background:#10b981; color:#fff; border:none; padding:5px 12px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; margin-top:4px;">' +
+                    'Kabul Et ✓' +
+                '</button>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+}
+
+async function acceptCustomerOffer(requestId, jewelerCode, agreedPrice, customerName, customerPhone) {
+    if (!confirm(jewelerCode + ' dükkanının ' + Number(agreedPrice).toLocaleString('tr-TR') + ' ₺ teklifini kabul etmek istiyor musunuz?')) return;
+
+    if (customerModalPollInterval) clearInterval(customerModalPollInterval);
+    if (customerModalTimerInterval) clearInterval(customerModalTimerInterval);
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/request/notify-winner', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestId, jewelerCode, agreedPrice, customerName, customerPhone })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('🎉 Tebrikler! ' + jewelerCode + ' ile anlaşma sağlandı. Sarrafa WhatsApp üzerinden anlık randevu bildiriminiz gönderildi.');
+            closeLiveAuctionModal();
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    } catch (e) {
+        alert('Sunucuya ulaşılamadı.');
+    }
+}
+
+function closeLiveAuctionModal() {
+    if (customerModalPollInterval) clearInterval(customerModalPollInterval);
+    if (customerModalTimerInterval) clearInterval(customerModalTimerInterval);
+    const modal = document.getElementById('liveAuctionModal');
+    if (modal) modal.style.display = 'none';
 }
 
 function copyKuyumcuTemplate() {
@@ -2069,7 +2160,7 @@ function copyKuyumcuTemplate() {
     const profile = getStoreProfile();
     const title = profile.name ? ('🔔 *' + profile.name.toUpperCase() + ' — ANLIK NAKİT ALIŞ TALEBİ*') : '🔔 *ALTIN EKSPER — ANLIK NAKİT ALIŞ TALEBİ*';
     const tempId = currentLoadedRequestId || String(Date.now()).slice(-4);
-    const portalUrl = window.location.origin + '/kuyumcu.html?id=' + tempId;
+    const portalUrl = window.location.origin + '/kuyumcu.html?req=' + tempId;
 
     const msg = title + '\n\n' +
                 '📍 *Bölge / İlçe:* ' + dist + '\n' +
@@ -2152,7 +2243,7 @@ function finalizeAppointmentAndNotifyWinner() {
         fetch(BACKEND_API_URL + '/request/notify-winner', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ requestId: currentLoadedRequestId, winnerCode: jewelerCode, agreedPrice: max, customerName: cName })
+            body: JSON.stringify({ requestId: currentLoadedRequestId, jewelerCode: jewelerCode, agreedPrice: max, customerName: cName, customerPhone: cPhone })
         }).catch(function() {});
     }
 
@@ -2485,8 +2576,8 @@ function restoreTransaction(id) {
     if (Array.isArray(item.quotes) && item.quotes.length > 0) {
         item.quotes.forEach(function(q) { addQuoteRow(q.name, q.price, q.note); });
     } else {
-        addQuoteRow('K001');
-        addQuoteRow('K002');
+        addQuoteRow('SARRAF_01');
+        addQuoteRow('SARRAF_02');
     }
     evaluateBestQuote();
 
@@ -2730,7 +2821,8 @@ function openDailyReportModal() {
 }
 function closeDailyReportModal() {
     const modal = document.getElementById('dailyReportModal');
-    if (modal) modal.style.display = 'none';
+    if (!modal) return;
+    modal.style.display = 'none';
 }
 
 function generateDailyReport() {
@@ -2822,7 +2914,7 @@ function printDailyReportPDF() {
             '<td style="text-align:center; font-weight:600;">' + (it.qty > 0 ? it.qty : '—') + '</td>' +
             '<td style="text-align:center; font-weight:600;">' + it.grams.toFixed(2) + ' g</td>' +
             '<td style="text-align:right; font-weight:700;">' + money(it.totalTL) + '</td>' +
-        '</tr>';
+            '</tr>';
     }).join('');
 
     const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>' + storeTitle + ' — Gün Sonu Kasa Raporu (' + rep.dateStr + ')</title>' +
