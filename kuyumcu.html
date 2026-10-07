@@ -129,7 +129,7 @@ input:focus{ outline:none; border-color:#f59e0b; }
 
 <div class="card" id="quoteFormCard">
     <label>Sarraf Kodu / Dükkan Adınız</label>
-    <input type="text" id="jewelerCodeInput" placeholder="Örn: K001 veya Yıldız Sarrafiye">
+    <input type="text" id="jewelerCodeInput" placeholder="Örn: SARRAF_01 veya Güneş Sarrafiye">
 
     <label>Toplam Peşin Nakit Alış Teklifiniz (TL)</label>
     <input type="number" id="offerPriceInput" placeholder="Örn: 154500" style="font-size:18px; font-weight:800; color:#1e293b;">
@@ -148,18 +148,27 @@ input:focus{ outline:none; border-color:#f59e0b; }
 
 <script>
 // DİNAMİK API URL
-const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'http://localhost:3000/api';
+const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'http://localhost:10000/api';
 
 let currentRequestData = null;
 let timerInterval = null;
 
-function getUrlRequestId() {
+function getUrlParams() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('id');
+    return {
+        id: params.get('req') || params.get('id') || params.get('requestId'),
+        jeweler: params.get('jeweler') || params.get('jewelerCode') || ''
+    };
 }
 
 async function loadAuctionData() {
-    const reqId = getUrlRequestId();
+    const { id: reqId, jeweler } = getUrlParams();
+
+    if (jeweler) {
+        const jInput = document.getElementById('jewelerCodeInput');
+        if (jInput) jInput.value = jeweler;
+    }
+
     if (!reqId) {
         showExpiredCard("Geçersiz veya eksik ihale linki.");
         return;
