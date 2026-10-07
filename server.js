@@ -1,172 +1,157 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Tüm kaynaklara izin ver
 app.use(cors());
 app.use(express.json());
 
-// Statik dosyaları doğrudan sun
-app.use(express.static(path.join(__dirname)));
+// ================= META WHATSAPP CLOUD API AYARLARI =================
+const WHATSAPP_CONFIG = {
+    phoneNumberId: '1293164497207661',
+    accessToken: 'EAAY3ClF5SXgBSvgXSHZAurDYzkpdsc3AmrsBk8oVTBSrpsM3CeZAAv04uLO3YCHzJBkPNa0WPnGiKeL0253BeARRDELXxJ9jk3YmnZBUa9NGJ4GIbzqJEZAd2LuhBajfmj9F3EghXtZBsePrGBDQ7qkpo06ZAhx2odj4GIqPdyNWLhSaEC0OoWjnRxrIpKiWjBYbmWvgBqIdHS5CAuZBtoO41FyTzBWuX1wiezMQpdk5so5bXpZCYDibnCoicrTFOxu6zG4rIdueNZC7gC6wGgCwON9TkRQZDZD',
+    apiVersion: 'v21.0'
+};
 
-const DB_FILE = path.join(__dirname, 'database.json');
+// WhatsApp Mesaj Gönderme Yardımcı Fonksiyonu
+async function sendWhatsAppMessage(toPhone, messageText) {
+    if (!toPhone || !WHATSAPP_CONFIG.accessToken) return null;
 
-const DEFAULT_JEWELERS = [
-    { code: 'K001', name: 'Yıldız Sarrafiye', district: 'Muratpaşa', phone: '905320000001', address: 'Işıklar Cad. No:14 Muratpaşa / Antalya', active: true },
-    { code: 'K002', name: 'Akdeniz Kuyumculuk', district: 'Kepez', phone: '905320000002', address: 'Dokuma Çallı Meydanı No:5 Kepez / Antalya', active: true },
-    { code: 'K003', name: 'Toros Altın', district: 'Konyaaltı', phone: '905320000003', address: 'Atatürk Bulvarı No:88 Konyaaltı / Antalya', active: true },
-    { code: 'K004', name: 'Alanya Sarraf', district: 'Alanya', phone: '905320000004', address: 'Hükümet Cad. No:22 Alanya / Antalya', active: true },
-    { code: 'K005', name: 'Manavgat Mücevherat', district: 'Manavgat', phone: '905320000005', address: 'Antalya Cad. No:45 Manavgat / Antalya', active: true }
-];
+    let cleanPhone = toPhone.replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('0')) cleanPhone = '90' + cleanPhone.substring(1);
+    if (cleanPhone.length === 10) cleanPhone = '90' + cleanPhone;
 
-function readDatabase() {
+    const url = `https://graph.facebook.com/${WHATSAPP_CONFIG.apiVersion}/${WHATSAPP_CONFIG.phoneNumberId}/messages`;
+
     try {
-        if (!fs.existsSync(DB_FILE)) {
-            const initialData = { requests: {}, jewelers: DEFAULT_JEWELERS };
-            fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
-            return initialData;
-        }
-        const raw = fs.readFileSync(DB_FILE, 'utf-8');
-        return JSON.parse(raw);
-    } catch (e) {
-        console.error('❌ Veritabanı okuma hatası:', e.message);
-        return { requests: {}, jewelers: DEFAULT_JEWELERS };
-    }
-}
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${WHATSAPP_CONFIG.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messaging_product: 'whatsapp',
+                recipient_type: 'individual',
+                to: cleanPhone,
+                type: 'text',
+                text: { preview_url: true, body: messageText }
+            })
+        });
 
-function writeDatabase(data) {
-    try {
-        fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (e) {
-        console.error('❌ Veritabanı kaydetme hatası:', e.message);
-    }
-}
-
-// Ana Sayfa Yönlendirmesi (Render İçin Zorunlu)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Canlılık / Sağlık Kontrolü
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', time: new Date().toISOString() });
-});
-
-/* 1. TALEP OLUŞTURMA & OTOMATİK İHALE FIRLATMA */
-app.post('/api/request/create', (req, res) => {
-    try {
-        const { requestId, customerName, customerPhone, district, totalGrams, totalReferenceTL, items } = req.body;
-
-        if (!requestId || !items || !items.length) {
-            return res.status(400).json({ success: false, message: 'Geçersiz talep verisi.' });
-        }
-
-        const db = readDatabase();
-        const durationMinutes = 15;
-        const expiresAt = new Date(Date.now() + durationMinutes * 60 * 1000);
-
-        const newRequest = {
-            requestId: String(requestId),
-            customerName: customerName || 'İsimsiz Müşteri',
-            customerPhone: customerPhone || 'Belirtilmedi',
-            district: district || 'Merkez',
-            totalGrams: totalGrams || '0,00 g',
-            totalReferenceTL: totalReferenceTL || '₺0,00',
-            items: items,
-            status: 'ACTIVE',
-            createdAt: new Date().toISOString(),
-            expiresAt: expiresAt.toISOString(),
-            quotes: []
-        };
-
-        db.requests[requestId] = newRequest;
-        writeDatabase(db);
-
-        console.log(`✅ [HAVUZA YAZILDI]: #${requestId} - ${customerName} (${totalGrams})`);
-
-        res.json({ success: true, requestId, expiresAt });
+        const data = await response.json();
+        console.log(`[WhatsApp API Sonucu -> ${cleanPhone}]:`, data);
+        return data;
     } catch (err) {
-        console.error('Kayıt Hatası:', err);
-        res.status(500).json({ success: false, message: err.message });
+        console.error('[WhatsApp Gönderim Hatası]:', err);
+        return null;
+    }
+}
+
+// Bellek İçi Talep Deposu (Canlı Havuz)
+let requestsPool = [];
+
+// Süresi dolan (15 dk) talepleri otomatik temizleme
+setInterval(() => {
+    const now = Date.now();
+    requestsPool = requestsPool.filter(r => !r.expiresAt || new Date(r.expiresAt).getTime() > now);
+}, 30000);
+
+// 1. Yeni Müşteri Satış Talebi Oluşturma & WhatsApp Bildirimi
+app.post('/api/request/create', async (req, res) => {
+    try {
+        const reqData = req.body;
+        if (!reqData || !reqData.requestId) {
+            return res.status(400).json({ success: false, message: 'Geçersiz talep verisi' });
+        }
+
+        reqData.quotes = [];
+        requestsPool.unshift(reqData);
+
+        // WhatsApp İhale Metnini Derle
+        const itemsList = (reqData.items || []).map(it => 
+            `• ${it.productName} (${it.karat}k) - ${it.grams ? it.grams + 'g' : ''} ${it.qty ? it.qty + ' adet' : ''}`
+        ).join('\n');
+
+        const messageBody = 
+`🔔 *ALTIN EKSPER — YENİ NAKİT ALIŞ İHALESİ*
+
+🏷 *Talep No:* #${reqData.requestId}
+👤 *Müşteri:* ${reqData.customerName || 'Müşteri'}
+📍 *Bölge:* ${reqData.district || 'Merkez'}
+⚖️ *Toplam Ağırlık:* ${reqData.totalGrams || '0 g'}
+💰 *Gösterge Değeri:* ${reqData.totalReferenceTL || '0 ₺'}
+
+📦 *Satılacak Ürünler:*
+${itemsList}
+
+⏱ *Kalan Teklif Süresi:* 15 Dakika
+👉 İhaleyi incelemek ve teklif vermek için panele giriş yapınız.`;
+
+        // Test numaranıza (veya müşteriye/sarrafa) otomatik bildirim gönder
+        if (reqData.customerPhone) {
+            await sendWhatsAppMessage(reqData.customerPhone, messageBody);
+        }
+
+        res.json({ success: true, message: 'Talep havuza alındı ve WhatsApp bildirimi iletildi.', requestId: reqData.requestId });
+    } catch (error) {
+        console.error('Create error:', error);
+        res.status(500).json({ success: false, message: 'Sunucu hatası' });
     }
 });
 
-/* 2. TÜM TALEPLERİ LİSTELEME (HAVUZ İÇİN) */
+// 2. Aktif Talepleri Listeleme
 app.get('/api/requests', (req, res) => {
-    try {
-        const db = readDatabase();
-        const list = Object.values(db.requests || {}).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        res.json({ success: true, requests: list });
-    } catch (err) {
-        res.status(500).json({ success: false, requests: [] });
-    }
+    const now = Date.now();
+    const active = requestsPool.filter(r => !r.expiresAt || new Date(r.expiresAt).getTime() > now);
+    res.json({ success: true, requests: active });
 });
 
-/* 3. TEK TALEP DETAYI */
+// 3. Tek Bir Talebi Getirme
 app.get('/api/request/:id', (req, res) => {
-    try {
-        const db = readDatabase();
-        const item = db.requests[req.params.id];
-        if (!item) return res.status(404).json({ success: false, message: 'Talep bulunamadı.' });
-        res.json({ success: true, data: item });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
+    const found = requestsPool.find(r => String(r.requestId) === String(req.params.id));
+    if (!found) return res.status(404).json({ success: false, message: 'Talep bulunamadı' });
+    res.json({ success: true, data: found });
 });
 
-/* 4. KUYUMCU TEKLİFİNİ ALMA */
+// 4. Sarraf Teklifi Ekleme / Güncelleme
 app.post('/api/request/quote', (req, res) => {
-    try {
-        const { requestId, jewelerCode, offerPrice, note } = req.body;
-        const db = readDatabase();
-        const requestSession = db.requests[requestId];
+    const { requestId, jewelerCode, offerPrice, note } = req.body;
+    const target = requestsPool.find(r => String(r.requestId) === String(requestId));
+    if (!target) return res.status(404).json({ success: false, message: 'Talep bulunamadı' });
 
-        if (!requestSession) {
-            return res.status(404).json({ success: false, message: 'Talep bulunamadı veya süresi doldu.' });
-        }
-
-        const priceNum = parseFloat(offerPrice) || 0;
-        if (priceNum <= 0) {
-            return res.status(400).json({ success: false, message: 'Geçersiz teklif tutarı.' });
-        }
-
-        requestSession.quotes = requestSession.quotes || [];
-        const existingIndex = requestSession.quotes.findIndex(q => q.jewelerCode === jewelerCode);
-        const quoteData = {
-            jewelerCode: jewelerCode || 'K000',
-            offerPrice: priceNum,
-            note: note || '',
-            updatedAt: new Date().toISOString()
-        };
-
-        if (existingIndex !== -1) {
-            requestSession.quotes[existingIndex] = quoteData;
-        } else {
-            requestSession.quotes.push(quoteData);
-        }
-
-        requestSession.quotes.sort((a, b) => b.offerPrice - a.offerPrice);
-        writeDatabase(db);
-
-        console.log(`💰 [TEKLİF GELDİ]: #${requestId} - ${jewelerCode} -> ${priceNum} TL`);
-
-        res.json({ success: true, bestQuote: requestSession.quotes[0], quotes: requestSession.quotes });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+    target.quotes = target.quotes || [];
+    const idx = target.quotes.findIndex(q => q.jewelerCode === jewelerCode);
+    if (idx !== -1) {
+        target.quotes[idx] = { jewelerCode, offerPrice, note };
+    } else {
+        target.quotes.push({ jewelerCode, offerPrice, note });
     }
+
+    res.json({ success: true, quotes: target.quotes });
 });
 
-/* 5. KAZANAN KUYUMCUYA RANDEVU BİLDİRİMİ */
-app.post('/api/request/notify-winner', (req, res) => {
-    const { requestId, winnerCode, agreedPrice, customerName } = req.body;
-    console.log(`🏁 [KAZANAN SARRAF]: #${requestId} -> ${winnerCode} (${agreedPrice} TL)`);
-    res.json({ success: true, message: 'Bildirim işlendi.' });
+// 5. Kazanan Sarraf & Randevu Bildirimi
+app.post('/api/request/notify-winner', async (req, res) => {
+    const { requestId, winnerCode, agreedPrice, customerName, jewelerPhone } = req.body;
+
+    if (jewelerPhone) {
+        const winnerMessage = 
+`🎉 *TEBRİKLER! İHALE SİZDE KALDI*
+
+🏷 *Talep No:* #${requestId}
+👤 *Müşteri:* ${customerName}
+💰 *Kabul Edilen Teklif:* ${agreedPrice} ₺
+
+Müşteriye mağaza adresiniz ve randevu kodu iletildi. Müşteri mağazanıza geldiğinde tartım/ayar kontrolü sonrası ödemeyi tamamlayabilirsiniz.`;
+
+        await sendWhatsAppMessage(jewelerPhone, winnerMessage);
+    }
+
+    res.json({ success: true, message: 'Kazanan sarrafa bildirim gönderildi.' });
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 ALTIN EKSPER SUNUCUSU AKTİF (Port: ${PORT})`);
+    console.log(`Altın Eksper API Sunucusu ${PORT} portunda çalışıyor.`);
 });
