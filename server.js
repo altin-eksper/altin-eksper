@@ -7,12 +7,8 @@ const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json());
-
-// Statik frontend dosyalarını (index.html, cities.js vb.) sun
 app.use(express.static(__dirname));
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+
 // ================= META WHATSAPP CLOUD API AYARLARI =================
 const WHATSAPP_CONFIG = {
     phoneNumberId: '1293164497207661',
@@ -20,7 +16,33 @@ const WHATSAPP_CONFIG = {
     apiVersion: 'v21.0'
 };
 
-// WhatsApp Mesaj Gönderme Yardımcı Fonksiyonu
+// ================= KAYITLI SARRAFLAR / KUYUMCULAR REHBERİ =================
+// Canlıya geçtiğinizde buraya dilediğiniz kadar gerçek sarraf ekleyebilirsiniz.
+const JEWELERS_DIRECTORY = [
+    {
+        id: 'SARRAF_01',
+        name: 'Güneş Sarrafiye',
+        city: 'Antalya',
+        district: 'Muratpaşa',
+        phone: '905399321893' // Test için numaranız tanımlandı
+    },
+    {
+        id: 'SARRAF_02',
+        name: 'Karat Mücevherat',
+        city: 'Antalya',
+        district: 'Kepez',
+        phone: '905399321893'
+    },
+    {
+        id: 'SARRAF_03',
+        name: 'Akdeniz Kuyumculuk',
+        city: 'Antalya',
+        district: 'Muratpaşa',
+        phone: '905399321893'
+    }
+];
+
+// WhatsApp Mesaj Gönderme Motoru
 async function sendWhatsAppMessage(toPhone, messageText) {
     if (!toPhone || !WHATSAPP_CONFIG.accessToken) return null;
 
@@ -55,7 +77,7 @@ async function sendWhatsAppMessage(toPhone, messageText) {
     }
 }
 
-// Canlı Talep Havuzu
+// Canlı Talep Deposu (Hafıza Havuzu)
 let requestsPool = [];
 
 // Süresi dolan (15 dk) talepleri otomatik temizleme
@@ -64,12 +86,12 @@ setInterval(() => {
     requestsPool = requestsPool.filter(r => !r.expiresAt || new Date(r.expiresAt).getTime() > now);
 }, 30000);
 
-// Ana Sayfa Yönlendirmesi
+// Ana Sayfa Rotaları
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 1. Yeni Müşteri Satış Talebi Oluşturma & WhatsApp Bildirimi
+// 1. Yeni Satış İhalesi Başlatma & İlgili Sarraflara Toplu Dağıtım
 app.post('/api/request/create', async (req, res) => {
     try {
         const reqData = req.body;
@@ -80,37 +102,67 @@ app.post('/api/request/create', async (req, res) => {
         reqData.quotes = [];
         requestsPool.unshift(reqData);
 
+        const targetCity = (reqData.city || 'Antalya').trim();
+        const targetDistrict = (reqData.district || '').trim();
+
+        // Bölgedeki sarrafları filtrele (İlçe eşleşmesi, yoksa il geneli)
+        let matchedJewelers = JEWELERS_DIRECTORY.filter(j => 
+            j.city.toLowerCase() === targetCity.toLowerCase() &&
+            j.district.toLowerCase() === targetDistrict.toLowerCase()
+        );
+
+        if (matchedJewelers.length === 0) {
+            matchedJewelers = JEWELERS_DIRECTORY.filter(j => 
+                j.city.toLowerCase() === targetCity.toLowerCase()
+            );
+        }
+
+        // Satılacak altınların listesi
         const itemsList = (reqData.items || []).map(it => 
             `• ${it.productName} (${it.karat}k) - ${it.grams ? it.grams + 'g' : ''} ${it.qty ? it.qty + ' adet' : ''}`
         ).join('\n');
 
-        const messageBody = 
-`🔔 *ALTIN EKSPER — YENİ NAKİT ALIŞ İHALESİ*
+        // Sarraflara gidecek resmi ihale çağrısı mesajı
+        const jewelerNotification = 
+`🔔 *ALTIN EKSPER — BÖLGENİZDE YENİ İHALE!*
+
+Sayın Sarraf İş Ortağımız, bölgenizde nakit altın satmak isteyen yeni bir müşteri ihalesi başladı.
 
 🏷 *Talep No:* #${reqData.requestId}
-👤 *Müşteri:* ${reqData.customerName || 'Müşteri'}
-📍 *Bölge:* ${reqData.district || 'Merkez'}
+📍 *Konum:* ${targetCity} / ${targetDistrict}
 ⚖️ *Toplam Ağırlık:* ${reqData.totalGrams || '0 g'}
-💰 *Gösterge Değeri:* ${reqData.totalReferenceTL || '0 ₺'}
+💰 *Referans Değer:* ${reqData.totalReferenceTL || '0 ₺'}
 
-📦 *Satılacak Ürünler:*
+📦 *Müşterinin Altınları:*
 ${itemsList}
 
 ⏱ *Kalan Teklif Süresi:* 15 Dakika
-👉 İhaleyi incelemek ve teklif vermek için panele giriş yapınız.`;
+📲 Hemen teklifinizi iletmek veya panele girmek için yanıtlayınız.`;
 
-        if (reqData.customerPhone) {
-            await sendWhatsAppMessage(reqData.customerPhone, messageBody);
+        // Eşleşen sarraflara WhatsApp bildirimi fırlat
+        console.log(`[Dağıtım]: ${targetDistrict} bölgesinde ${matchedJewelers.length} sarrafa ihale iletiliyor...`);
+        for (const jeweler of matchedJewelers) {
+            await sendWhatsAppMessage(jeweler.phone, jewelerNotification);
         }
 
-        res.json({ success: true, message: 'Talep havuza alındı ve WhatsApp bildirimi iletildi.', requestId: reqData.requestId });
+        // Müşteriye bilgi teyidi (Varsa)
+        if (reqData.customerPhone) {
+            const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz ${targetDistrict} bölgesindeki kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
+            await sendWhatsAppMessage(reqData.customerPhone, customerMsg);
+        }
+
+        res.json({ 
+            success: true, 
+            message: `İhale açıldı, bölgedeki ${matchedJewelers.length} sarrafa WhatsApp iletildi.`, 
+            requestId: reqData.requestId 
+        });
     } catch (error) {
         console.error('Create error:', error);
         res.status(500).json({ success: false, message: 'Sunucu hatası' });
     }
 });
 
-// 2. Aktif Talepleri Listeleme
+// 2. Aktif Talepleri Listeleme (Kuyumcu Paneli İçin)
 app.get('/api/requests', (req, res) => {
     const now = Date.now();
     const active = requestsPool.filter(r => !r.expiresAt || new Date(r.expiresAt).getTime() > now);
@@ -124,7 +176,7 @@ app.get('/api/request/:id', (req, res) => {
     res.json({ success: true, data: found });
 });
 
-// 4. Sarraf Teklifi Ekleme
+// 4. Sarraf Teklifi Ekleme / Güncelleme
 app.post('/api/request/quote', (req, res) => {
     const { requestId, jewelerCode, offerPrice, note } = req.body;
     const target = requestsPool.find(r => String(r.requestId) === String(requestId));
@@ -141,7 +193,7 @@ app.post('/api/request/quote', (req, res) => {
     res.json({ success: true, quotes: target.quotes });
 });
 
-// 5. Kazanan Sarraf Bildirimi
+// 5. Kazanan Sarraf & Randevu Bildirimi
 app.post('/api/request/notify-winner', async (req, res) => {
     const { requestId, winnerCode, agreedPrice, customerName, jewelerPhone } = req.body;
 
@@ -153,7 +205,7 @@ app.post('/api/request/notify-winner', async (req, res) => {
 👤 *Müşteri:* ${customerName}
 💰 *Kabul Edilen Teklif:* ${agreedPrice} ₺
 
-Müşteriye randevu kodu iletildi. Kontroller sonrası işlemi tamamlayabilirsiniz.`;
+Müşteriye mağazanız için randevu kodu verildi. İşlemi mağazanızda tamamlayabilirsiniz.`;
 
         await sendWhatsAppMessage(jewelerPhone, winnerMessage);
     }
