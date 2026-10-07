@@ -180,17 +180,23 @@ app.get('/api/request/:id', (req, res) => {
 // 4. Sarraf Teklifi Ekleme / Güncelleme
 app.post('/api/request/quote', (req, res) => {
     const { requestId, jewelerCode, offerPrice, note } = req.body;
-    const target = requestsPool.find(r => String(r.requestId) === String(requestId));
-    if (!target) return res.status(404).json({ success: false, message: 'Talep bulunamadı' });
+    console.log(`[Teklif Girişi]: #${requestId} için ${jewelerCode} -> ${offerPrice} TL`);
+
+    const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
+    if (!target) {
+        console.error(`[Teklif Hatası]: #${requestId} nolu talep bulunamadı! Mevcutlar:`, requestsPool.map(r => r.requestId));
+        return res.status(404).json({ success: false, message: 'Talep bulunamadı' });
+    }
 
     target.quotes = target.quotes || [];
     const idx = target.quotes.findIndex(q => q.jewelerCode === jewelerCode);
     if (idx !== -1) {
-        target.quotes[idx] = { jewelerCode, offerPrice, note };
+        target.quotes[idx] = { jewelerCode, offerPrice: Number(offerPrice), note };
     } else {
-        target.quotes.push({ jewelerCode, offerPrice, note });
+        target.quotes.push({ jewelerCode, offerPrice: Number(offerPrice), note });
     }
 
+    console.log(`[Güncel Teklifler #${requestId}]:`, target.quotes);
     res.json({ success: true, quotes: target.quotes });
 });
 
