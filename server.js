@@ -12,7 +12,7 @@ app.use(express.static(__dirname));
 // ================= META WHATSAPP CLOUD API AYARLARI =================
 const WHATSAPP_CONFIG = {
     phoneNumberId: '1293164497207661',
-    accessToken: 'EAAY3ClF5SXgBSvgXSHZAurDYzkpdsc3AmrsBk8oVTBSrpsM3CeZAAv04uLO3YCHzJBkPNa0WPnGiKeL0253BeARRDELXxJ9jk3YmnZBUa9NGJ4GIbzqJEZAd2LuhBajfmj9F3EghXtZBsePrGBDQ7qkpo06ZAhx2odj4GIqPdyNWLhSaEC0OoWjnRxrIpKiWjBYbmWvgBqIdHS5CAuZBtoO41FyTzBWuX1wiezMQpdk5so5bXpZCYDibnCoicrTFOxu6zG4rIdueNZC7gC6wGgCwON9TkRQZDZD',
+    accessToken: 'EAAY3ClF5SXgBSo9afxI4QgTtWJYcv8jY2IIefuLnPKFdqck3WbTqW4brEtrDfrNIgGKCkqPfQFAOcT6sFhmP1y9ZCxaYWW1T8a5VwApyoiwN5H51UQtFo9nhRp2Q4d8mamUmU7WBZBTzJKz46RGpJvwfktJhJ2IBD6rrloIhZBJFVoeLLkhPjSNaWVn9aHEfSJvJlwaMKB9rmQ5IwpW6LIuC8XPjXr0u0Cu7lwnVssZCQO7odWpk72tHueZCZAfOCH4dDzYeqo23ZCjp18qFLZAZBXHvV',
     apiVersion: 'v21.0'
 };
 
