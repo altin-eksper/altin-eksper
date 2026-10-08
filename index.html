@@ -770,7 +770,14 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 </div>
 
 </div>
-
+<!-- SABİT CANLI İHALE TAKİP ÇUBUĞU -->
+<div id="activeAuctionStickyBar" style="display:none; position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:9999; background:#1e293b; color:#fff; padding:10px 18px; border-radius:30px; box-shadow:0 10px 25px rgba(0,0,0,0.3); border:2px solid #10b981; cursor:pointer; align-items:center; gap:12px; font-size:13px;" onclick="reopenLiveAuctionModal()">
+    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+    <span>İhale <b id="stickyReqId">#...</b> Devam Ediyor</span>
+    <span id="stickyQuotesBadge" style="background:#10b981; color:#fff; padding:2px 8px; border-radius:12px; font-weight:800; font-size:11px;">0 Teklif</span>
+    <span id="stickyTimerBadge" style="color:#f59e0b; font-weight:700;">15:00</span>
+    <span style="background:rgba(255,255,255,0.15); padding:4px 8px; border-radius:6px; font-size:11px;">Pencereyi Aç ↗</span>
+</div>
 <!-- MÜŞTERİ CANLI İHALE & TEKLİF İZLEME MODALI -->
 <div id="liveAuctionModal" class="report-modal">
     <div class="report-modal-content" style="max-width:560px;">
@@ -2043,16 +2050,59 @@ async function sendCustomerDirectReportWhatsApp() {
     // Canlı İhale & Teklif Takip Modalını Ekrana Aç ve 3 Saniyede Bir Dinle
     openLiveAuctionModal(tempId, cName, cPhone, expiresAt);
 }
+// ================= HAFIZA & YARDIMCI FONKSİYONLAR =================
+const ACTIVE_AUCTION_KEY = 'altinEksperActiveAuction_v1';
+
+function saveActiveAuctionToStorage(reqId, cName, cPhone, expiresAtIso) {
+    try {
+        localStorage.setItem(ACTIVE_AUCTION_KEY, JSON.stringify({
+            reqId, cName, cPhone, expiresAtIso
+        }));
+    } catch(e) {}
+}
+
+function getActiveAuctionFromStorage() {
+    try {
+        const item = JSON.parse(localStorage.getItem(ACTIVE_AUCTION_KEY) || 'null');
+        if (!item) return null;
+        if (new Date(item.expiresAtIso).getTime() <= Date.now()) {
+            localStorage.removeItem(ACTIVE_AUCTION_KEY);
+            return null;
+        }
+        return item;
+    } catch(e) { return null; }
+}
+
+function clearActiveAuctionStorage() {
+    try { localStorage.removeItem(ACTIVE_AUCTION_KEY); } catch(e) {}
+    const bar = document.getElementById('activeAuctionStickyBar');
+    if (bar) bar.style.display = 'none';
+}
+
+function reopenLiveAuctionModal() {
+    const active = getActiveAuctionFromStorage();
+    if (active) {
+        openLiveAuctionModal(active.reqId, active.cName, active.cPhone, active.expiresAtIso);
+    }
+}
 
 function openLiveAuctionModal(reqId, cName, cPhone, expiresAtIso) {
+    saveActiveAuctionToStorage(reqId, cName, cPhone, expiresAtIso);
+
     const modal = document.getElementById('liveAuctionModal');
     const reqInfo = document.getElementById('liveModalReqInfo');
     const timerEl = document.getElementById('liveModalTimer');
     const listEl = document.getElementById('liveModalQuotesList');
+    const stickyBar = document.getElementById('activeAuctionStickyBar');
 
     if (reqInfo) reqInfo.textContent = 'İhale No: #' + reqId + ' • Müşteri: ' + safeText(cName);
     if (listEl) listEl.innerHTML = '<div style="text-align:center; color:#64748b; padding:30px 10px; font-size:13px;">⏱ Bölgenizdeki sarraflara WhatsApp iletildi, ilk teklifler bekleniyor...</div>';
     if (modal) modal.style.display = 'flex';
+    if (stickyBar) {
+        stickyBar.style.display = 'none';
+        const sReq = document.getElementById('stickyReqId');
+        if (sReq) sReq.textContent = '#' + reqId;
+    }
 
     if (customerModalTimerInterval) clearInterval(customerModalTimerInterval);
     const expireTime = new Date(expiresAtIso).getTime();
@@ -2062,11 +2112,16 @@ function openLiveAuctionModal(reqId, cName, cPhone, expiresAtIso) {
         if (diff <= 0) {
             clearInterval(customerModalTimerInterval);
             if (timerEl) { timerEl.textContent = 'Süre Doldu'; timerEl.style.background = '#e2e8f0'; timerEl.style.color = '#64748b'; }
+            clearActiveAuctionStorage();
             return;
         }
         const m = Math.floor(diff / 60000);
         const s = Math.floor((diff % 60000) / 1000);
-        if (timerEl) timerEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s + ' Kaldı';
+        const timerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        if (timerEl) timerEl.textContent = timerText + ' Kaldı';
+        
+        const stickyTimer = document.getElementById('stickyTimerBadge');
+        if (stickyTimer) stickyTimer.textContent = timerText;
     }
     updateModalTimer();
     customerModalTimerInterval = setInterval(updateModalTimer, 1000);
@@ -2077,13 +2132,12 @@ function openLiveAuctionModal(reqId, cName, cPhone, expiresAtIso) {
         try {
             const res = await fetch(BACKEND_API_URL + '/request/' + reqId);
             const data = await res.json();
-            console.log(`[Müşteri Teklif Sorgusu #${reqId}]:`, data);
-            if (data.success && data.data && data.data.quotes && data.data.quotes.length > 0) {
+            if (data.success && data.data && data.data.quotes) {
                 renderCustomerLiveQuotes(data.data, cName, cPhone);
+                const countBadge = document.getElementById('stickyQuotesBadge');
+                if (countBadge) countBadge.textContent = data.data.quotes.length + ' Teklif';
             }
-        } catch (err) {
-            console.error('Sorgu hatası:', err);
-        }
+        } catch (err) {}
     }, 3000);
 }
 
@@ -2140,10 +2194,15 @@ async function acceptCustomerOffer(requestId, jewelerCode, agreedPrice, customer
 }
 
 function closeLiveAuctionModal() {
-    if (customerModalPollInterval) clearInterval(customerModalPollInterval);
-    if (customerModalTimerInterval) clearInterval(customerModalTimerInterval);
     const modal = document.getElementById('liveAuctionModal');
     if (modal) modal.style.display = 'none';
+
+    // Modal kapansa bile 15 dakikalık süre bitmediyse alttaki sabit takip çubuğunu aç
+    const active = getActiveAuctionFromStorage();
+    if (active) {
+        const stickyBar = document.getElementById('activeAuctionStickyBar');
+        if (stickyBar) stickyBar.style.display = 'flex';
+    }
 }
 
 function copyKuyumcuTemplate() {
@@ -3157,6 +3216,12 @@ applyModeUI();
 resetWorkbenchClean();
 loadLivePrices();
 setInterval(loadLivePrices, 20000);
+
+// Sayfa yenilendiğinde aktif ihale varsa çubuğu otomatik aç
+const savedAuction = getActiveAuctionFromStorage();
+if (savedAuction) {
+    reopenLiveAuctionModal();
+}
 </script>
 
 <!-- 81 İL & İLÇE MOTORU BAĞLANTISI -->
