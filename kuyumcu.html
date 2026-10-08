@@ -91,6 +91,28 @@ input:focus{ outline:none; border-color:#f59e0b; }
     text-align:center;
     margin-top:10px;
 }
+.status-box-win{
+    display:none;
+    background:#ecfdf5;
+    border:2px solid #10b981;
+    color:#065f46;
+    padding:16px;
+    border-radius:10px;
+    margin-bottom:12px;
+    text-align:center;
+}
+.status-box-closed{
+    display:none;
+    background:#f8fafc;
+    border:1px solid #cbd5e1;
+    color:#64748b;
+    padding:14px;
+    border-radius:10px;
+    margin-bottom:12px;
+    text-align:center;
+    font-weight:600;
+    font-size:13px;
+}
 </style>
 </head>
 
@@ -102,6 +124,17 @@ input:focus{ outline:none; border-color:#f59e0b; }
         <div style="font-size:11px; color:#94a3b8;">Sarraf Teklif Giriş Portalı</div>
     </div>
     <div id="auctionTimer" class="badge-timer">15:00 Kaldı</div>
+</div>
+
+<!-- KAZANAN / KAPANDI BİLDİRİM KARTLARI -->
+<div id="winStatusBox" class="status-box-win">
+    <div style="font-size:18px; font-weight:800; color:#059669; margin-bottom:6px;">🎉 TEBRİKLER! İHALE SİZDE KALDI</div>
+    <div style="font-size:13px; margin-bottom:10px;">Teklifiniz müşteri tarafından kabul edildi. Müşteriye mağazanız için randevu oluşturuldu.</div>
+    <div id="winnerCustomerDetails" style="background:#fff; border:1px dashed #10b981; padding:10px; border-radius:6px; font-size:13px; text-align:left;"></div>
+</div>
+
+<div id="closedStatusBox" class="status-box-closed">
+    🔒 Bu ihale başka bir teklifle tamamlanmıştır. İlginiz için teşekkür ederiz.
 </div>
 
 <div class="card" id="auctionDetailsCard">
@@ -152,6 +185,7 @@ const BACKEND_API_URL = window.location.origin.includes('http') ? (window.locati
 
 let currentRequestData = null;
 let timerInterval = null;
+let jewelerPollInterval = null;
 
 function getUrlParams() {
     const params = new URLSearchParams(window.location.search);
@@ -185,6 +219,8 @@ async function loadAuctionData() {
         currentRequestData = data.data;
         renderAuctionUI();
         startTimer();
+        checkAuctionStatus(currentRequestData);
+        startJewelerPolling(reqId);
 
     } catch (e) {
         showExpiredCard("Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol ediniz.");
@@ -217,13 +253,14 @@ function startTimer() {
 
         if (diff <= 0) {
             clearInterval(timerInterval);
+            if (jewelerPollInterval) clearInterval(jewelerPollInterval);
             const timerEl = document.getElementById('auctionTimer');
             if (timerEl) {
                 timerEl.textContent = 'Süre Doldu';
                 timerEl.className = 'badge-timer badge-expired';
             }
             const formCard = document.getElementById('quoteFormCard');
-            if (formCard) {
+            if (formCard && (!currentRequestData || currentRequestData.status !== 'COMPLETED')) {
                 formCard.innerHTML = '<div style="text-align:center; color:#dc2626; font-weight:700; padding:10px;">⏱ Bu ihalenin 15 dakikalık süresi sona ermiştir.</div>';
             }
             return;
@@ -239,6 +276,50 @@ function startTimer() {
 
     update();
     timerInterval = setInterval(update, 1000);
+}
+
+function startJewelerPolling(reqId) {
+    if (jewelerPollInterval) clearInterval(jewelerPollInterval);
+    jewelerPollInterval = setInterval(async () => {
+        try {
+            const res = await fetch(BACKEND_API_URL + '/request/' + reqId);
+            const data = await res.json();
+            if (data.success && data.data) {
+                currentRequestData = data.data;
+                checkAuctionStatus(data.data);
+            }
+        } catch (err) {}
+    }, 3000);
+}
+
+function checkAuctionStatus(req) {
+    if (req.status === 'COMPLETED') {
+        if (jewelerPollInterval) clearInterval(jewelerPollInterval);
+        const myCode = (document.getElementById('jewelerCodeInput').value || '').trim();
+        const winBox = document.getElementById('winStatusBox');
+        const closedBox = document.getElementById('closedStatusBox');
+        const formCard = document.getElementById('quoteFormCard');
+
+        if (formCard) formCard.style.display = 'none';
+
+        if (myCode && req.winnerCode && req.winnerCode.toLowerCase() === myCode.toLowerCase()) {
+            // İhaleyi bu sarraf kazandı
+            if (winBox) {
+                winBox.style.display = 'block';
+                const details = document.getElementById('winnerCustomerDetails');
+                if (details) {
+                    details.innerHTML = '<b>Müşteri:</b> ' + (req.customerName || 'Müşteri') + '<br>' +
+                                        '<b>Telefon:</b> ' + (req.customerPhone || 'Girilmedi') + '<br>' +
+                                        '<b>Onaylanan Tutar:</b> ' + Number(req.agreedPrice || 0).toLocaleString('tr-TR') + ' ₺';
+                }
+            }
+            if (closedBox) closedBox.style.display = 'none';
+        } else {
+            // İhale başka bir sarrafta bitti
+            if (closedBox) closedBox.style.display = 'block';
+            if (winBox) winBox.style.display = 'none';
+        }
+    }
 }
 
 function showExpiredCard(msg) {
