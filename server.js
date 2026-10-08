@@ -204,6 +204,13 @@ app.post('/api/request/quote', (req, res) => {
 app.post('/api/request/notify-winner', async (req, res) => {
     try {
         const { requestId, jewelerCode, agreedPrice, customerName, customerPhone } = req.body;
+        const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
+        if (target) {
+            target.status = 'COMPLETED';
+            target.winnerCode = jewelerCode;
+            target.agreedPrice = Number(agreedPrice);
+            console.log(`[İhale Tamamlandı]: #${requestId} kazanan: ${jewelerCode}`);
+        }
 
         // Sarraf rehberinden sarrafın telefonunu bul (yoksa test numaranıza fırlatır)
         const targetJeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerCode || j.name === jewelerCode);
