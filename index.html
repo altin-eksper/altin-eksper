@@ -483,6 +483,12 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         <div class="tag" id="headerTag">Altınını Değerinde Sat — Güvenilir Sarraf Teklifleri</div>
     </div>
     <div class="header-actions">
+        <!-- ESNAF / KUYUMCU KATILIM BUTONU -->
+        <button type="button" onclick="openJewelerApplyModal()" 
+                style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #facc15; border: 1px solid #eab308; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+            <span>🏪</span> Sarraf / Esnaf Katıl
+        </button>
+
         <button type="button" class="mode-toggle-btn" id="modeSwitchBtn" onclick="toggleAppMode()">
             🔐 Kuyumcu Girişi
         </button>
@@ -770,6 +776,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 </div>
 
 </div>
+
 <!-- SABİT CANLI İHALE TAKİP ÇUBUĞU -->
 <div id="activeAuctionStickyBar" style="display:none; position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:9999; background:#1e293b; color:#fff; padding:10px 18px; border-radius:30px; box-shadow:0 10px 25px rgba(0,0,0,0.3); border:2px solid #10b981; cursor:pointer; align-items:center; gap:12px; font-size:13px;" onclick="reopenLiveAuctionModal()">
     <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
@@ -778,6 +785,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     <span id="stickyTimerBadge" style="color:#f59e0b; font-weight:700;">15:00</span>
     <span style="background:rgba(255,255,255,0.15); padding:4px 8px; border-radius:6px; font-size:11px;">Pencereyi Aç ↗</span>
 </div>
+
 <!-- MÜŞTERİ CANLI İHALE & TEKLİF İZLEME MODALI -->
 <div id="liveAuctionModal" class="report-modal">
     <div class="report-modal-content" style="max-width:560px;">
@@ -806,6 +814,84 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
                 Kapat
             </button>
         </div>
+    </div>
+</div>
+
+<!-- KUYUMCU / ESNAF BAŞVURU MODALI -->
+<div id="jewelerApplyModal" class="report-modal" style="display:none;">
+    <div class="report-modal-content" style="max-width:480px; border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:10px; margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:24px;">🏪</span>
+                <div>
+                    <h3 style="margin:0; font-size:18px; color:#0f172a;">Altın Eksper Esnaf Ağı</h3>
+                    <span style="font-size:12px; color:#64748b;">Bölgenizdeki sıcak satış ihalelerine katılın</span>
+                </div>
+            </div>
+            <button type="button" class="secondary" style="padding:4px 8px;" onclick="document.getElementById('jewelerApplyModal').style.display='none'">✕</button>
+        </div>
+
+        <form id="jewelerApplyForm" onsubmit="handleJewelerApply(event)">
+            <div style="margin-bottom:12px;">
+                <label>Kuyumcu / Firma Adı *</label>
+                <input type="text" id="jFirmName" required placeholder="Örn: Güneş Sarrafiye">
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <label>WhatsApp Telefon Numarası *</label>
+                <input type="tel" id="jPhone" required placeholder="05XX XXX XX XX">
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+                <div>
+                    <label>İl</label>
+                    <input type="text" id="jCity" value="Antalya" readonly style="background:#f8fafc; color:#64748b;">
+                </div>
+                <div>
+                    <label>Hizmet Verilen İlçe *</label>
+                    <select id="jDistrict" required style="background:#fff;">
+                        <option value="Muratpaşa">Muratpaşa</option>
+                        <option value="Kepez">Kepez</option>
+                        <option value="Konyaaltı">Konyaaltı</option>
+                        <option value="Alanya">Alanya</option>
+                        <option value="Manavgat">Manavgat</option>
+                        <option value="Döşemealtı">Döşemealtı</option>
+                    </select>
+                </div>
+            </div>
+
+            <label style="margin-bottom:6px;">Paket Tercihi *</label>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+                <label style="display:flex; align-items:flex-start; gap:10px; padding:10px; border:1.5px solid #cbd5e1; border-radius:8px; cursor:pointer; background:#fff;">
+                    <input type="radio" name="planSelect" value="token_25" checked style="width:auto; margin-top:3px;">
+                    <div>
+                        <div style="font-weight:700; font-size:13px; color:#0f172a;">🪙 25 İhale Jeton Paketi</div>
+                        <div style="font-size:11px; color:#64748b;">Süre kısıtlaması yok. Teklif verdikçe bakiyenizden düşer.</div>
+                    </div>
+                </label>
+
+                <label style="display:flex; align-items:flex-start; gap:10px; padding:10px; border:1.5px solid #cbd5e1; border-radius:8px; cursor:pointer; background:#fff;">
+                    <input type="radio" name="planSelect" value="token_75" style="width:auto; margin-top:3px;">
+                    <div>
+                        <div style="font-weight:700; font-size:13px; color:#0f172a;">🪙 75 İhale Avantaj Paketi</div>
+                        <div style="font-size:11px; color:#64748b;">Orta ölçekli kuyumcular için indirimli jeton paketi.</div>
+                    </div>
+                </label>
+
+                <label style="display:flex; align-items:flex-start; gap:10px; padding:10px; border:1.5px solid #facc15; border-radius:8px; cursor:pointer; background:#fefce8;">
+                    <input type="radio" name="planSelect" value="subscription_vip" style="width:auto; margin-top:3px;">
+                    <div>
+                        <div style="font-weight:700; font-size:13px; color:#854d0e;">👑 Sınırsız Aylık VIP Abonelik</div>
+                        <div style="font-size:11px; color:#713f12;">30 gün boyunca bölgenizdeki tüm ihalelere sınırsız katılım.</div>
+                    </div>
+                </label>
+            </div>
+
+            <button type="submit" id="btnJewelerSubmit" class="primary" style="width:100%; padding:12px; font-size:14px; font-weight:700; background:#0f172a; color:#fff;">
+                Başvuruyu Gönder
+            </button>
+            <div id="jewelerApplyResult" style="margin-top:10px; font-size:12px; text-align:center; display:none;"></div>
+        </form>
     </div>
 </div>
 
@@ -2050,6 +2136,7 @@ async function sendCustomerDirectReportWhatsApp() {
     // Canlı İhale & Teklif Takip Modalını Ekrana Aç ve 3 Saniyede Bir Dinle
     openLiveAuctionModal(tempId, cName, cPhone, expiresAt);
 }
+
 // ================= HAFIZA & YARDIMCI FONKSİYONLAR =================
 const ACTIVE_AUCTION_KEY = 'altinEksperActiveAuction_v1';
 
@@ -2085,6 +2172,7 @@ function reopenLiveAuctionModal() {
         openLiveAuctionModal(active.reqId, active.cName, active.cPhone, active.expiresAtIso);
     }
 }
+
 // YENİ TEKLİF DİNG SESİ (Web Audio API - Mobil Uyumlu)
 function playOfferChime() {
     try {
@@ -2092,7 +2180,6 @@ function playOfferChime() {
         if (!AudioContext) return;
         const ctx = new AudioContext();
 
-        // Mobilde ses askıda kaldıysa uyandır
         if (ctx.state === 'suspended') {
             ctx.resume();
         }
@@ -2137,19 +2224,17 @@ function openLiveAuctionModal(reqId, cName, cPhone, expiresAtIso) {
     if (customerModalTimerInterval) clearInterval(customerModalTimerInterval);
     const expireTime = new Date(expiresAtIso).getTime();
 
-   function updateModalTimer() {
+    function updateModalTimer() {
         const diff = expireTime - Date.now();
         if (diff <= 0) {
             clearInterval(customerModalTimerInterval);
 
-            // Modal sayacını kırmızı yap
             if (timerEl) {
                 timerEl.textContent = '⏱ Süre Doldu';
                 timerEl.style.background = '#fee2e2';
                 timerEl.style.color = '#dc2626';
             }
 
-            // Alttaki yapışkan çubuğu güncelle
             const stickyTimer = document.getElementById('stickyTimerBadge');
             if (stickyTimer) {
                 stickyTimer.textContent = 'Süre Doldu';
@@ -2157,14 +2242,13 @@ function openLiveAuctionModal(reqId, cName, cPhone, expiresAtIso) {
                 stickyTimer.style.color = '#dc2626';
             }
 
-            // Teklif yoksa veya liste boşsa yeniden başlatma seçeneği sun
             const quotesListEl = document.getElementById('liveModalQuotesList');
             if (quotesListEl && (!quotesListEl.children || quotesListEl.children.length === 0 || quotesListEl.innerText.includes('bekleniyor'))) {
                 quotesListEl.innerHTML = `
                     <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px; text-align:center; color:#991b1b; font-size:13px; margin-top:8px;">
                         ⏱ <b>15 dakikalık ihale süresi doldu.</b><br>
                         Bu süre zarfında teklif gelmediyse ihaleyi tek tıkla yenileyebilirsiniz.<br><br>
-                        <button type="button" onclick="clearActiveAuctionStorage(); document.getElementById('liveAuctionModal').style.display='none'; document.getElementById('btnSubmitWhatsApp').click();" 
+                        <button type="button" onclick="clearActiveAuctionStorage(); document.getElementById('liveAuctionModal').style.display='none'; document.getElementById('submitRequestBtn').click();" 
                                 style="background:#dc2626; color:#fff; border:none; padding:10px 16px; border-radius:6px; font-weight:700; cursor:pointer; font-size:13px;">
                             🔄 İhaleyi Yeniden Başlat
                         </button>
@@ -2189,7 +2273,6 @@ function openLiveAuctionModal(reqId, cName, cPhone, expiresAtIso) {
 
     lastSeenQuoteCount = 0;
 
-    // Teklifleri her 3 saniyede bir sorgula
     if (customerModalPollInterval) clearInterval(customerModalPollInterval);
     customerModalPollInterval = setInterval(async () => {
         try {
@@ -2266,11 +2349,64 @@ function closeLiveAuctionModal() {
     const modal = document.getElementById('liveAuctionModal');
     if (modal) modal.style.display = 'none';
 
-    // Modal kapansa bile 15 dakikalık süre bitmediyse alttaki sabit takip çubuğunu aç
     const active = getActiveAuctionFromStorage();
     if (active) {
         const stickyBar = document.getElementById('activeAuctionStickyBar');
         if (stickyBar) stickyBar.style.display = 'flex';
+    }
+}
+
+// ================= KUYUMCU / ESNAF BAŞVURU İŞLEMLERİ =================
+function openJewelerApplyModal() {
+    const modal = document.getElementById('jewelerApplyModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+async function handleJewelerApply(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnJewelerSubmit');
+    const resultBox = document.getElementById('jewelerApplyResult');
+
+    const firmName = document.getElementById('jFirmName').value.trim();
+    const phone = document.getElementById('jPhone').value.trim();
+    const city = document.getElementById('jCity').value.trim();
+    const district = document.getElementById('jDistrict').value;
+    const selectedPlan = document.querySelector('input[name="planSelect"]:checked').value;
+    const planType = selectedPlan.startsWith('subscription') ? 'subscription' : 'token';
+
+    btn.disabled = true;
+    btn.textContent = 'İletiliyor...';
+    resultBox.style.display = 'none';
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/jeweler/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ firmName, phone, city, district, planType, selectedPlan })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            resultBox.style.display = 'block';
+            resultBox.style.color = '#15803d';
+            resultBox.innerHTML = '✅ <b>Başvurunuz başarıyla alındı!</b><br>Yetkilimiz WhatsApp üzerinden sizinle iletişime geçecektir.';
+            document.getElementById('jewelerApplyForm').reset();
+            setTimeout(() => {
+                document.getElementById('jewelerApplyModal').style.display = 'none';
+                resultBox.style.display = 'none';
+            }, 3500);
+        } else {
+            resultBox.style.display = 'block';
+            resultBox.style.color = '#b91c1c';
+            resultBox.textContent = '❌ ' + (data.message || 'Bir hata oluştu.');
+        }
+    } catch (err) {
+        resultBox.style.display = 'block';
+        resultBox.style.color = '#b91c1c';
+        resultBox.textContent = 'Bağlantı hatası oluştu.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Başvuruyu Gönder';
     }
 }
 
@@ -3286,7 +3422,6 @@ resetWorkbenchClean();
 loadLivePrices();
 setInterval(loadLivePrices, 20000);
 
-// Sayfa yenilendiğinde aktif ihale varsa çubuğu otomatik aç
 const savedAuction = getActiveAuctionFromStorage();
 if (savedAuction) {
     reopenLiveAuctionModal();
