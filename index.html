@@ -2019,7 +2019,7 @@ async function sendCustomerDirectReportWhatsApp() {
     if (!payloadItems.length) { alert('Lütfen önce satılacak ürünleri ekleyin.'); return; }
 
     const tempId = String(Date.now()).slice(-6);
-    const expiresAt = new Date(Date.now() + 15 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
     const requestPayload = {
         requestId: tempId, customerName: cName, customerPhone: cPhone,
