@@ -189,7 +189,10 @@ app.get('/api/jeweler/status/:id', (req, res) => {
         }
     });
 });
-
+// Tüm Başvuru & Kayıtlı Kuyumcuları Listele (Admin Paneli İçin)
+app.get('/api/admin/jewelers', (req, res) => {
+    res.json({ success: true, jewelers: JEWELERS_DIRECTORY });
+});
 // ================= İHALE & TEKLİF YÖNETİMİ =================
 
 // 1. Yeni Satış İhalesi Başlatma & Sadece Bakiyeli/Aktif Sarraflara Dağıtım
