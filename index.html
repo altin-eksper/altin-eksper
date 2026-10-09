@@ -2445,12 +2445,35 @@ async function acceptCustomerOffer(requestId, jewelerCode, agreedPrice, customer
             body: JSON.stringify({ requestId, jewelerCode, agreedPrice, customerName, customerPhone })
         });
         const data = await res.json();
-        if (data.success) {
-            alert('🎉 Tebrikler! ' + jewelerCode + ' ile anlaşma sağlandı. Sarrafa WhatsApp üzerinden anlık randevu bildiriminiz gönderildi.');
-            closeLiveAuctionModal();
-        } else {
-            alert('Hata: ' + data.message);
+        
+        // Ekrana Randevu & Harita Kartını Aç
+        const directory = getDirectoryJewelers();
+        const matched = directory.find(j => (j.id === jewelerCode || j.code === jewelerCode));
+        const address = matched ? (matched.address || matched.district) : 'Antalya';
+        const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address);
+
+        const listEl = document.getElementById('liveModalQuotesList');
+        if (listEl) {
+            listEl.innerHTML = `
+                <div style="background:#ecfdf5; border:2px solid #10b981; border-radius:10px; padding:16px; text-align:center;">
+                    <div style="font-size:32px; margin-bottom:4px;">🎉</div>
+                    <h3 style="margin:0 0 4px; color:#065f46; font-size:18px;">Tebrikler! Teklif Kabul Edildi</h3>
+                    <p style="margin:0 0 12px; font-size:13px; color:#047857;">Anlaşmalı sarrafımız bilgilendirildi ve randevunuz oluşturuldu.</p>
+                    
+                    <div style="background:#fff; border-radius:8px; padding:12px; text-align:left; font-size:13px; color:#1e293b; margin-bottom:12px; border:1px solid #a7f3d0;">
+                        <div>🏪 <b>Yetkili Sarraf:</b> ${safeText(matched ? matched.name : jewelerCode)}</div>
+                        <div style="margin-top:4px;">💰 <b>Taahhüt Edilen Tutar:</b> <span style="color:#b45309; font-weight:800;">${Number(agreedPrice).toLocaleString('tr-TR')} ₺</span></div>
+                        <div style="margin-top:4px;">📍 <b>Adres:</b> ${safeText(address)}</div>
+                        <div style="margin-top:4px;">🎟️ <b>Güvenlik / Randevu Kodu:</b> <span style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:800;">#${requestId}</span></div>
+                    </div>
+
+                    <a href="${mapUrl}" target="_blank" style="display:inline-block; background:#0284c7; color:#fff; text-decoration:none; padding:10px 18px; border-radius:8px; font-weight:700; font-size:13px; margin-bottom:6px;">
+                        🗺️ Google Haritalar ile Yol Tarifi Al
+                    </a>
+                </div>
+            `;
         }
+        clearActiveAuctionStorage();
     } catch (e) {
         alert('Sunucuya ulaşılamadı.');
     }

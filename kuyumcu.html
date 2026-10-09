@@ -3,366 +3,234 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Altın Eksper — Sarraf İhale Portalı</title>
-<meta name="theme-color" content="#1e293b">
-
+<title>Altın Eksper — Kuyumcu Teklif Portalı</title>
+<meta name="theme-color" content="#0f172a">
 <style>
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 body{
-    margin:0;
-    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    background:#f1f5f9;
-    color:#1e293b;
-    padding:12px;
-}
-.header{
-    background:#1e293b;
-    color:#fff;
-    padding:14px;
-    border-radius:10px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:12px;
+    margin:0; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background:#0f172a; color:#f8fafc; padding:16px;
 }
 .card{
-    background:#fff;
-    border-radius:10px;
-    padding:16px;
-    margin-bottom:12px;
-    box-shadow:0 1px 4px rgba(0,0,0,0.06);
-    border:1px solid #e2e8f0;
+    background:#1e293b; border:1px solid #334155; border-radius:12px;
+    padding:18px; max-width:600px; margin:0 auto 16px; box-shadow:0 10px 25px rgba(0,0,0,0.3);
 }
-.badge-timer{
-    background:#fee2e2;
-    color:#dc2626;
-    font-weight:800;
-    padding:4px 8px;
-    border-radius:6px;
-    font-size:13px;
+.header{
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom:1px solid #334155; padding-bottom:12px; margin-bottom:14px;
 }
-.badge-expired{
-    background:#f1f5f9;
-    color:#64748b;
+.brand{ font-size:18px; font-weight:800; color:#f59e0b; }
+.timer-badge{
+    background:#fee2e2; color:#dc2626; font-weight:800; padding:6px 12px;
+    border-radius:20px; font-size:13px; display:inline-flex; align-items:center; gap:5px;
 }
-.item-row{
-    border-bottom:1px solid #f1f5f9;
-    padding:8px 0;
-    display:flex;
-    justify-content:space-between;
-    font-size:13px;
+.balance-box{
+    background:#0f172a; border:1px solid #334155; border-radius:8px;
+    padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;
 }
-.item-row:last-child{ border-bottom:none; }
-label{
-    font-size:12px;
-    font-weight:700;
-    color:#475569;
-    display:block;
-    margin-bottom:4px;
+.item-card{
+    background:#0f172a; border:1px solid #334155; border-radius:8px;
+    padding:10px; margin-bottom:8px; display:flex; gap:12px; align-items:center;
 }
-input, button{
-    width:100%;
-    padding:12px;
-    border-radius:8px;
-    font-size:15px;
-    border:1px solid #cbd5e1;
-    margin-bottom:10px;
-    font-family:inherit;
+.item-thumb{
+    width:56px; height:56px; border-radius:6px; object-fit:cover;
+    background:#334155; border:1px solid #475569; cursor:pointer;
 }
-input:focus{ outline:none; border-color:#f59e0b; }
-.btn-submit{
-    background:#f59e0b;
-    color:#1e293b;
-    font-weight:800;
-    border:none;
-    cursor:pointer;
-    padding:14px;
+.price-input{
+    width:100%; padding:14px; border-radius:8px; border:2px solid #f59e0b;
+    background:#0f172a; color:#fff; font-size:20px; font-weight:800; text-align:center; outline:none; margin-bottom:12px;
 }
-.btn-submit:hover{ background:#d97706; color:#fff; }
-.success-box{
-    display:none;
-    background:#ecfdf5;
-    border:1px solid #10b981;
-    color:#065f46;
-    padding:12px;
-    border-radius:8px;
-    font-size:13px;
-    font-weight:700;
-    text-align:center;
-    margin-top:10px;
+.submit-btn{
+    width:100%; background:linear-gradient(135deg, #f59e0b, #d97706); color:#0f172a;
+    border:none; padding:14px; border-radius:8px; font-weight:800; font-size:16px; cursor:pointer;
 }
-.status-box-win{
-    display:none;
-    background:#ecfdf5;
-    border:2px solid #10b981;
-    color:#065f46;
-    padding:16px;
-    border-radius:10px;
-    margin-bottom:12px;
-    text-align:center;
-}
-.status-box-closed{
-    display:none;
-    background:#f8fafc;
-    border:1px solid #cbd5e1;
-    color:#64748b;
-    padding:14px;
-    border-radius:10px;
-    margin-bottom:12px;
-    text-align:center;
-    font-weight:600;
-    font-size:13px;
+.photo-modal{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+    z-index:99999; align-items:center; justify-content:center; padding:20px;
 }
 </style>
 </head>
-
 <body>
 
-<div class="header">
-    <div>
-        <div style="font-weight:800; color:#f59e0b; font-size:18px;">ALTIN EKSPER</div>
-        <div style="font-size:11px; color:#94a3b8;">Sarraf Teklif Giriş Portalı</div>
-    </div>
-    <div id="auctionTimer" class="badge-timer">15:00 Kaldı</div>
-</div>
-
-<!-- KAZANAN / KAPANDI BİLDİRİM KARTLARI -->
-<div id="winStatusBox" class="status-box-win">
-    <div style="font-size:18px; font-weight:800; color:#059669; margin-bottom:6px;">🎉 TEBRİKLER! İHALE SİZDE KALDI</div>
-    <div style="font-size:13px; margin-bottom:10px;">Teklifiniz müşteri tarafından kabul edildi. Müşteriye mağazanız için randevu oluşturuldu.</div>
-    <div id="winnerCustomerDetails" style="background:#fff; border:1px dashed #10b981; padding:10px; border-radius:6px; font-size:13px; text-align:left;"></div>
-</div>
-
-<div id="closedStatusBox" class="status-box-closed">
-    🔒 Bu ihale başka bir teklifle tamamlanmıştır. İlginiz için teşekkür ederiz.
-</div>
-
-<div class="card" id="auctionDetailsCard">
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
-        <strong id="reqIdLabel" style="font-size:14px; color:#1e293b;">İhale: #......</strong>
-        <span id="districtLabel" style="font-size:12px; color:#0369a1; font-weight:700; background:#e0f2fe; padding:2px 6px; border-radius:4px;">Merkez</span>
-    </div>
-
-    <div style="margin-bottom:10px;">
-        <span style="font-size:11px; color:#64748b; font-weight:700; text-transform:uppercase;">Satılacak Ürünler:</span>
-        <div id="itemsContainer" style="margin-top:4px;"></div>
-    </div>
-
-    <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:10px 12px; border-radius:8px; display:flex; flex-direction:column; gap:6px; font-size:13px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="color:#64748b;">Toplam Portföy Ağırlığı:</span>
-            <strong id="totalGramsLabel" style="color:#1e293b; font-size:14px;">0,00 g</strong>
+<div class="card">
+    <div class="header">
+        <div>
+            <div class="brand">ALTIN EKSPER</div>
+            <div style="font-size:12px; color:#94a3b8;">Canlı Satış İhalesi</div>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #cbd5e1; padding-top:6px;">
-            <span style="color:#64748b; font-weight:600;">Piyasa Gösterge Değeri (İlk Fiyat):</span>
-            <strong id="totalRefTLLabel" style="color:#b45309; font-size:16px; font-weight:800;">₺0,00</strong>
+        <div id="countdownTimer" class="timer-badge">⏱ 15:00</div>
+    </div>
+
+    <div class="balance-box">
+        <div>
+            <div style="font-size:11px; color:#94a3b8;">Giriş Yapan Sarraf:</div>
+            <strong id="jewelerTitle" style="color:#f8fafc; font-size:13px;">Doğrulanıyor...</strong>
+        </div>
+        <div id="balanceBadge" style="font-size:12px; font-weight:700; color:#38bdf8;">
+            🪙 Yükleniyor...
         </div>
     </div>
+
+    <div style="font-size:12px; color:#94a3b8; margin-bottom:6px;">Müşteri İhale Detayı:</div>
+    <div id="auctionDetails" style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155; margin-bottom:14px; font-size:13px;">
+        Yükleniyor...
+    </div>
+
+    <div style="font-size:12px; color:#94a3b8; margin-bottom:6px;">Satılacak Ürünler (Fotoğrafa basarak büyütebilirsiniz):</div>
+    <div id="itemsContainer"></div>
+
+    <form id="offerForm" onsubmit="handleSendOffer(event)" style="margin-top:16px;">
+        <label style="display:block; font-size:12px; color:#94a3b8; margin-bottom:6px; text-align:center;">
+            Nakit Alış Teklifiniz (Toplam TL):
+        </label>
+        <input type="number" id="offerPrice" class="price-input" required placeholder="Örn: 85000">
+        <input type="text" id="offerNote" placeholder="Varsa notunuz (Örn: Nakit hazır, dükkanda çay ikramı)" 
+               style="width:100%; padding:10px; border-radius:6px; border:1px solid #334155; background:#0f172a; color:#fff; font-size:13px; margin-bottom:12px; outline:none;">
+        <button type="submit" id="btnSubmitOffer" class="submit-btn">Teklifi Müşteriye İlet</button>
+    </form>
+    <div id="offerResult" style="margin-top:12px; font-size:13px; text-align:center; display:none;"></div>
 </div>
 
-<div class="card" id="quoteFormCard">
-    <label>Sarraf Kodu / Dükkan Adınız</label>
-    <input type="text" id="jewelerCodeInput" placeholder="Örn: SARRAF_01 veya Güneş Sarrafiye">
-
-    <label>Toplam Peşin Nakit Alış Teklifiniz (TL)</label>
-    <input type="number" id="offerPriceInput" placeholder="Örn: 154500" style="font-size:18px; font-weight:800; color:#1e293b;">
-
-    <label>Mağaza Adresi / Şartınız (Opsiyonel)</label>
-    <input type="text" id="offerNoteInput" placeholder="Örn: Işıklar Cad. No:14 (Hemen Nakit)">
-
-    <button type="button" class="btn-submit" onclick="submitJewelerOffer()">
-        🚀 Teklifi Sisteme Gönder
-    </button>
-
-    <div id="successMessage" class="success-box">
-        ✓ Teklifiniz sisteme başarıyla işlendi! En iyi teklif durumunda müşteri randevu fişiyle dükkanınıza yönlendirilecektir.
-    </div>
+<!-- FOTOĞRAF BÜYÜTME MODALI -->
+<div id="photoModal" class="photo-modal" onclick="this.style.display='none'">
+    <img id="bigPhotoImg" src="" style="max-width:100%; max-height:90vh; border-radius:8px;">
 </div>
 
 <script>
-// DİNAMİK API URL
-const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'http://localhost:10000/api';
+const BACKEND_API_URL = 'https://altin-eksper.onrender.com/api';
+const urlParams = new URLSearchParams(window.location.search);
+const reqId = urlParams.get('req') || '';
+let loggedJeweler = null;
 
-let currentRequestData = null;
-let timerInterval = null;
-let jewelerPollInterval = null;
-
-function getUrlParams() {
-    const params = new URLSearchParams(window.location.search);
-    return {
-        id: params.get('req') || params.get('id') || params.get('requestId'),
-        jeweler: params.get('jeweler') || params.get('jewelerCode') || ''
-    };
-}
-
-async function loadAuctionData() {
-    const { id: reqId, jeweler } = getUrlParams();
-
-    if (jeweler) {
-        const jInput = document.getElementById('jewelerCodeInput');
-        if (jInput) jInput.value = jeweler;
+async function initPortal() {
+    let jewelerId = localStorage.getItem('loggedJewelerId');
+    if (!jewelerId) {
+        jewelerId = prompt("Sarraf / Kuyumcu Kodunuzu Giriniz (Örn: SARRAF_01 veya SARRAF_7206):");
+        if (jewelerId) localStorage.setItem('loggedJewelerId', jewelerId.trim().toUpperCase());
+    }
+    
+    if (jewelerId) {
+        try {
+            const res = await fetch(BACKEND_API_URL + '/jeweler/status/' + jewelerId);
+            const data = await res.json();
+            if (data.success && data.data) {
+                loggedJeweler = data.data;
+                document.getElementById('jewelerTitle').textContent = loggedJeweler.name + ' (' + loggedJeweler.id + ')';
+                const bBadge = document.getElementById('balanceBadge');
+                if (loggedJeweler.membershipType === 'subscription') {
+                    bBadge.textContent = '👑 VIP Aylık Sınırsız';
+                    bBadge.style.color = '#facc15';
+                } else {
+                    bBadge.textContent = '🪙 Kalan: ' + (loggedJeweler.credits || 0) + ' Jeton';
+                }
+            }
+        } catch(e) {}
     }
 
     if (!reqId) {
-        showExpiredCard("Geçersiz veya eksik ihale linki.");
+        document.getElementById('auctionDetails').textContent = 'Geçersiz veya süresi dolmuş ihale linki.';
         return;
     }
 
     try {
         const res = await fetch(BACKEND_API_URL + '/request/' + reqId);
         const data = await res.json();
-        if (!data.success || !data.data) {
-            showExpiredCard("Bu ihale sunucuda bulunamadı veya süresi doldu. Lütfen yeni bir talep oluşturup deneyiniz.");
-            return;
+        if (data.success && data.data) {
+            renderAuction(data.data);
+        } else {
+            document.getElementById('auctionDetails').innerHTML = '⚠️ Bu ihale sona ermiş veya silinmiş.';
         }
-
-        currentRequestData = data.data;
-        renderAuctionUI();
-        startTimer();
-        checkAuctionStatus(currentRequestData);
-        startJewelerPolling(reqId);
-
-    } catch (e) {
-        showExpiredCard("Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol ediniz.");
+    } catch(e) {
+        document.getElementById('auctionDetails').textContent = 'Sunucuya bağlanılamadı.';
     }
 }
 
-function renderAuctionUI() {
-    const req = currentRequestData;
-    document.getElementById('reqIdLabel').textContent = 'İhale: #' + req.requestId;
-    document.getElementById('districtLabel').textContent = req.district || 'Merkez';
-    document.getElementById('totalGramsLabel').textContent = req.totalGrams || '0,00 g';
-    document.getElementById('totalRefTLLabel').textContent = req.totalReferenceTL || '₺0,00';
+function renderAuction(req) {
+    document.getElementById('auctionDetails').innerHTML = `
+        📍 <b>Bölge:</b> ${req.district} &bull; ⚖️ <b>Toplam:</b> ${req.totalGrams} &bull; 🏷 <b>Ref. Değer:</b> ${req.totalReferenceTL}
+    `;
 
     const itemsBox = document.getElementById('itemsContainer');
-    itemsBox.innerHTML = (req.items || []).map(function(it, idx) {
-        return '<div class="item-row">' +
-            '<span><b>' + (idx+1) + '.</b> ' + it.productName + ' (' + (it.karat ? it.karat + 'k' : '') + ')</span>' +
-            '<span style="color:#475569; font-weight:600;">' + (it.grams ? it.grams + ' gr' : '') + (it.qty ? it.qty + ' adet' : '') + '</span>' +
-        '</div>';
+    itemsBox.innerHTML = (req.items || []).map(it => {
+        const imgHtml = it.photo ? `<img src="${it.photo}" class="item-thumb" onclick="openBigPhoto('${it.photo}')">` : `<div class="item-thumb" style="display:flex; align-items:center; justify-content:center; font-size:10px; color:#64748b;">Foto Yok</div>`;
+        return `
+            <div class="item-card">
+                ${imgHtml}
+                <div style="flex:1;">
+                    <div style="font-weight:700; color:#f8fafc; font-size:14px;">${it.productName} (${it.karat} Ayar)</div>
+                    <div style="font-size:12px; color:#94a3b8;">${it.grams ? it.grams + ' g' : ''} ${it.qty ? it.qty + ' adet' : ''}</div>
+                </div>
+            </div>
+        `;
     }).join('');
+
+    startCountdown(req.expiresAt);
 }
 
-function startTimer() {
-    if (!currentRequestData || !currentRequestData.expiresAt) return;
-    const expireTime = new Date(currentRequestData.expiresAt).getTime();
+function startCountdown(expiresAtIso) {
+    const expireTime = new Date(expiresAtIso).getTime();
+    const tBadge = document.getElementById('countdownTimer');
 
-    function update() {
-        const now = new Date().getTime();
-        const diff = expireTime - now;
-
+    const interval = setInterval(() => {
+        const diff = expireTime - Date.now();
         if (diff <= 0) {
-            clearInterval(timerInterval);
-            if (jewelerPollInterval) clearInterval(jewelerPollInterval);
-            const timerEl = document.getElementById('auctionTimer');
-            if (timerEl) {
-                timerEl.textContent = 'Süre Doldu';
-                timerEl.className = 'badge-timer badge-expired';
-            }
-            const formCard = document.getElementById('quoteFormCard');
-            if (formCard && (!currentRequestData || currentRequestData.status !== 'COMPLETED')) {
-                formCard.innerHTML = '<div style="text-align:center; color:#dc2626; font-weight:700; padding:10px;">⏱ Bu ihalenin 15 dakikalık süresi sona ermiştir.</div>';
-            }
+            clearInterval(interval);
+            tBadge.textContent = '⏱ Süre Doldu';
+            document.getElementById('offerForm').style.display = 'none';
             return;
         }
-
         const m = Math.floor(diff / 60000);
         const s = Math.floor((diff % 60000) / 1000);
-        const timerEl = document.getElementById('auctionTimer');
-        if (timerEl) {
-            timerEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s + ' Kaldı';
-        }
-    }
-
-    update();
-    timerInterval = setInterval(update, 1000);
+        tBadge.textContent = `⏱ ${(m<10?'0':'')+m}:${(s<10?'0':'')+s}`;
+    }, 1000);
 }
 
-function startJewelerPolling(reqId) {
-    if (jewelerPollInterval) clearInterval(jewelerPollInterval);
-    jewelerPollInterval = setInterval(async () => {
-        try {
-            const res = await fetch(BACKEND_API_URL + '/request/' + reqId);
-            const data = await res.json();
-            if (data.success && data.data) {
-                currentRequestData = data.data;
-                checkAuctionStatus(data.data);
-            }
-        } catch (err) {}
-    }, 3000);
+function openBigPhoto(src) {
+    document.getElementById('bigPhotoImg').src = src;
+    document.getElementById('photoModal').style.display = 'flex';
 }
 
-function checkAuctionStatus(req) {
-    if (req.status === 'COMPLETED') {
-        if (jewelerPollInterval) clearInterval(jewelerPollInterval);
-        const myCode = (document.getElementById('jewelerCodeInput').value || '').trim();
-        const winBox = document.getElementById('winStatusBox');
-        const closedBox = document.getElementById('closedStatusBox');
-        const formCard = document.getElementById('quoteFormCard');
+async function handleSendOffer(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmitOffer');
+    const resultBox = document.getElementById('offerResult');
+    const offerPrice = Number(document.getElementById('offerPrice').value);
+    const offerNote = document.getElementById('offerNote').value.trim();
+    const jewelerCode = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || 'SARRAF');
 
-        if (formCard) formCard.style.display = 'none';
-
-        if (myCode && req.winnerCode && req.winnerCode.toLowerCase() === myCode.toLowerCase()) {
-            // İhaleyi bu sarraf kazandı
-            if (winBox) {
-                winBox.style.display = 'block';
-                const details = document.getElementById('winnerCustomerDetails');
-                if (details) {
-                    details.innerHTML = '<b>Müşteri:</b> ' + (req.customerName || 'Müşteri') + '<br>' +
-                                        '<b>Telefon:</b> ' + (req.customerPhone || 'Girilmedi') + '<br>' +
-                                        '<b>Onaylanan Tutar:</b> ' + Number(req.agreedPrice || 0).toLocaleString('tr-TR') + ' ₺';
-                }
-            }
-            if (closedBox) closedBox.style.display = 'none';
-        } else {
-            // İhale başka bir sarrafta bitti
-            if (closedBox) closedBox.style.display = 'block';
-            if (winBox) winBox.style.display = 'none';
-        }
-    }
-}
-
-function showExpiredCard(msg) {
-    document.body.innerHTML = '<div class="card" style="text-align:center; padding:30px; margin-top:20px;">' +
-        '<h3 style="color:#dc2626; margin-top:0;">İhale Aktif Değil</h3>' +
-        '<p style="font-size:13px; color:#64748b;">' + msg + '</p>' +
-    '</div>';
-}
-
-async function submitJewelerOffer() {
-    const jCode = document.getElementById('jewelerCodeInput').value.trim();
-    const price = parseFloat(document.getElementById('offerPriceInput').value);
-    const note = document.getElementById('offerNoteInput').value.trim();
-
-    if (!jCode) { alert('Lütfen sarraf kodu veya dükkan adınızı yazınız.'); return; }
-    if (!price || price <= 0) { alert('Lütfen geçerli bir teklif tutarı giriniz.'); return; }
+    btn.disabled = true;
+    btn.textContent = 'İletiliyor...';
 
     try {
         const res = await fetch(BACKEND_API_URL + '/request/quote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                requestId: currentRequestData.requestId,
-                jewelerCode: jCode,
-                offerPrice: price,
-                note: note
-            })
+            body: JSON.stringify({ requestId: reqId, jewelerCode, offerPrice, note: offerNote })
         });
-
         const data = await res.json();
         if (data.success) {
-            document.getElementById('successMessage').style.display = 'block';
-            document.querySelector('.btn-submit').style.display = 'none';
+            resultBox.style.display = 'block';
+            resultBox.style.color = '#4ade80';
+            resultBox.innerHTML = '✅ <b>Teklifiniz başarıyla müşteriye iletildi!</b><br>Müşteri onaylarsa WhatsApp üzerinden anlık randevu kodu alacaksınız.';
+            document.getElementById('offerPrice').disabled = true;
+            btn.style.display = 'none';
         } else {
-            alert('Hata: ' + data.message);
+            resultBox.style.display = 'block';
+            resultBox.style.color = '#f87171';
+            resultBox.textContent = 'Hata: ' + data.message;
+            btn.disabled = false;
+            btn.textContent = 'Teklifi Müşteriye İlet';
         }
-    } catch (e) {
-        alert('Sunucuya ulaşılamadı.');
+    } catch(err) {
+        resultBox.style.display = 'block';
+        resultBox.style.color = '#f87171';
+        resultBox.textContent = 'Bağlantı hatası oluştu.';
+        btn.disabled = false;
+        btn.textContent = 'Teklifi Müşteriye İlet';
     }
 }
 
-loadAuctionData();
+initPortal();
 </script>
-
 </body>
 </html>

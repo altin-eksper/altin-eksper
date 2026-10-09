@@ -365,7 +365,15 @@ Müşteriye mağazanız için randevu kodu tanımlandı. Müşteri kısa süre i
         res.status(500).json({ success: false, message: 'Bildirim gönderilemedi.' });
     }
 });
-
+// ================= 15 DAKİKALIK İHALE TEMİZLEYİCİSİ =================
+setInterval(() => {
+    const now = Date.now();
+    if (Array.isArray(global.AUCTION_REQUESTS)) {
+        global.AUCTION_REQUESTS = global.AUCTION_REQUESTS.filter(req => {
+            return new Date(req.expiresAt).getTime() > now;
+        });
+    }
+}, 60 * 1000); // Her 1 dakikada bir süresi bitenleri otomatik temizler
 app.listen(PORT, () => {
     console.log(`Altın Eksper API Sunucusu ${PORT} portunda çalışıyor.`);
 });

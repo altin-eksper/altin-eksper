@@ -1,0 +1,159 @@
+{
+  "requests": {
+    "332845": {
+      "requestId": "332845",
+      "customerName": "REŞİT YAKARER",
+      "customerPhone": "05399321893",
+      "district": "Muratpaşa, Kepez, Konyaaltı",
+      "totalGrams": "375,40 g",
+      "totalReferenceTL": "₺2.301.161,32",
+      "items": [
+        {
+          "index": 1,
+          "productCode": "gram",
+          "productName": "Gram Altın",
+          "karat": "24",
+          "grams": "100",
+          "qty": "",
+          "amount": "₺656.224,71"
+        },
+        {
+          "index": 2,
+          "productCode": "bracelet",
+          "productName": "Bilezik",
+          "karat": "22",
+          "grams": "100",
+          "qty": "",
+          "amount": "₺601.539,32"
+        },
+        {
+          "index": 3,
+          "productCode": "quarter",
+          "productName": "Çeyrek Altın",
+          "karat": "22",
+          "grams": "175.40",
+          "qty": "100",
+          "amount": "₺1.043.397,29"
+        }
+      ],
+      "status": "ACTIVE",
+      "createdAt": "2026-09-30T14:08:52.992Z",
+      "expiresAt": "2026-09-30T14:23:52.992Z",
+      "quotes": []
+    },
+    "729398": {
+      "requestId": "729398",
+      "customerName": "reşit yakarer",
+      "customerPhone": "05399321893",
+      "district": "Muratpaşa, Kepez, Konyaaltı",
+      "totalGrams": "402,56 g",
+      "totalReferenceTL": "₺2.434.395,37",
+      "items": [
+        {
+          "index": 1,
+          "productCode": "gram",
+          "productName": "Gram Altın",
+          "karat": "24",
+          "grams": "85",
+          "qty": "",
+          "amount": "₺553.000,60"
+        },
+        {
+          "index": 2,
+          "productCode": "bracelet",
+          "productName": "Bilezik",
+          "karat": "22",
+          "grams": "65",
+          "qty": "",
+          "amount": "₺387.642,57"
+        },
+        {
+          "index": 3,
+          "productCode": "ataLira",
+          "productName": "Ata Lira",
+          "karat": "22",
+          "grams": "252.56",
+          "qty": "35",
+          "amount": "₺1.493.752,20"
+        }
+      ],
+      "status": "ACTIVE",
+      "createdAt": "2026-09-28T09:28:49.417Z",
+      "expiresAt": "2026-09-28T09:43:49.417Z",
+      "quotes": [
+        {
+          "jewelerCode": "MERVE KUYUM",
+          "offerPrice": 2440000,
+          "note": "DÖŞEMEALTI/ANTALYA",
+          "updatedAt": "2026-09-28T09:30:52.690Z"
+        },
+        {
+          "jewelerCode": "K004 (Kale Sarraf)",
+          "offerPrice": 2437000,
+          "note": "Kalekapısı Kuyumcular İçi No:21 Muratpaşa / Antalya",
+          "updatedAt": "2026-09-28T09:29:37.354Z"
+        },
+        {
+          "jewelerCode": "K003 (Toros Altın)",
+          "offerPrice": 2436500,
+          "note": "Atatürk Bulvarı No:88 Konyaaltı / Antalya",
+          "updatedAt": "2026-09-28T09:29:31.614Z"
+        },
+        {
+          "jewelerCode": "K002 (Akdeniz Kuyumculuk)",
+          "offerPrice": 2436000,
+          "note": "Dokuma Çallı Meydanı No:5 Kepez / Antalya",
+          "updatedAt": "2026-09-28T09:29:19.006Z"
+        },
+        {
+          "jewelerCode": "K001 (Yıldız Sarrafiye)",
+          "offerPrice": 2435000,
+          "note": "Işıklar Cad. No:14 Muratpaşa / Antalya",
+          "updatedAt": "2026-09-28T09:29:14.253Z"
+        }
+      ]
+    }
+  },
+  "jewelers": [
+    {
+      "code": "K001",
+      "name": "Yıldız Sarrafiye",
+      "district": "Muratpaşa",
+      "phone": "905320000001",
+      "address": "Işıklar Cad. No:14 Muratpaşa / Antalya",
+      "active": true
+    },
+    {
+      "code": "K002",
+      "name": "Akdeniz Kuyumculuk",
+      "district": "Kepez",
+      "phone": "905320000002",
+      "address": "Dokuma Çallı Meydanı No:5 Kepez / Antalya",
+      "active": true
+    },
+    {
+      "code": "K003",
+      "name": "Toros Altın",
+      "district": "Konyaaltı",
+      "phone": "905320000003",
+      "address": "Atatürk Bulvarı No:88 Konyaaltı / Antalya",
+      "active": true
+    },
+    {
+      "code": "K004",
+      "name": "Alanya Sarraf",
+      "district": "Alanya",
+      "phone": "905320000004",
+      "address": "Hükümet Cad. No:22 Alanya / Antalya",
+      "active": true
+    },
+    {
+      "code": "K005",
+      "name": "Manavgat Mücevherat",
+      "district": "Manavgat",
+      "phone": "905320000005",
+      "address": "Antalya Cad. No:45 Manavgat / Antalya",
+      "active": true
+    }
+  ]
+}
