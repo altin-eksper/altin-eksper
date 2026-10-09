@@ -2137,19 +2137,50 @@ function openLiveAuctionModal(reqId, cName, cPhone, expiresAtIso) {
     if (customerModalTimerInterval) clearInterval(customerModalTimerInterval);
     const expireTime = new Date(expiresAtIso).getTime();
 
-    function updateModalTimer() {
+   function updateModalTimer() {
         const diff = expireTime - Date.now();
         if (diff <= 0) {
             clearInterval(customerModalTimerInterval);
-            if (timerEl) { timerEl.textContent = 'Süre Doldu'; timerEl.style.background = '#e2e8f0'; timerEl.style.color = '#64748b'; }
+
+            // Modal sayacını kırmızı yap
+            if (timerEl) {
+                timerEl.textContent = '⏱ Süre Doldu';
+                timerEl.style.background = '#fee2e2';
+                timerEl.style.color = '#dc2626';
+            }
+
+            // Alttaki yapışkan çubuğu güncelle
+            const stickyTimer = document.getElementById('stickyTimerBadge');
+            if (stickyTimer) {
+                stickyTimer.textContent = 'Süre Doldu';
+                stickyTimer.style.background = '#fee2e2';
+                stickyTimer.style.color = '#dc2626';
+            }
+
+            // Teklif yoksa veya liste boşsa yeniden başlatma seçeneği sun
+            const quotesListEl = document.getElementById('liveModalQuotesList');
+            if (quotesListEl && (!quotesListEl.children || quotesListEl.children.length === 0 || quotesListEl.innerText.includes('bekleniyor'))) {
+                quotesListEl.innerHTML = `
+                    <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px; text-align:center; color:#991b1b; font-size:13px; margin-top:8px;">
+                        ⏱ <b>15 dakikalık ihale süresi doldu.</b><br>
+                        Bu süre zarfında teklif gelmediyse ihaleyi tek tıkla yenileyebilirsiniz.<br><br>
+                        <button type="button" onclick="clearActiveAuctionStorage(); document.getElementById('liveAuctionModal').style.display='none'; document.getElementById('btnSubmitWhatsApp').click();" 
+                                style="background:#dc2626; color:#fff; border:none; padding:10px 16px; border-radius:6px; font-weight:700; cursor:pointer; font-size:13px;">
+                            🔄 İhaleyi Yeniden Başlat
+                        </button>
+                    </div>
+                `;
+            }
+
             clearActiveAuctionStorage();
             return;
         }
+
         const m = Math.floor(diff / 60000);
         const s = Math.floor((diff % 60000) / 1000);
         const timerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
         if (timerEl) timerEl.textContent = timerText + ' Kaldı';
-        
+
         const stickyTimer = document.getElementById('stickyTimerBadge');
         if (stickyTimer) stickyTimer.textContent = timerText;
     }
