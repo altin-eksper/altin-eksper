@@ -193,7 +193,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 .ledger-box strong{ font-size:15px; color:#1e293b; display:block; margin-top:2px; }
 
 .history-tabs{ display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:8px; }
-.tab-btn{ background:#f1f5f9; color:#475569; padding:6px 12px; font-size:12px; font-weight:600; border-radius:6px; }
+.tab-btn{ background:#f1f5f9; color:#475569; padding:6px 12px; font-size:12px; font-weight:600; border-radius:6px; cursor:pointer; border:none; }
 .tab-btn.active{ background:#1e293b; color:#fff; }
 
 .date-group-card{
@@ -895,19 +895,30 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     </div>
 </div>
 
-<!-- SARRAF REHBERİ MODALI -->
+<!-- SARRAF REHBERİ & BAŞVURU YÖNETİM MODALI -->
 <div id="directoryModal" class="report-modal">
-    <div class="report-modal-content" style="max-width:750px;">
+    <div class="report-modal-content" style="max-width:850px;">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
             <div>
-                <h3 style="margin:0; font-size:18px; color:#1e293b;">📖 Anlaşmalı Sarraf Rehberi</h3>
-                <span style="font-size:12px; color:#64748b;">İhale dağıtımı yapılacak tüm sarraflar.</span>
+                <h3 style="margin:0; font-size:18px; color:#1e293b;">📖 Sarraf Rehberi & Başvuru Yönetimi</h3>
+                <span style="font-size:12px; color:#64748b;">Kayıtlı sarrafları yönetin ve gelen esnaf başvurularını tek tıkla onaylayın.</span>
             </div>
             <button type="button" class="secondary" style="padding:4px 8px;" onclick="closeDirectoryModal()">✕</button>
         </div>
 
-        <div style="margin:14px 0; background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
-            <h4 style="margin:0 0 10px; font-size:13px; color:#1e293b;">+ Yeni Sarraf Ekle</h4>
+        <!-- Sekmeler: Onay Bekleyenler & Aktif Sarraflar -->
+        <div style="display:flex; gap:8px; margin:14px 0 10px;">
+            <button type="button" class="tab-btn active" id="tabPendingJewelers" onclick="switchJewelerDirectoryTab('pending')">
+                ⏳ Onay Bekleyen Başvurular (<span id="pendingJewelersCount">0</span>)
+            </button>
+            <button type="button" class="tab-btn" id="tabActiveJewelers" onclick="switchJewelerDirectoryTab('active')">
+                ✅ Aktif Sarraflar (<span id="activeJewelersCount">0</span>)
+            </button>
+        </div>
+
+        <!-- ELLE YENİ SARRAF EKLEME FORMU (Sadece Aktif Sekmesinde) -->
+        <div id="manualAddJewelerArea" style="display:none; margin-bottom:14px; background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
+            <h4 style="margin:0 0 10px; font-size:13px; color:#1e293b;">+ Elle Yeni Sarraf Ekle</h4>
             <div style="display:grid; grid-template-columns:100px 1.2fr 1fr 1fr; gap:8px; margin-bottom:8px;">
                 <input id="dirNewCode" placeholder="Kod (K001)">
                 <input id="dirNewName" placeholder="Kuyumcu Ünvanı">
@@ -920,14 +931,16 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
             </div>
         </div>
 
+        <!-- KUYUMCULAR TABLOSU -->
         <table class="report-table">
             <thead>
                 <tr>
-                    <th style="width:70px;">Kod</th>
-                    <th>Sarraf Adı</th>
-                    <th style="width:90px;">İlçe</th>
-                    <th style="width:110px;">WhatsApp</th>
-                    <th style="width:40px;"></th>
+                    <th style="width:90px;">Kod</th>
+                    <th>Firma / Ünvan</th>
+                    <th style="width:100px;">İlçe</th>
+                    <th style="width:115px;">WhatsApp</th>
+                    <th style="width:120px; text-align:center;">Paket / Bakiye</th>
+                    <th style="width:180px; text-align:center;">İşlem</th>
                 </tr>
             </thead>
             <tbody id="directoryTableBody"></tbody>
@@ -1840,9 +1853,9 @@ function getDirectoryJewelers() {
     } catch (e) {}
 
     const defaults = [
-        { code: 'SARRAF_01', name: 'Güneş Sarrafiye', district: 'Muratpaşa', phone: '05399321893', address: 'Işıklar Cad. No:14 Muratpaşa / Antalya' },
-        { code: 'SARRAF_02', name: 'Karat Mücevherat', district: 'Kepez', phone: '05399321893', address: 'Dokuma Çallı Meydanı No:5 Kepez / Antalya' },
-        { code: 'SARRAF_03', name: 'Akdeniz Kuyumculuk', district: 'Muratpaşa', phone: '05399321893', address: 'Atatürk Bulvarı No:88 Muratpaşa / Antalya' }
+        { id: 'SARRAF_01', code: 'SARRAF_01', name: 'Güneş Sarrafiye', districts: ['Muratpaşa'], district: 'Muratpaşa', phone: '05399321893', membershipType: 'token', credits: 25, status: 'ACTIVE', address: 'Işıklar Cad. No:14 Muratpaşa / Antalya' },
+        { id: 'SARRAF_02', code: 'SARRAF_02', name: 'Karat Mücevherat', districts: ['Kepez'], district: 'Kepez', phone: '05399321893', membershipType: 'subscription', credits: 0, status: 'ACTIVE', address: 'Dokuma Çallı Meydanı No:5 Kepez / Antalya' },
+        { id: 'SARRAF_03', code: 'SARRAF_03', name: 'Akdeniz Kuyumculuk', districts: ['Muratpaşa'], district: 'Muratpaşa', phone: '05399321893', membershipType: 'token', credits: 50, status: 'ACTIVE', address: 'Atatürk Bulvarı No:88 Muratpaşa / Antalya' }
     ];
     setDirectoryJewelers(defaults);
     return defaults;
@@ -1852,29 +1865,136 @@ function setDirectoryJewelers(list) {
     try { localStorage.setItem(DIRECTORY_STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
 }
 
+let currentJewelerTab = 'pending';
+
 function openDirectoryModal() {
     renderDirectoryTable();
     const modal = document.getElementById('directoryModal');
     if (modal) modal.style.display = 'flex';
 }
+
 function closeDirectoryModal() {
     const modal = document.getElementById('directoryModal');
     if (modal) modal.style.display = 'none';
 }
 
-function renderDirectoryTable() {
+function switchJewelerDirectoryTab(tab) {
+    currentJewelerTab = tab;
+    document.getElementById('tabPendingJewelers').className = 'tab-btn ' + (tab === 'pending' ? 'active' : '');
+    document.getElementById('tabActiveJewelers').className = 'tab-btn ' + (tab === 'active' ? 'active' : '');
+    
+    const manualArea = document.getElementById('manualAddJewelerArea');
+    if (manualArea) manualArea.style.display = (tab === 'active') ? 'block' : 'none';
+    
+    renderDirectoryTable();
+}
+
+async function renderDirectoryTable() {
     const tbody = document.getElementById('directoryTableBody');
     if (!tbody) return;
-    const list = getDirectoryJewelers();
-    tbody.innerHTML = list.map(function(j, i) {
-        return '<tr>' +
-            '<td><b>' + safeText(j.code) + '</b></td>' +
-            '<td>' + safeText(j.name) + '<div style="font-size:11px; color:#64748b;">' + safeText(j.address) + '</div></td>' +
-            '<td><span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:600;">' + safeText(j.district) + '</span></td>' +
-            '<td>' + safeText(j.phone) + '</td>' +
-            '<td><button type="button" class="danger" style="padding:2px 6px; font-size:10px;" onclick="removeDirectoryJeweler(' + i + ')">×</button></td>' +
-        '</tr>';
+
+    let jewelers = [];
+    try {
+        const res = await fetch(BACKEND_API_URL + '/admin/jewelers');
+        const data = await res.json();
+        if (data.success && data.jewelers) {
+            jewelers = data.jewelers;
+        }
+    } catch (e) {
+        jewelers = getDirectoryJewelers();
+    }
+
+    if (!jewelers.length) jewelers = getDirectoryJewelers();
+
+    const pending = jewelers.filter(j => j.status === 'PENDING');
+    const active = jewelers.filter(j => j.status !== 'PENDING');
+
+    const pBadge = document.getElementById('pendingJewelersCount');
+    const aBadge = document.getElementById('activeJewelersCount');
+    if (pBadge) pBadge.textContent = pending.length;
+    if (aBadge) aBadge.textContent = active.length;
+
+    const list = (currentJewelerTab === 'pending') ? pending : active;
+
+    if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">
+            ${currentJewelerTab === 'pending' ? 'Bekleyen onay talebi bulunmuyor.' : 'Aktif sarraf kaydı bulunmuyor.'}
+        </td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = list.map(j => {
+        const districtName = (j.districts && j.districts.length) ? j.districts.join(', ') : (j.district || 'Merkez');
+        
+        let packageBadge = '';
+        if (j.membershipType === 'subscription') {
+            packageBadge = '<span style="background:#fefce8; color:#854d0e; padding:2px 6px; border-radius:4px; font-weight:700; font-size:11px;">👑 VIP Aylık</span>';
+        } else {
+            packageBadge = `<span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:700; font-size:11px;">🪙 ${j.credits || 0} Jeton</span>`;
+        }
+
+        let actionButtons = '';
+        if (j.status === 'PENDING') {
+            actionButtons = `
+                <div style="display:flex; gap:4px; justify-content:center;">
+                    <button type="button" class="primary" style="background:#10b981; color:#fff; font-size:11px; padding:4px 8px;" 
+                            onclick="approveJeweler('${j.id}', 'subscription', 30)" title="30 Günlük Aylık VIP Tanımla">
+                        👑 VIP Onayla
+                    </button>
+                    <button type="button" class="primary" style="background:#2563eb; color:#fff; font-size:11px; padding:4px 8px;" 
+                            onclick="approveJeweler('${j.id}', 'token', 25)" title="25 Jeton Tanımla">
+                        🪙 25 Jeton
+                    </button>
+                </div>
+            `;
+        } else {
+            actionButtons = `
+                <div style="display:flex; gap:4px; justify-content:center;">
+                    <button type="button" class="secondary" style="font-size:10px; padding:3px 6px; background:#475569;" 
+                            onclick="approveJeweler('${j.id}', 'token', 25)">+25 Jeton</button>
+                    <button type="button" class="secondary" style="font-size:10px; padding:3px 6px; background:#ca8a04;" 
+                            onclick="approveJeweler('${j.id}', 'subscription', 30)">+30 Gün</button>
+                </div>
+            `;
+        }
+
+        return `
+            <tr>
+                <td><b>${safeText(j.id || j.code)}</b></td>
+                <td>
+                    <strong>${safeText(j.name)}</strong>
+                    <div style="font-size:11px; color:#64748b;">${safeText(j.address || '')}</div>
+                </td>
+                <td><span style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:11px;">${safeText(districtName)}</span></td>
+                <td>${safeText(j.phone)}</td>
+                <td style="text-align:center;">${packageBadge}</td>
+                <td>${actionButtons}</td>
+            </tr>
+        `;
     }).join('');
+}
+
+async function approveJeweler(jewelerId, type, amount) {
+    const payload = { jewelerId: jewelerId, activate: true };
+    if (type === 'subscription') payload.extendDays = amount;
+    if (type === 'token') payload.addCredits = amount;
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/admin/jeweler/topup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(`✅ ${jewelerId} onaylandı ve ${type === 'subscription' ? amount + ' günlük VIP üyelik' : amount + ' jeton'} tanımlandı.`);
+            renderDirectoryTable();
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    } catch (e) {
+        alert('Sunucu bağlantı hatası!');
+    }
 }
 
 function addDirectoryJeweler() {
@@ -1886,20 +2006,13 @@ function addDirectoryJeweler() {
 
     if (!name) { alert('Lütfen kuyumcu ünvanını yazınız.'); return; }
     const list = getDirectoryJewelers();
-    list.push({ code: code, name: name, district: dist, phone: phone, address: addr });
+    list.push({ id: code, code: code, name: name, districts: [dist], district: dist, phone: phone, address: addr, membershipType: 'token', credits: 25, status: 'ACTIVE' });
     setDirectoryJewelers(list);
 
     document.getElementById('dirNewName').value = '';
     document.getElementById('dirNewDistrict').value = '';
     document.getElementById('dirNewPhone').value = '';
     document.getElementById('dirNewAddress').value = '';
-    renderDirectoryTable();
-}
-
-function removeDirectoryJeweler(index) {
-    const list = getDirectoryJewelers();
-    list.splice(index, 1);
-    setDirectoryJewelers(list);
     renderDirectoryTable();
 }
 
@@ -1915,7 +2028,7 @@ function addQuoteRow(name, price, note) {
     const jewelers = getDirectoryJewelers();
     let optionsHtml = '<option value="">-- Rehberden Seç veya Elle Yaz --</option>';
     jewelers.forEach(function(j) {
-        optionsHtml += '<option value="' + j.code + '" data-name="' + j.name + '" data-address="' + j.address + '">' + j.code + ' — ' + j.name + ' (' + j.district + ')</option>';
+        optionsHtml += '<option value="' + (j.id || j.code) + '" data-name="' + j.name + '" data-address="' + (j.address || '') + '">' + (j.id || j.code) + ' — ' + j.name + ' (' + (j.districts ? j.districts.join(', ') : j.district) + ')</option>';
     });
 
     div.innerHTML = 
@@ -2057,8 +2170,8 @@ function openAuctionDispatchModal() {
 
         return '<div style="background:#fff; border:1px solid #cbd5e1; border-radius:6px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">' +
             '<div>' +
-                '<strong style="color:#1e293b;">' + safeText(j.name) + ' (' + safeText(j.code) + ')</strong>' +
-                '<div style="font-size:11px; color:#64748b;">📍 ' + safeText(j.district) + ' • 📞 ' + safeText(j.phone || 'Belirtilmedi') + '</div>' +
+                '<strong style="color:#1e293b;">' + safeText(j.name) + ' (' + safeText(j.code || j.id) + ')</strong>' +
+                '<div style="font-size:11px; color:#64748b;">📍 ' + safeText(j.district || (j.districts ? j.districts[0] : '')) + ' • 📞 ' + safeText(j.phone || 'Belirtilmedi') + '</div>' +
             '</div>' +
             '<a href="' + waUrl + '" target="_blank" class="wa-btn" style="text-decoration:none; padding:6px 12px; font-size:12px;">' +
                 '📲 İhale Fırlat' +
@@ -2133,7 +2246,6 @@ async function sendCustomerDirectReportWhatsApp() {
         if (btn) { btn.textContent = '📲 WhatsApp ile Teklif İste (0536 043 42 07)'; btn.disabled = false; }
     }
 
-    // Canlı İhale & Teklif Takip Modalını Ekrana Aç ve 3 Saniyede Bir Dinle
     openLiveAuctionModal(tempId, cName, cPhone, expiresAt);
 }
 
@@ -2173,7 +2285,6 @@ function reopenLiveAuctionModal() {
     }
 }
 
-// YENİ TEKLİF DİNG SESİ (Web Audio API - Mobil Uyumlu)
 function playOfferChime() {
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -2501,7 +2612,7 @@ function finalizeAppointmentAndNotifyWinner() {
     const jewelerCode = bestJewelerName.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
 
     const directory = getDirectoryJewelers();
-    const matchedJeweler = directory.find(function(j) { return j.code === jewelerCode || bestJewelerName.includes(j.name); });
+    const matchedJeweler = directory.find(function(j) { return (j.code === jewelerCode || j.id === jewelerCode) || bestJewelerName.includes(j.name); });
     const jewelerPhone = matchedJeweler ? matchedJeweler.phone : 'Belirtilmedi';
     const jewelerAddress = (matchedJeweler && matchedJeweler.address) ? matchedJeweler.address : bestJewelerNote;
     const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(jewelerAddress);
