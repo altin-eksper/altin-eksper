@@ -923,18 +923,15 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
                 <div>
-                    <label>İl</label>
-                    <input type="text" id="jCity" value="Antalya" readonly style="background:#f8fafc; color:#64748b;">
+               <label>İl *</label>
+                    <select id="jCity" required onchange="onJewelerCityChange()" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff;">
+                        <option value="">İl Seçin...</option>
+                    </select>
                 </div>
                 <div>
                     <label>Hizmet Verilen İlçe *</label>
-                    <select id="jDistrict" required style="background:#fff;">
-                        <option value="Muratpaşa">Muratpaşa</option>
-                        <option value="Kepez">Kepez</option>
-                        <option value="Konyaaltı">Konyaaltı</option>
-                        <option value="Alanya">Alanya</option>
-                        <option value="Manavgat">Manavgat</option>
-                        <option value="Döşemealtı">Döşemealtı</option>
+                    <select id="jDistrict" required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff;">
+                        <option value="">Önce İl Seçin</option>
                     </select>
                 </div>
             </div>
@@ -3324,14 +3321,54 @@ function restoreFromBackupFile(event) {
     };
     reader.readAsText(file);
 }
-// 1. ESNAF / SARRAF KATIL PENCERESİNİ AÇMA FONKSİYONU
+// 1. ESNAF / SARRAF KATIL PENCERESİNİ AÇMA & İL/İLÇE MOTORU
 function openJewelerApplyModal() {
+    populateJewelerCities();
     const modal = document.getElementById('jewelerApplyModal');
     if (modal) {
         modal.style.display = 'flex';
     } else {
         alert('Başvuru formu bulunamadı.');
     }
+}
+
+function populateJewelerCities() {
+    const citySel = document.getElementById('jCity');
+    if (!citySel) return;
+    
+    const cityDataSource = (typeof TURKEY_CITIES !== 'undefined') ? TURKEY_CITIES : 
+                           (typeof CITIES_DATA !== 'undefined') ? CITIES_DATA : 
+                           (typeof CITIES !== 'undefined') ? CITIES : {};
+
+    const cityList = Object.keys(cityDataSource);
+
+    citySel.innerHTML = '<option value="">İl Seçin...</option>';
+    cityList.sort((a,b) => a.localeCompare(b, 'tr')).forEach(c => {
+        citySel.innerHTML += `<option value="${c}">${c}</option>`;
+    });
+
+    if (cityList.includes("Antalya")) {
+        citySel.value = "Antalya";
+        onJewelerCityChange();
+    }
+}
+
+function onJewelerCityChange() {
+    const citySel = document.getElementById('jCity');
+    const distSel = document.getElementById('jDistrict');
+    if (!citySel || !distSel) return;
+
+    const selectedCity = citySel.value;
+    distSel.innerHTML = '<option value="">İlçe Seçin...</option>';
+
+    const cityDataSource = (typeof TURKEY_CITIES !== 'undefined') ? TURKEY_CITIES : 
+                           (typeof CITIES_DATA !== 'undefined') ? CITIES_DATA : 
+                           (typeof CITIES !== 'undefined') ? CITIES : {};
+
+    const districts = cityDataSource[selectedCity] || [];
+    districts.forEach(d => {
+        distSel.innerHTML += `<option value="${d}">${d}</option>`;
+    });
 }
 
 // 2. WHATSAPP TEKLİF İSTE BUTONUNUN GÜVENLİ TETİKLENMESİ
