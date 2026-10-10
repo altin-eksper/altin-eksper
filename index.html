@@ -667,12 +667,11 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
             </button>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button type="button" id="submitRequestBtn" class="wa-btn consumer-only-btn" style="background:#25d366; padding:10px 18px; font-size:14px; font-weight:700;" onclick="checkAndSendRequest()">
+            <button type="button" id="submitRequestBtn" class="wa-btn" 
+        style="background:#25d366; color:#fff; padding:10px 18px; font-size:14px; font-weight:700; cursor:pointer; position:relative; z-index:100;" 
+        onclick="triggerWhatsAppOffer(event)">
     📲 WhatsApp ile Teklif İste (0536 043 42 07)
 </button>
-            <button type="button" class="wa-btn admin-only-btn" style="display:none; background:#0284c7;" onclick="openAuctionDispatchModal()">
-                📢 İhaleyi Sarraflara Dağıt
-            </button>
             <button type="button" class="secondary admin-only-btn" style="display:none;" onclick="copyKuyumcuTemplate()">
                 📋 Metni Kopyala
             </button>
@@ -3306,21 +3305,28 @@ function openJewelerApplyModal() {
 }
 
 // 2. WHATSAPP TEKLİF İSTE BUTONUNUN GÜVENLİ TETİKLENMESİ
-function checkAndSendRequest() {
+function triggerWhatsAppOffer(e) {
+    if (e) e.preventDefault();
+    
     const distInput = document.getElementById('customerDistrict');
+    const districtVal = distInput ? distInput.value.trim() : '';
     const rows = document.querySelectorAll('#rows > tr');
-
-    if (!distInput || !distInput.value.trim()) {
-        alert('Lütfen teklif almak istediğiniz en az bir il ve ilçe seçiniz.');
-        return;
-    }
-
+    
     if (rows.length === 0) {
-        alert('Lütfen önce satmak istediğiniz altın ürünlerini listeye ekleyiniz.');
+        alert("Lütfen önce satmak istediğiniz altın ürünlerini '+ Yeni Ürün Ekle' butonuyla listeye ekleyiniz.");
         return;
     }
 
-    sendCustomerDirectReportWhatsApp();
+    if (!districtVal) {
+        alert("Lütfen teklif almak istediğiniz en az bir İl ve İlçe seçiniz.");
+        return;
+    }
+
+    if (typeof sendCustomerDirectReportWhatsApp === 'function') {
+        sendCustomerDirectReportWhatsApp();
+    } else {
+        alert("İşlem başlatılıyor, lütfen tekrar basınız.");
+    }
 }
 // ================= BAŞLANGIÇ YÖNETİMİ =================
 function startApp() {
