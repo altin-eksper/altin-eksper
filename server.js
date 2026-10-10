@@ -18,18 +18,47 @@ const WHATSAPP_CONFIG = {
 };
 
 // ================= ONAYLI & BAKİYELİ KUYUMCULAR LİSTESİ =================
-// Başvuru yapan ve ödemesini tamamlayarak onayladığınız esnaflar burada tutulur.
+let JEWELERS_DIRECTORY = [
+    {
+        id: 'SARRAF_01',
+        name: 'Güneş Sarrafiye',
+        city: 'Antalya',
+        districts:`server.js` dosyanızın içine ödeme bildirimleri, admin ödeme onaylama/reddetme, bakiye/VIP paket yükleme ve WhatsApp bildirim mekanizmalarını eksiksiz entegre ettim.
+
+Aşağıdaki kodun tamamını kopyalayıp doğrudan `server.js` dosyanızın içeriğiyle değiştirin:
+
+```javascript
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static(__dirname));
+
+// ================= META WHATSAPP CLOUD API AYARLARI =================
+const WHATSAPP_CONFIG = {
+    phoneNumberId: '1293164497207661',
+    accessToken: 'EAAY3ClF5SXgBSgKOGZAf4f2hIzEYFjjbLMmOpQ790tWqSYKnFCrCpKUgp8It3BAAPZCXhIGpIXWHlz0MhOd2ZCeE7tWxyOlUc9rGH0QbOyFpnvNZCIZAbtpVOa4NOZBg9DKrWUOd6MfqXPttArAyeAkzUc6dN9GyfmWWSR0eBoJnt95qMdR65QDRtHZC4hOWzi47QZDZD',
+    apiVersion: 'v21.0',
+    adminPhone: '905399321893' // Sistem yöneticisi WhatsApp bildirim hattı
+};
+
+// ================= ONAYLI & BAKİYELİ KUYUMCULAR LİSTESİ =================
 let JEWELERS_DIRECTORY = [
     {
         id: 'SARRAF_01',
         name: 'Güneş Sarrafiye',
         city: 'Antalya',
         districts: ['Muratpaşa'],
-        phone: '905399321893', // Test numaranız
-        membershipType: 'token', // 'token' (jeton) veya 'subscription' (aylık paket)
-        credits: 25,             // Kalan teklif hakkı
+        phone: '905399321893',
+        membershipType: 'token',
+        credits: 25,
         subscriptionExpiresAt: null,
-        status: 'ACTIVE'         // 'ACTIVE', 'PENDING', 'SUSPENDED'
+        status: 'ACTIVE'
     },
     {
         id: 'SARRAF_02',
@@ -39,7 +68,7 @@ let JEWELERS_DIRECTORY = [
         phone: '905399321893',
         membershipType: 'subscription',
         credits: 0,
-        subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 gün aktif
+        subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         status: 'ACTIVE'
     }
 ];
@@ -52,7 +81,7 @@ async function sendWhatsAppMessage(toPhone, messageText) {
     if (cleanPhone.startsWith('0')) cleanPhone = '90' + cleanPhone.substring(1);
     if (cleanPhone.length === 10) cleanPhone = '90' + cleanPhone;
 
-    const url = `https://graph.facebook.com/${WHATSAPP_CONFIG.apiVersion}/${WHATSAPP_CONFIG.phoneNumberId}/messages`;
+    const url = `[https://graph.facebook.com/$](https://graph.facebook.com/$){WHATSAPP_CONFIG.apiVersion}/${WHATSAPP_CONFIG.phoneNumberId}/messages`;
 
     try {
         const response = await fetch(url, {
@@ -82,6 +111,9 @@ async function sendWhatsAppMessage(toPhone, messageText) {
 // Canlı Talep Deposu (Hafıza Havuzu)
 let requestsPool = [];
 
+// Bekleyen Ödeme Talepleri Deposu
+let pendingPayments = [];
+
 // Süresi dolan (15 dk) talepleri otomatik temizleme
 setInterval(() => {
     const now = Date.now();
@@ -95,7 +127,7 @@ app.get('/', (req, res) => {
 
 // ================= KUYUMCU ÜYELİK & BAKİYE YÖNETİMİ =================
 
-// Kuyumcu Yeni Başvuru Endpoint'i (Siteden form doldurduğunda çalışır)
+// Kuyumcu Yeni Başvuru Endpoint'i
 app.post('/api/jeweler/apply', async (req, res) => {
     try {
         const { firmName, phone, city, district, planType } = req.body;
@@ -111,14 +143,14 @@ app.post('/api/jeweler/apply', async (req, res) => {
             districts: district ? [district] : ['Muratpaşa'],
             phone: phone,
             membershipType: planType === 'subscription' ? 'subscription' : 'token',
-            credits: 0, // Ödeme alınana kadar 0 hak
+            credits: 0,
             subscriptionExpiresAt: null,
-            status: 'PENDING' // Siz onaylayana kadar beklemede
+            status: 'PENDING'
         };
 
         JEWELERS_DIRECTORY.push(newJeweler);
 
-        // Yöneticiye (Size) WhatsApp'tan haber ver
+        // Yöneticiye WhatsApp'tan haber ver
         const adminAlert = 
 `💼 *YENİ KUYUMCU BAŞVURUSU!*
 
@@ -146,7 +178,7 @@ app.post('/api/jeweler/apply', async (req, res) => {
 // Yönetici: Kuyumcu Onaylama & Paket/Jeton Yükleme Endpoint'i
 app.post('/api/admin/jeweler/topup', (req, res) => {
     const { jewelerId, addCredits, extendDays, activate } = req.body;
-    const jeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerId);
+    const jeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerId || j.name === jewelerId);
 
     if (!jeweler) {
         return res.status(404).json({ success: false, message: 'Kuyumcu bulunamadı.' });
@@ -189,10 +221,130 @@ app.get('/api/jeweler/status/:id', (req, res) => {
         }
     });
 });
-// Tüm Başvuru & Kayıtlı Kuyumcuları Listele (Admin Paneli İçin)
+
+// Tüm Kayıtlı Kuyumcuları Listele (Admin Paneli İçin)
 app.get('/api/admin/jewelers', (req, res) => {
     res.json({ success: true, jewelers: JEWELERS_DIRECTORY });
 });
+
+// ================= ÖDEME & JETON SATIN ALMA ALTYAPISI =================
+
+// Kuyumcunun Paket Satın Alıp Ödeme Bildirmesi
+app.post('/api/jeweler/purchase-package', async (req, res) => {
+    try {
+        const { jewelerId, packageId, paymentMethod, senderName, note } = req.body;
+        const jeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerId || j.name === jewelerId);
+
+        if (!jeweler) {
+            return res.status(404).json({ success: false, message: 'Kuyumcu kaydı bulunamadı.' });
+        }
+
+        const packageNames = {
+            token_25: '25 İhale Jetonu (750 TL)',
+            token_75: '75 Avantaj Jetonu (1.750 TL)',
+            subscription_vip: '30 Gün Sınırsız VIP (3.500 TL)'
+        };
+
+        const newOrder = {
+            orderId: 'ORD_' + Date.now().toString().slice(-6),
+            jewelerId: jeweler.id,
+            jewelerName: jeweler.name,
+            jewelerPhone: jeweler.phone,
+            packageId: packageId, // 'token_25', 'token_75', 'subscription_vip'
+            packageName: packageNames[packageId] || packageId,
+            paymentMethod: paymentMethod || 'HAVALE',
+            senderName: senderName || jeweler.name,
+            note: note || '',
+            createdAt: new Date().toISOString(),
+            status: 'PENDING_APPROVAL'
+        };
+
+        pendingPayments.unshift(newOrder);
+
+        // Yöneticiye anlık bildirim ilet
+        const paymentAlert = 
+`💳 *YENİ PAKET / JETON ÖDEME BİLDİRİMİ!*
+
+🏪 *Kuyumcu:* ${jeweler.name} (${jeweler.id})
+📦 *Paket:* ${newOrder.packageName}
+👤 *Ödeme Yapan (Dekont İsim):* ${newOrder.senderName}
+🎟️ *Sipariş No:* #${newOrder.orderId}
+
+Admin panelinden ödemeyi teyit edip tek tıkla onaylayabilirsiniz.`;
+
+        await sendWhatsAppMessage(WHATSAPP_CONFIG.adminPhone, paymentAlert);
+
+        res.json({
+            success: true,
+            message: 'Ödeme bildiriminiz alındı. Yönetici teyidinden sonra bakiyeniz otomatik yüklenecektir.',
+            order: newOrder
+        });
+    } catch (err) {
+        console.error('Ödeme bildirim hatası:', err);
+        res.status(500).json({ success: false, message: 'Ödeme bildirimi işlenemedi.' });
+    }
+});
+
+// Admin: Bekleyen Ödemeleri Listele
+app.get('/api/admin/payments', (req, res) => {
+    res.json({ success: true, payments: pendingPayments });
+});
+
+// Admin: Ödemeyi Onayla ve Bakiyeyi Otomatik Yükle
+app.post('/api/admin/payment/approve', async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        const order = pendingPayments.find(p => p.orderId === orderId);
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Sipariş bulunamadı.' });
+        }
+
+        const jeweler = JEWELERS_DIRECTORY.find(j => j.id === order.jewelerId);
+        if (!jeweler) {
+            return res.status(404).json({ success: false, message: 'İlgili kuyumcu hesabı bulunamadı.' });
+        }
+
+        jeweler.status = 'ACTIVE';
+
+        // Pakete göre yükleme yap
+        if (order.packageId === 'token_25') {
+            jeweler.membershipType = 'token';
+            jeweler.credits = (jeweler.credits || 0) + 25;
+        } else if (order.packageId === 'token_75') {
+            jeweler.membershipType = 'token';
+            jeweler.credits = (jeweler.credits || 0) + 75;
+        } else if (order.packageId === 'subscription_vip') {
+            jeweler.membershipType = 'subscription';
+            const now = new Date();
+            const baseDate = (jeweler.subscriptionExpiresAt && new Date(jeweler.subscriptionExpiresAt) > now)
+                ? new Date(jeweler.subscriptionExpiresAt)
+                : now;
+            baseDate.setDate(baseDate.getDate() + 30);
+            jeweler.subscriptionExpiresAt = baseDate.toISOString();
+        }
+
+        order.status = 'APPROVED';
+
+        // Kuyumcuya WhatsApp'tan bakiye yüklendi müjdesi ver
+        const approvalNotice = 
+`✅ *ÖDEMENİZ ONAYLANDI & BAKİYENİZ YÜKLENDİ!*
+
+Sayın *${jeweler.name}*, #${order.orderId} nolu siparişiniz onaylandı.
+📦 Tanımlanan Paket: ${order.packageName}
+${jeweler.membershipType === 'token' ? `🪙 Yeni Jeton Bakiyeniz: ${jeweler.credits}` : `👑 VIP Abonelik Bitiş: ${new Date(jeweler.subscriptionExpiresAt).toLocaleDateString('tr-TR')}`}
+
+Bölgenizdeki tüm yeni ihalelere hemen teklif vermeye başlayabilirsiniz. Bol kazançlar dileriz!`;
+
+        await sendWhatsAppMessage(jeweler.phone, approvalNotice);
+
+        res.json({ success: true, message: 'Ödeme onaylandı, bakiye sarrafa tanımlandı.', jeweler });
+    } catch (err) {
+        console.error('Ödeme onay hatası:', err);
+        res.status(500).json({ success: false, message: 'Ödeme onaylanamadı.' });
+    }
+});
+
 // ================= İHALE & TEKLİF YÖNETİMİ =================
 
 // 1. Yeni Satış İhalesi Başlatma & Sadece Bakiyeli/Aktif Sarraflara Dağıtım
@@ -218,7 +370,6 @@ app.post('/api/request/create', async (req, res) => {
             const districtMatch = !targetDistrict || (j.districts && j.districts.some(d => d.toLowerCase() === targetDistrict));
             if (!districtMatch) return false;
 
-            // Bakiye / Üyelik Kontrolü
             if (j.membershipType === 'token') {
                 return (j.credits || 0) > 0;
             } else if (j.membershipType === 'subscription') {
@@ -227,7 +378,6 @@ app.post('/api/request/create', async (req, res) => {
             return false;
         });
 
-        // Satılacak altınların listesi
         const itemsList = (reqData.items || []).map(it => 
             `• ${it.productName} (${it.karat}k) - ${it.grams ? it.grams + 'g' : ''} ${it.qty ? it.qty + ' adet' : ''}`
         ).join('\n');
@@ -235,7 +385,7 @@ app.post('/api/request/create', async (req, res) => {
         console.log(`[Dağıtım]: ${targetDistrict} bölgesinde ${matchedJewelers.length} hak sahibi sarrafa ihale iletiliyor...`);
 
         for (const jeweler of matchedJewelers) {
-            const offerLink = `https://altin-eksper.onrender.com/kuyumcu.html?req=${reqData.requestId}&jeweler=${jeweler.id}`;
+            const offerLink = `[https://altin-eksper.onrender.com/kuyumcu.html?req=$](https://altin-eksper.onrender.com/kuyumcu.html?req=$){reqData.requestId}&jeweler=${jeweler.id}`;
 
             const remainingInfo = jeweler.membershipType === 'token' 
                 ? `🪙 Kalan Teklif Hakkınız: ${jeweler.credits}`
@@ -261,7 +411,6 @@ ${itemsList}
             await sendWhatsAppMessage(jeweler.phone, jewelerNotification);
         }
 
-        // Müşteriye bilgi teyidi
         if (reqData.customerPhone) {
             const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz ${reqData.district} bölgesindeki kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
             await sendWhatsAppMessage(reqData.customerPhone, customerMsg);
@@ -302,7 +451,6 @@ app.post('/api/request/quote', (req, res) => {
         return res.status(404).json({ success: false, message: 'Talep bulunamadı' });
     }
 
-    // Teklifi veren kuyumcunun bakiye kontrolü
     const jeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerCode || j.name === jewelerCode);
     if (jeweler) {
         if (jeweler.status !== 'ACTIVE') {
@@ -320,7 +468,6 @@ app.post('/api/request/quote', (req, res) => {
         target.quotes[idx] = { jewelerCode, offerPrice: Number(offerPrice), note };
     } else {
         target.quotes.push({ jewelerCode, offerPrice: Number(offerPrice), note });
-        // İlk teklif girişinde jetonlu üyeden 1 jeton düş
         if (jeweler && jeweler.membershipType === 'token' && jeweler.credits > 0) {
             jeweler.credits -= 1;
             console.log(`[Bakiye Düştü]: ${jeweler.name} kalan jeton: ${jeweler.credits}`);
@@ -365,15 +512,7 @@ Müşteriye mağazanız için randevu kodu tanımlandı. Müşteri kısa süre i
         res.status(500).json({ success: false, message: 'Bildirim gönderilemedi.' });
     }
 });
-// ================= 15 DAKİKALIK İHALE TEMİZLEYİCİSİ =================
-setInterval(() => {
-    const now = Date.now();
-    if (Array.isArray(global.AUCTION_REQUESTS)) {
-        global.AUCTION_REQUESTS = global.AUCTION_REQUESTS.filter(req => {
-            return new Date(req.expiresAt).getTime() > now;
-        });
-    }
-}, 60 * 1000); // Her 1 dakikada bir süresi bitenleri otomatik temizler
+
 app.listen(PORT, () => {
     console.log(`Altın Eksper API Sunucusu ${PORT} portunda çalışıyor.`);
 });

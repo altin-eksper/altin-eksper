@@ -26,8 +26,13 @@ body{
 }
 .balance-box{
     background:#0f172a; border:1px solid #334155; border-radius:8px;
-    padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;
+    padding:12px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;
 }
+.btn-topup{
+    background:#f59e0b; color:#0f172a; border:none; padding:7px 14px; border-radius:6px;
+    font-weight:800; font-size:12px; cursor:pointer; transition:0.2s;
+}
+.btn-topup:hover{ background:#d97706; }
 .item-card{
     background:#0f172a; border:1px solid #334155; border-radius:8px;
     padding:10px; margin-bottom:8px; display:flex; gap:12px; align-items:center;
@@ -48,6 +53,10 @@ body{
     display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
     z-index:99999; align-items:center; justify-content:center; padding:20px;
 }
+.plan-option{
+    border:1px solid #475569; padding:12px; border-radius:8px; cursor:pointer;
+    display:flex; gap:10px; align-items:flex-start; background:#0f172a; margin-bottom:10px;
+}
 </style>
 </head>
 <body>
@@ -61,13 +70,19 @@ body{
         <div id="countdownTimer" class="timer-badge">⏱ 15:00</div>
     </div>
 
+    <!-- KUYUMCU BİLGİSİ & BAKİYE KUTUSU -->
     <div class="balance-box">
         <div>
             <div style="font-size:11px; color:#94a3b8;">Giriş Yapan Sarraf:</div>
             <strong id="jewelerTitle" style="color:#f8fafc; font-size:13px;">Doğrulanıyor...</strong>
+            <div id="balanceBadge" style="font-size:13px; font-weight:800; color:#38bdf8; margin-top:2px;">
+                🪙 Yükleniyor...
+            </div>
         </div>
-        <div id="balanceBadge" style="font-size:12px; font-weight:700; color:#38bdf8;">
-            🪙 Yükleniyor...
+        <div>
+            <button type="button" class="btn-topup" onclick="openPackagePurchaseModal()">
+                ➕ Bakiye Yükle
+            </button>
         </div>
     </div>
 
@@ -96,6 +111,53 @@ body{
     <img id="bigPhotoImg" src="" style="max-width:100%; max-height:90vh; border-radius:8px;">
 </div>
 
+<!-- BAKİYE & JETON PAKETİ SATIN ALMA MODALI -->
+<div id="packageModal" class="photo-modal">
+    <div style="background:#1e293b; border:1px solid #475569; border-radius:12px; max-width:440px; width:100%; padding:20px; color:#f8fafc; position:relative;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #334155; padding-bottom:10px;">
+            <h3 style="margin:0; font-size:16px; color:#f59e0b;">🪙 İhale Katılım Paketleri</h3>
+            <button type="button" onclick="document.getElementById('packageModal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:20px; cursor:pointer;">✕</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; margin-bottom:14px;">
+            <label class="plan-option">
+                <input type="radio" name="buyPlan" value="token_25" checked style="margin-top:3px;">
+                <div>
+                    <div style="font-weight:700; font-size:14px; color:#f8fafc;">🪙 25 İhale Jetonu — 750 ₺</div>
+                    <div style="font-size:12px; color:#94a3b8;">Her yeni ihale teklifinizde 1 jeton düşer.</div>
+                </div>
+            </label>
+            <label class="plan-option">
+                <input type="radio" name="buyPlan" value="token_75" style="margin-top:3px;">
+                <div>
+                    <div style="font-weight:700; font-size:14px; color:#38bdf8;">🪙 75 Avantaj Jetonu — 1.750 ₺</div>
+                    <div style="font-size:12px; color:#94a3b8;">Yoğun teklif veren dükkanlar için indirimli paket.</div>
+                </div>
+            </label>
+            <label class="plan-option" style="border:1.5px solid #facc15; background:#0f172a;">
+                <input type="radio" name="buyPlan" value="subscription_vip" style="margin-top:3px;">
+                <div>
+                    <div style="font-weight:700; font-size:14px; color:#facc15;">👑 30 Gün Sınırsız VIP — 3.500 ₺</div>
+                    <div style="font-size:12px; color:#cbd5e1;">Bölgenizdeki tüm ihalelere sınırsız ve kesintisiz katılım.</div>
+                </div>
+            </label>
+        </div>
+
+        <div style="background:#0f172a; border-radius:8px; padding:12px; font-size:12px; color:#cbd5e1; margin-bottom:12px; line-height:1.5; border:1px solid #334155;">
+            🏦 <b>Havale / EFT / FAST Bilgileri:</b><br>
+            <b>Banka:</b> Garanti BBVA / Kuveyt Türk<br>
+            <b>IBAN:</b> TR33 0006 2000 0000 0000 0000 00<br>
+            <b>Alıcı:</b> Yasin Adalı Kuyumculuk
+        </div>
+
+        <input id="senderNameInput" placeholder="Ödeme Yapan Ad Soyad / Ünvan" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #475569; background:#0f172a; color:#fff; font-size:13px; margin-bottom:12px; outline:none;">
+
+        <button type="button" id="btnSubmitPayment" onclick="submitPackageOrder()" style="width:100%; background:#10b981; color:#fff; border:none; padding:12px; border-radius:6px; font-weight:800; font-size:14px; cursor:pointer;">
+            Ödemeyi Yaptım, Onaya Gönder ✓
+        </button>
+    </div>
+</div>
+
 <script>
 const BACKEND_API_URL = 'https://altin-eksper.onrender.com/api';
 const urlParams = new URLSearchParams(window.location.search);
@@ -105,7 +167,7 @@ let loggedJeweler = null;
 async function initPortal() {
     let jewelerId = localStorage.getItem('loggedJewelerId');
     if (!jewelerId) {
-        jewelerId = prompt("Sarraf / Kuyumcu Kodunuzu Giriniz (Örn: SARRAF_01 veya SARRAF_7206):");
+        jewelerId = prompt("Sarraf / Kuyumcu Kodunuzu Giriniz (Örn: SARRAF_01 veya SARRAF_0885):");
         if (jewelerId) localStorage.setItem('loggedJewelerId', jewelerId.trim().toUpperCase());
     }
     
@@ -116,13 +178,7 @@ async function initPortal() {
             if (data.success && data.data) {
                 loggedJeweler = data.data;
                 document.getElementById('jewelerTitle').textContent = loggedJeweler.name + ' (' + loggedJeweler.id + ')';
-                const bBadge = document.getElementById('balanceBadge');
-                if (loggedJeweler.membershipType === 'subscription') {
-                    bBadge.textContent = '👑 VIP Aylık Sınırsız';
-                    bBadge.style.color = '#facc15';
-                } else {
-                    bBadge.textContent = '🪙 Kalan: ' + (loggedJeweler.credits || 0) + ' Jeton';
-                }
+                updateBalanceDisplay();
             }
         } catch(e) {}
     }
@@ -142,6 +198,18 @@ async function initPortal() {
         }
     } catch(e) {
         document.getElementById('auctionDetails').textContent = 'Sunucuya bağlanılamadı.';
+    }
+}
+
+function updateBalanceDisplay() {
+    const bBadge = document.getElementById('balanceBadge');
+    if (!loggedJeweler) return;
+    if (loggedJeweler.membershipType === 'subscription') {
+        bBadge.textContent = '👑 VIP Aylık Sınırsız';
+        bBadge.style.color = '#facc15';
+    } else {
+        bBadge.textContent = '🪙 Kalan: ' + (loggedJeweler.credits || 0) + ' Jeton';
+        bBadge.style.color = '#38bdf8';
     }
 }
 
@@ -188,6 +256,51 @@ function startCountdown(expiresAtIso) {
 function openBigPhoto(src) {
     document.getElementById('bigPhotoImg').src = src;
     document.getElementById('photoModal').style.display = 'flex';
+}
+
+function openPackagePurchaseModal() {
+    document.getElementById('packageModal').style.display = 'flex';
+}
+
+async function submitPackageOrder() {
+    const selectedPlan = document.querySelector('input[name="buyPlan"]:checked').value;
+    const sender = document.getElementById('senderNameInput').value.trim();
+    const jewelerId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || 'SARRAF_01');
+    const btn = document.getElementById('btnSubmitPayment');
+
+    if (!sender) {
+        alert('Lütfen havale/dekont üzerindeki ad soyad veya dükkan ünvanını yazınız.');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Bildiriliyor...';
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/jeweler/purchase-package', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jewelerId,
+                packageId: selectedPlan,
+                paymentMethod: 'HAVALE',
+                senderName: sender
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('✅ Ödeme bildiriminiz yöneticiye iletildi. Kontrol edildikten hemen sonra bakiyeniz otomatik yüklenecektir.');
+            document.getElementById('packageModal').style.display = 'none';
+            document.getElementById('senderNameInput').value = '';
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    } catch (e) {
+        alert('Sunucu bağlantı hatası oluştu.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Ödemeyi Yaptım, Onaya Gönder ✓';
+    }
 }
 
 async function handleSendOffer(e) {
