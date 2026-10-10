@@ -667,9 +667,9 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
             </button>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button type="button" id="submitRequestBtn" class="wa-btn consumer-only-btn" style="background:#25d366; padding:10px 18px; font-size:14px; font-weight:700;" onclick="sendCustomerDirectReportWhatsApp()">
-                📲 WhatsApp ile Teklif İste (0536 043 42 07)
-            </button>
+          <button type="button" id="submitRequestBtn" class="wa-btn consumer-only-btn" style="background:#25d366; padding:10px 18px; font-size:14px; font-weight:700;" onclick="checkAndSendRequest()">
+    📲 WhatsApp ile Teklif İste (0536 043 42 07)
+</button>
             <button type="button" class="wa-btn admin-only-btn" style="display:none; background:#0284c7;" onclick="openAuctionDispatchModal()">
                 📢 İhaleyi Sarraflara Dağıt
             </button>
@@ -3295,7 +3295,33 @@ function restoreFromBackupFile(event) {
     };
     reader.readAsText(file);
 }
+// 1. ESNAF / SARRAF KATIL PENCERESİNİ AÇMA FONKSİYONU
+function openJewelerApplyModal() {
+    const modal = document.getElementById('jewelerApplyModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    } else {
+        alert('Başvuru formu bulunamadı.');
+    }
+}
 
+// 2. WHATSAPP TEKLİF İSTE BUTONUNUN GÜVENLİ TETİKLENMESİ
+function checkAndSendRequest() {
+    const distInput = document.getElementById('customerDistrict');
+    const rows = document.querySelectorAll('#rows > tr');
+
+    if (!distInput || !distInput.value.trim()) {
+        alert('Lütfen teklif almak istediğiniz en az bir il ve ilçe seçiniz.');
+        return;
+    }
+
+    if (rows.length === 0) {
+        alert('Lütfen önce satmak istediğiniz altın ürünlerini listeye ekleyiniz.');
+        return;
+    }
+
+    sendCustomerDirectReportWhatsApp();
+}
 // ================= BAŞLANGIÇ YÖNETİMİ =================
 function startApp() {
     initCityDropdowns();
