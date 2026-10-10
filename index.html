@@ -3305,28 +3305,66 @@ function openJewelerApplyModal() {
 }
 
 // 2. WHATSAPP TEKLİF İSTE BUTONUNUN GÜVENLİ TETİKLENMESİ
-function triggerWhatsAppOffer(e) {
+async function triggerWhatsAppOffer(e) {
     if (e) e.preventDefault();
-    
-    const distInput = document.getElementById('customerDistrict');
-    const districtVal = distInput ? distInput.value.trim() : '';
+
+    const btn = document.getElementById('submitRequestBtn');
+    const cName = document.getElementById('customerNote')?.value.trim() || 'Müşteri';
+    const cPhone = document.getElementById('customerPhone')?.value.trim() || '';
+    const dist = document.getElementById('customerDistrict')?.value.trim();
+    const totalTL = document.getElementById('grandTotal')?.textContent || '0,00 ₺';
+    const totalG = document.getElementById('totalGrams')?.textContent || '0,00 g';
+
     const rows = document.querySelectorAll('#rows > tr');
-    
     if (rows.length === 0) {
-        alert("Lütfen önce satmak istediğiniz altın ürünlerini '+ Yeni Ürün Ekle' butonuyla listeye ekleyiniz.");
+        alert("Lütfen önce satmak istediğiniz altın ürünlerini '+ Yeni Ürün Ekle' butonuyla ekleyiniz.");
         return;
     }
 
-    if (!districtVal) {
+    if (!dist) {
         alert("Lütfen teklif almak istediğiniz en az bir İl ve İlçe seçiniz.");
         return;
     }
 
-    if (typeof sendCustomerDirectReportWhatsApp === 'function') {
-        sendCustomerDirectReportWhatsApp();
-    } else {
-        alert("İşlem başlatılıyor, lütfen tekrar basınız.");
+    const payloadItems = [];
+    rows.forEach(function(tr, i) {
+        const pCode = tr.querySelector('.product')?.value || 'gram';
+        const pName = (typeof PRODUCTS !== 'undefined' && PRODUCTS[pCode]) ? PRODUCTS[pCode] : pCode;
+        const k = tr.querySelector('.karat')?.value || '24';
+        const g = tr.querySelector('.grams')?.value || '';
+        const q = tr.querySelector('.qty')?.value || '';
+        const amt = tr.querySelector('.amount')?.textContent || '';
+
+        payloadItems.push({
+            index: i + 1, productCode: pCode, productName: pName,
+            karat: k, grams: g, qty: q, amount: amt
+        });
+    });
+
+    const tempId = String(Date.now()).slice(-6);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    const requestPayload = {
+        requestId: tempId, customerName: cName, customerPhone: cPhone,
+        city: 'Antalya', district: dist, totalGrams: totalG, totalReferenceTL: totalTL,
+        items: payloadItems, createdAt: new Date().toISOString(), expiresAt: expiresAt
+    };
+
+    if (btn) { btn.textContent = '⏳ Sarraflara İletiliyor...'; btn.disabled = true; }
+
+    try {
+        await fetch(BACKEND_API_URL + '/request/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestPayload)
+        });
+    } catch (err) {
+        console.error('İstek hatası:', err);
+    } finally {
+        if (btn) { btn.textContent = '📲 WhatsApp ile Teklif İste (0536 043 42 07)'; btn.disabled = false; }
     }
+
+    openLiveAuctionModal(tempId, cName, cPhone, expiresAt);
 }
 // ================= BAŞLANGIÇ YÖNETİMİ =================
 function startApp() {
