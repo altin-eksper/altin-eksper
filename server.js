@@ -25,6 +25,7 @@ let JEWELERS_DIRECTORY = [
         city: 'Antalya',
         districts: ['Muratpaşa'],
         phone: '905399321893',
+        address: 'Işıklar Cad. No:14 Muratpaşa / Antalya',
         membershipType: 'token',
         credits: 50,
         subscriptionExpiresAt: null,
@@ -36,6 +37,7 @@ let JEWELERS_DIRECTORY = [
         city: 'Antalya',
         districts: ['Kepez'],
         phone: '905399321893',
+        address: 'Dokuma Çallı Meydanı No:5 Kepez / Antalya',
         membershipType: 'subscription',
         credits: 0,
         subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -47,6 +49,7 @@ let JEWELERS_DIRECTORY = [
         city: 'Antalya',
         districts: ['Muratpaşa', 'Kepez', 'Konyaaltı'],
         phone: '905399321893',
+        address: 'Atatürk Bulvarı No:88 Muratpaşa / Antalya',
         membershipType: 'token',
         credits: 50,
         subscriptionExpiresAt: null,
@@ -95,6 +98,9 @@ let requestsPool = [];
 // Bekleyen Ödeme Talepleri Deposu
 let pendingPayments = [];
 
+// Tamamlanan Başarılı Anlaşmalar & Komisyon Havuzu
+let completedDeals = [];
+
 // Süresi dolan (15 dk) talepleri otomatik temizleme
 setInterval(() => {
     const now = Date.now();
@@ -122,6 +128,7 @@ app.post('/api/jeweler/apply', async (req, res) => {
             city: city || 'Antalya',
             districts: district ? [district] : ['Muratpaşa'],
             phone: phone,
+            address: `${district || 'Merkez'} / ${city || 'Antalya'}`,
             membershipType: planType === 'subscription' ? 'subscription' : 'token',
             credits: 0,
             subscriptionExpiresAt: null,
@@ -194,7 +201,8 @@ app.get('/api/jeweler/status/:id', (req, res) => {
             status: jeweler.status,
             membershipType: jeweler.membershipType,
             credits: jeweler.credits,
-            subscriptionExpiresAt: jeweler.subscriptionExpiresAt
+            subscriptionExpiresAt: jeweler.subscriptionExpiresAt,
+            address: jeweler.address || ''
         }
     });
 });
@@ -334,7 +342,7 @@ app.post('/api/request/create', async (req, res) => {
         const matchedJewelers = JEWELERS_DIRECTORY.filter(j => {
             if (j.status !== 'ACTIVE') return false;
 
-            // İlçe filtresi: 'Antalya - Muratpaşa' veya 'Muratpaşa' gibi varyasyonların ikisini de kapsar
+            // İlçe filtresi
             const hasDistrictMatch = !targetDistrictRaw || (j.districts && j.districts.some(d => {
                 const cleanD = d.toLowerCase();
                 return targetDistrictRaw.includes(cleanD) || cleanD.includes(targetDistrictRaw);
@@ -357,7 +365,7 @@ app.post('/api/request/create', async (req, res) => {
 
         console.log(`[Dağıtım]: #${reqData.requestId} için ${matchedJewelers.length} sarrafa WhatsApp gönderiliyor...`);
 
-        // Kuyumculara İhale Linki Gönder (1. Resimdeki Mesaj)
+        // Kuyumculara İhale Linki Gönder
         for (const jeweler of matchedJewelers) {
             const offerLink = `https://altin-eksper.onrender.com/kuyumcu.html?req=${reqData.requestId}&jeweler=${jeweler.id}`;
 
@@ -385,7 +393,7 @@ ${itemsList}
             await sendWhatsAppMessage(jeweler.phone, jewelerNotification);
         }
 
-        // Müşteriye Bilgi Mesajı Gönder (2. Resimdeki Mesaj)
+        // Müşteriye Bilgi Mesajı Gönder
         if (reqData.customerPhone) {
             const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz ${reqData.district} bölgesindeki kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
             await sendWhatsAppMessage(reqData.customerPhone, customerMsg);
@@ -414,13 +422,14 @@ app.get('/api/request/:id', (req, res) => {
     res.json({ success: true, data: found });
 });
 
+// ================= TEKLİF VERME & REVİZE ETME =================
 app.post('/api/request/quote', (req, res) => {
     const { requestId, jewelerCode, offerPrice, note } = req.body;
     console.log(`[Teklif Girişi]: #${requestId} için ${jewelerCode} -> ${offerPrice} TL`);
 
     const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
     if (!target) {
-        return res.status(404).json({ success: false, message: 'Talep bulunamadı' });
+        return res.status(404).json({ success: false, message: 'İhale süresi dolmuş veya bulunamadı.' });
     }
 
     const jeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerCode || j.name === jewelerCode);
@@ -428,31 +437,51 @@ app.post('/api/request/quote', (req, res) => {
         if (jeweler.status !== 'ACTIVE') {
             return res.status(403).json({ success: false, message: 'Üyeliğiniz aktif değil.' });
         }
-        if (jeweler.membershipType === 'token' && jeweler.credits <= 0) {
-            return res.status(403).json({ success: false, message: 'Yetersiz bakiye! Teklif vermek için paket yenileyin.' });
-        }
     }
 
     target.quotes = target.quotes || [];
     const idx = target.quotes.findIndex(q => q.jewelerCode === jewelerCode);
 
     if (idx !== -1) {
-        target.quotes[idx] = { jewelerCode, offerPrice: Number(offerPrice), note };
+        // AYNI KUYUMCU TEKLİFİNİ REVİZE EDİYOR (Tekrar jeton düşmez!)
+        target.quotes[idx] = { 
+            jewelerCode, 
+            offerPrice: Number(offerPrice), 
+            note: note || target.quotes[idx].note,
+            updatedAt: new Date().toISOString()
+        };
+        console.log(`[Teklif Revize Edildi]: ${jewelerCode} yeni teklif: ${offerPrice} TL`);
     } else {
-        target.quotes.push({ jewelerCode, offerPrice: Number(offerPrice), note });
-        if (jeweler && jeweler.membershipType === 'token' && jeweler.credits > 0) {
+        // İLK KEZ TEKLİF VERİLİYOR (Jeton kontrolü ve düşümü)
+        if (jeweler && jeweler.membershipType === 'token') {
+            if (jeweler.credits <= 0) {
+                return res.status(403).json({ success: false, message: 'Yetersiz bakiye! Teklif vermek için paket yenileyin.' });
+            }
             jeweler.credits -= 1;
             console.log(`[Bakiye Düştü]: ${jeweler.name} kalan jeton: ${jeweler.credits}`);
         }
+
+        target.quotes.push({ 
+            jewelerCode, 
+            offerPrice: Number(offerPrice), 
+            note, 
+            createdAt: new Date().toISOString() 
+        });
     }
 
-    res.json({ success: true, quotes: target.quotes });
+    res.json({ 
+        success: true, 
+        quotes: target.quotes, 
+        remainingCredits: jeweler ? jeweler.credits : null 
+    });
 });
 
+// ================= İHALE ONAYI, RANDEVU & ÇİFT TARAFLI WHATSAPP =================
 app.post('/api/request/notify-winner', async (req, res) => {
     try {
-        const { requestId, jewelerCode, agreedPrice, customerName, customerPhone } = req.body;
+        const { requestId, jewelerCode, agreedPrice, customerName, customerPhone, commissionTL } = req.body;
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
+        
         if (target) {
             target.status = 'COMPLETED';
             target.winnerCode = jewelerCode;
@@ -462,26 +491,91 @@ app.post('/api/request/notify-winner', async (req, res) => {
 
         const targetJeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerCode || j.name === jewelerCode);
         const jewelerPhone = targetJeweler ? targetJeweler.phone : WHATSAPP_CONFIG.adminPhone;
+        const jewelerName = targetJeweler ? targetJeweler.name : jewelerCode;
+        const jewelerAddress = (targetJeweler && targetJeweler.address) ? targetJeweler.address : 'Muratpaşa / Antalya';
+        const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(jewelerAddress);
 
+        // Başarılı anlaşmayı muhasebe havuzuna kaydet
+        const dealRecord = {
+            dealId: 'DL_' + Date.now().toString().slice(-6),
+            requestId,
+            customerName: customerName || 'Müşteri',
+            customerPhone: customerPhone || '',
+            jewelerId: targetJeweler ? targetJeweler.id : jewelerCode,
+            jewelerName: jewelerName,
+            jewelerPhone: jewelerPhone,
+            jewelerAddress: jewelerAddress,
+            agreedPrice: Number(agreedPrice),
+            commissionTL: Number(commissionTL) || 0,
+            completedAt: new Date().toISOString()
+        };
+        completedDeals.unshift(dealRecord);
+
+        // 1. Kazanan Sarrafa WhatsApp Bildirimi
         const winnerMessage = 
 `🎉 *TEBRİKLER! İHALE SİZDE KALDI*
 
-Sayın İş Ortağımız, verdiğiniz teklif müşteri tarafından onaylandı!
+Sayın *${jewelerName}*, verdiğiniz teklif müşteri tarafından onaylandı!
 
 🏷 *İhale No:* #${requestId}
 👤 *Müşteri Adı:* ${customerName || 'Müşteri'}
 💰 *Anlaşılan Tutar:* ${Number(agreedPrice).toLocaleString('tr-TR')} ₺
-
 📌 *Müşteri İletişim:* ${customerPhone || 'Girilmedi'}
-Müşteriye mağazanız için randevu kodu tanımlandı. Müşteri kısa süre içinde dükkanınıza gelecektir.`;
+
+Müşteriye mağazanızın açık adresi, harita konumu ve randevu kodu tanımlandı. Müşteri kısa süre içinde mağazanıza gelecektir.`;
 
         await sendWhatsAppMessage(jewelerPhone, winnerMessage);
 
-        res.json({ success: true, message: 'Kazanan sarrafa WhatsApp randevu bildirimi başarıyla iletildi.' });
+        // 2. Müşteriye WhatsApp Randevu & Konum Fişi Bildirimi
+        if (customerPhone) {
+            const customerAppointmentMsg = 
+`🎉 *TEBRİKLER! İŞLEMİNİZ ONAYLANDI*
+
+Sayın *${customerName || 'Müşterimiz'}*, altın satış işleminiz için anlaşmalı sarrafımız bilgilendirildi.
+
+🏪 *Yetkili Sarraf:* ${jewelerName}
+💰 *Taahhüt Edilen Tutar:* ${Number(agreedPrice).toLocaleString('tr-TR')} ₺
+📍 *Mağaza Adresi:* ${jewelerAddress}
+🎟️ *Güvenlik / Randevu Kodu:* #${requestId}
+
+🗺️ *Google Haritalar Yol Tarifi:*
+${mapUrl}
+
+📌 Mağazada fiziki tartım ve ayar teyidinden sonra ödemeniz anında nakit veya IBAN ile eksiksiz ödenecektir.`;
+
+            await sendWhatsAppMessage(customerPhone, customerAppointmentMsg);
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Kazanan sarrafa ve müşteriye randevu bildirimleri iletildi.',
+            deal: dealRecord 
+        });
     } catch (err) {
         console.error('Notify winner error:', err);
         res.status(500).json({ success: false, message: 'Bildirim gönderilemedi.' });
     }
+});
+
+// ================= KOMİSYON & BAŞARILI İHALE MUHASEBE RAPORU =================
+app.get('/api/admin/commission-report', (req, res) => {
+    let totalTurnover = 0;
+    let totalCommission = 0;
+
+    completedDeals.forEach(d => {
+        totalTurnover += (d.agreedPrice || 0);
+        totalCommission += (d.commissionTL || 0);
+    });
+
+    res.json({
+        success: true,
+        stats: {
+            totalDeals: completedDeals.length,
+            totalTurnover,
+            totalCommission
+        },
+        deals: completedDeals
+    });
 });
 
 app.listen(PORT, () => {
