@@ -9,6 +9,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// ================= AYARLAR & GELİR MOTORU =================
+// Başarılı anlaşma tamamlandığında kazanan kuyumcudan düşülecek jeton sayısı
+// (İleride dilediğiniz gibi sadece bu rakamı değiştirebilirsiniz)
+const SUCCESS_DEAL_TOKEN_COST = 5; 
+
 // ================= META WHATSAPP CLOUD API AYARLARI =================
 const WHATSAPP_CONFIG = {
     phoneNumberId: '1293164497207661',
@@ -458,7 +463,7 @@ app.post('/api/request/quote', (req, res) => {
                 return res.status(403).json({ success: false, message: 'Yetersiz bakiye! Teklif vermek için paket yenileyin.' });
             }
             jeweler.credits -= 1;
-            console.log(`[Bakiye Düştü]: ${jeweler.name} kalan jeton: ${jeweler.credits}`);
+            console.log(`[Bakiye Düştü]: ${jeweler.name} teklif için 1 jeton harcadı. Kalan jeton: ${jeweler.credits}`);
         }
 
         target.quotes.push({ 
@@ -476,7 +481,7 @@ app.post('/api/request/quote', (req, res) => {
     });
 });
 
-// ================= İHALE ONAYI, RANDEVU & ÇİFT TARAFLI WHATSAPP =================
+// ================= İHALE ONAYI, RANDEVU & BAŞARI JETONU DÜŞÜMÜ =================
 app.post('/api/request/notify-winner', async (req, res) => {
     try {
         const { requestId, jewelerCode, agreedPrice, customerName, customerPhone, commissionTL } = req.body;
@@ -495,6 +500,18 @@ app.post('/api/request/notify-winner', async (req, res) => {
         const jewelerAddress = (targetJeweler && targetJeweler.address) ? targetJeweler.address : 'Muratpaşa / Antalya';
         const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(jewelerAddress);
 
+        // --- BAŞARI JETON DÜŞÜMÜ & KOMİSYON İŞLEMESİ ---
+        let deductedTokens = 0;
+        let remainingCredits = null;
+
+        if (targetJeweler && targetJeweler.membershipType === 'token') {
+            deductedTokens = SUCCESS_DEAL_TOKEN_COST;
+            targetJeweler.credits = Math.max(0, (targetJeweler.credits || 0) - SUCCESS_DEAL_TOKEN_COST);
+            remainingCredits = targetJeweler.credits;
+
+            console.log(`[Başarı Jetonu Kesildi]: ${targetJeweler.name} hesabından ${SUCCESS_DEAL_TOKEN_COST} jeton düşüldü. Kalan Bakiye: ${targetJeweler.credits}`);
+        }
+
         // Başarılı anlaşmayı muhasebe havuzuna kaydet
         const dealRecord = {
             dealId: 'DL_' + Date.now().toString().slice(-6),
@@ -506,12 +523,18 @@ app.post('/api/request/notify-winner', async (req, res) => {
             jewelerPhone: jewelerPhone,
             jewelerAddress: jewelerAddress,
             agreedPrice: Number(agreedPrice),
+            deductedTokens: deductedTokens,
+            remainingCredits: remainingCredits,
             commissionTL: Number(commissionTL) || 0,
             completedAt: new Date().toISOString()
         };
         completedDeals.unshift(dealRecord);
 
         // 1. Kazanan Sarrafa WhatsApp Bildirimi
+        const tokenDeductNote = (targetJeweler && targetJeweler.membershipType === 'token')
+            ? `🪙 *Kullanılan Başarı Jetonu:* ${SUCCESS_DEAL_TOKEN_COST} Adet\n🪙 *Kalan Jeton Bakiyeniz:* ${targetJeweler.credits}`
+            : `👑 *Üyelik Durumu:* VIP Sınırsız Paket`;
+
         const winnerMessage = 
 `🎉 *TEBRİKLER! İHALE SİZDE KALDI*
 
@@ -521,6 +544,7 @@ Sayın *${jewelerName}*, verdiğiniz teklif müşteri tarafından onaylandı!
 👤 *Müşteri Adı:* ${customerName || 'Müşteri'}
 💰 *Anlaşılan Tutar:* ${Number(agreedPrice).toLocaleString('tr-TR')} ₺
 📌 *Müşteri İletişim:* ${customerPhone || 'Girilmedi'}
+${tokenDeductNote}
 
 Müşteriye mağazanızın açık adresi, harita konumu ve randevu kodu tanımlandı. Müşteri kısa süre içinde mağazanıza gelecektir.`;
 
@@ -548,8 +572,9 @@ ${mapUrl}
 
         res.json({ 
             success: true, 
-            message: 'Kazanan sarrafa ve müşteriye randevu bildirimleri iletildi.',
-            deal: dealRecord 
+            message: 'Kazanan sarrafa ve müşteriye randevu bildirimleri iletildi. Başarı jetonu düşüldü.',
+            deal: dealRecord,
+            remainingCredits: remainingCredits
         });
     } catch (err) {
         console.error('Notify winner error:', err);
@@ -561,10 +586,12 @@ ${mapUrl}
 app.get('/api/admin/commission-report', (req, res) => {
     let totalTurnover = 0;
     let totalCommission = 0;
+    let totalTokensUsed = 0;
 
     completedDeals.forEach(d => {
         totalTurnover += (d.agreedPrice || 0);
         totalCommission += (d.commissionTL || 0);
+        totalTokensUsed += (d.deductedTokens || 0);
     });
 
     res.json({
@@ -572,7 +599,8 @@ app.get('/api/admin/commission-report', (req, res) => {
         stats: {
             totalDeals: completedDeals.length,
             totalTurnover,
-            totalCommission
+            totalCommission,
+            totalTokensUsed
         },
         deals: completedDeals
     });
