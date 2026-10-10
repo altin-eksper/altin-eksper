@@ -23,40 +23,10 @@ let JEWELERS_DIRECTORY = [
         id: 'SARRAF_01',
         name: 'Güneş Sarrafiye',
         city: 'Antalya',
-        districts:`server.js` dosyanızın içine ödeme bildirimleri, admin ödeme onaylama/reddetme, bakiye/VIP paket yükleme ve WhatsApp bildirim mekanizmalarını eksiksiz entegre ettim.
-
-Aşağıdaki kodun tamamını kopyalayıp doğrudan `server.js` dosyanızın içeriğiyle değiştirin:
-
-```javascript
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-
-const app = express();
-const PORT = process.env.PORT || 10000;
-
-app.use(cors());
-app.use(express.json());
-app.use(express.static(__dirname));
-
-// ================= META WHATSAPP CLOUD API AYARLARI =================
-const WHATSAPP_CONFIG = {
-    phoneNumberId: '1293164497207661',
-    accessToken: 'EAAY3ClF5SXgBSgKOGZAf4f2hIzEYFjjbLMmOpQ790tWqSYKnFCrCpKUgp8It3BAAPZCXhIGpIXWHlz0MhOd2ZCeE7tWxyOlUc9rGH0QbOyFpnvNZCIZAbtpVOa4NOZBg9DKrWUOd6MfqXPttArAyeAkzUc6dN9GyfmWWSR0eBoJnt95qMdR65QDRtHZC4hOWzi47QZDZD',
-    apiVersion: 'v21.0',
-    adminPhone: '905399321893' // Sistem yöneticisi WhatsApp bildirim hattı
-};
-
-// ================= ONAYLI & BAKİYELİ KUYUMCULAR LİSTESİ =================
-let JEWELERS_DIRECTORY = [
-    {
-        id: 'SARRAF_01',
-        name: 'Güneş Sarrafiye',
-        city: 'Antalya',
         districts: ['Muratpaşa'],
         phone: '905399321893',
         membershipType: 'token',
-        credits: 25,
+        credits: 50,
         subscriptionExpiresAt: null,
         status: 'ACTIVE'
     },
@@ -70,6 +40,17 @@ let JEWELERS_DIRECTORY = [
         credits: 0,
         subscriptionExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         status: 'ACTIVE'
+    },
+    {
+        id: 'SARRAF_03',
+        name: 'Akdeniz Kuyumculuk',
+        city: 'Antalya',
+        districts: ['Muratpaşa', 'Kepez', 'Konyaaltı'],
+        phone: '905399321893',
+        membershipType: 'token',
+        credits: 50,
+        subscriptionExpiresAt: null,
+        status: 'ACTIVE'
     }
 ];
 
@@ -81,7 +62,7 @@ async function sendWhatsAppMessage(toPhone, messageText) {
     if (cleanPhone.startsWith('0')) cleanPhone = '90' + cleanPhone.substring(1);
     if (cleanPhone.length === 10) cleanPhone = '90' + cleanPhone;
 
-    const url = `[https://graph.facebook.com/$](https://graph.facebook.com/$){WHATSAPP_CONFIG.apiVersion}/${WHATSAPP_CONFIG.phoneNumberId}/messages`;
+    const url = `https://graph.facebook.com/${WHATSAPP_CONFIG.apiVersion}/${WHATSAPP_CONFIG.phoneNumberId}/messages`;
 
     try {
         const response = await fetch(url, {
@@ -127,7 +108,6 @@ app.get('/', (req, res) => {
 
 // ================= KUYUMCU ÜYELİK & BAKİYE YÖNETİMİ =================
 
-// Kuyumcu Yeni Başvuru Endpoint'i
 app.post('/api/jeweler/apply', async (req, res) => {
     try {
         const { firmName, phone, city, district, planType } = req.body;
@@ -150,7 +130,6 @@ app.post('/api/jeweler/apply', async (req, res) => {
 
         JEWELERS_DIRECTORY.push(newJeweler);
 
-        // Yöneticiye WhatsApp'tan haber ver
         const adminAlert = 
 `💼 *YENİ KUYUMCU BAŞVURUSU!*
 
@@ -175,7 +154,6 @@ app.post('/api/jeweler/apply', async (req, res) => {
     }
 });
 
-// Yönetici: Kuyumcu Onaylama & Paket/Jeton Yükleme Endpoint'i
 app.post('/api/admin/jeweler/topup', (req, res) => {
     const { jewelerId, addCredits, extendDays, activate } = req.body;
     const jeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerId || j.name === jewelerId);
@@ -204,7 +182,6 @@ app.post('/api/admin/jeweler/topup', (req, res) => {
     res.json({ success: true, message: 'Kuyumcu hesabı güncellendi.', jeweler });
 });
 
-// Kuyumcu Durumu & Kalan Hak Sorgulama
 app.get('/api/jeweler/status/:id', (req, res) => {
     const jeweler = JEWELERS_DIRECTORY.find(j => j.id === req.params.id);
     if (!jeweler) return res.status(404).json({ success: false, message: 'Kuyumcu bulunamadı.' });
@@ -222,14 +199,12 @@ app.get('/api/jeweler/status/:id', (req, res) => {
     });
 });
 
-// Tüm Kayıtlı Kuyumcuları Listele (Admin Paneli İçin)
 app.get('/api/admin/jewelers', (req, res) => {
     res.json({ success: true, jewelers: JEWELERS_DIRECTORY });
 });
 
 // ================= ÖDEME & JETON SATIN ALMA ALTYAPISI =================
 
-// Kuyumcunun Paket Satın Alıp Ödeme Bildirmesi
 app.post('/api/jeweler/purchase-package', async (req, res) => {
     try {
         const { jewelerId, packageId, paymentMethod, senderName, note } = req.body;
@@ -250,7 +225,7 @@ app.post('/api/jeweler/purchase-package', async (req, res) => {
             jewelerId: jeweler.id,
             jewelerName: jeweler.name,
             jewelerPhone: jeweler.phone,
-            packageId: packageId, // 'token_25', 'token_75', 'subscription_vip'
+            packageId: packageId,
             packageName: packageNames[packageId] || packageId,
             paymentMethod: paymentMethod || 'HAVALE',
             senderName: senderName || jeweler.name,
@@ -261,7 +236,6 @@ app.post('/api/jeweler/purchase-package', async (req, res) => {
 
         pendingPayments.unshift(newOrder);
 
-        // Yöneticiye anlık bildirim ilet
         const paymentAlert = 
 `💳 *YENİ PAKET / JETON ÖDEME BİLDİRİMİ!*
 
@@ -285,12 +259,10 @@ Admin panelinden ödemeyi teyit edip tek tıkla onaylayabilirsiniz.`;
     }
 });
 
-// Admin: Bekleyen Ödemeleri Listele
 app.get('/api/admin/payments', (req, res) => {
     res.json({ success: true, payments: pendingPayments });
 });
 
-// Admin: Ödemeyi Onayla ve Bakiyeyi Otomatik Yükle
 app.post('/api/admin/payment/approve', async (req, res) => {
     try {
         const { orderId } = req.body;
@@ -307,7 +279,6 @@ app.post('/api/admin/payment/approve', async (req, res) => {
 
         jeweler.status = 'ACTIVE';
 
-        // Pakete göre yükleme yap
         if (order.packageId === 'token_25') {
             jeweler.membershipType = 'token';
             jeweler.credits = (jeweler.credits || 0) + 25;
@@ -326,7 +297,6 @@ app.post('/api/admin/payment/approve', async (req, res) => {
 
         order.status = 'APPROVED';
 
-        // Kuyumcuya WhatsApp'tan bakiye yüklendi müjdesi ver
         const approvalNotice = 
 `✅ *ÖDEMENİZ ONAYLANDI & BAKİYENİZ YÜKLENDİ!*
 
@@ -347,7 +317,6 @@ Bölgenizdeki tüm yeni ihalelere hemen teklif vermeye başlayabilirsiniz. Bol k
 
 // ================= İHALE & TEKLİF YÖNETİMİ =================
 
-// 1. Yeni Satış İhalesi Başlatma & Sadece Bakiyeli/Aktif Sarraflara Dağıtım
 app.post('/api/request/create', async (req, res) => {
     try {
         const reqData = req.body;
@@ -358,18 +327,22 @@ app.post('/api/request/create', async (req, res) => {
         reqData.quotes = [];
         requestsPool.unshift(reqData);
 
-        const targetCity = (reqData.city || 'Antalya').trim().toLowerCase();
-        const targetDistrict = (reqData.district || '').trim().toLowerCase();
+        const targetDistrictRaw = (reqData.district || '').trim().toLowerCase();
         const now = new Date();
 
-        // SADECE: Aktif olan + Aynı il/ilçede olan + (Kredisi olan VEYA Aboneliği bitmemiş) Kuyumcular
+        // Esnek İlçe ve Bölge Eşleştirmesi
         const matchedJewelers = JEWELERS_DIRECTORY.filter(j => {
             if (j.status !== 'ACTIVE') return false;
-            if (j.city.toLowerCase() !== targetCity) return false;
 
-            const districtMatch = !targetDistrict || (j.districts && j.districts.some(d => d.toLowerCase() === targetDistrict));
-            if (!districtMatch) return false;
+            // İlçe filtresi: 'Antalya - Muratpaşa' veya 'Muratpaşa' gibi varyasyonların ikisini de kapsar
+            const hasDistrictMatch = !targetDistrictRaw || (j.districts && j.districts.some(d => {
+                const cleanD = d.toLowerCase();
+                return targetDistrictRaw.includes(cleanD) || cleanD.includes(targetDistrictRaw);
+            }));
 
+            if (!hasDistrictMatch) return false;
+
+            // Bakiye veya Üyelik Kontrolü
             if (j.membershipType === 'token') {
                 return (j.credits || 0) > 0;
             } else if (j.membershipType === 'subscription') {
@@ -382,10 +355,11 @@ app.post('/api/request/create', async (req, res) => {
             `• ${it.productName} (${it.karat}k) - ${it.grams ? it.grams + 'g' : ''} ${it.qty ? it.qty + ' adet' : ''}`
         ).join('\n');
 
-        console.log(`[Dağıtım]: ${targetDistrict} bölgesinde ${matchedJewelers.length} hak sahibi sarrafa ihale iletiliyor...`);
+        console.log(`[Dağıtım]: #${reqData.requestId} için ${matchedJewelers.length} sarrafa WhatsApp gönderiliyor...`);
 
+        // Kuyumculara İhale Linki Gönder (1. Resimdeki Mesaj)
         for (const jeweler of matchedJewelers) {
-            const offerLink = `[https://altin-eksper.onrender.com/kuyumcu.html?req=$](https://altin-eksper.onrender.com/kuyumcu.html?req=$){reqData.requestId}&jeweler=${jeweler.id}`;
+            const offerLink = `https://altin-eksper.onrender.com/kuyumcu.html?req=${reqData.requestId}&jeweler=${jeweler.id}`;
 
             const remainingInfo = jeweler.membershipType === 'token' 
                 ? `🪙 Kalan Teklif Hakkınız: ${jeweler.credits}`
@@ -411,6 +385,7 @@ ${itemsList}
             await sendWhatsAppMessage(jeweler.phone, jewelerNotification);
         }
 
+        // Müşteriye Bilgi Mesajı Gönder (2. Resimdeki Mesaj)
         if (reqData.customerPhone) {
             const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz ${reqData.district} bölgesindeki kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
             await sendWhatsAppMessage(reqData.customerPhone, customerMsg);
@@ -427,21 +402,18 @@ ${itemsList}
     }
 });
 
-// 2. Aktif Talepleri Listeleme
 app.get('/api/requests', (req, res) => {
     const now = Date.now();
     const active = requestsPool.filter(r => !r.expiresAt || new Date(r.expiresAt).getTime() > now);
     res.json({ success: true, requests: active });
 });
 
-// 3. Tek Bir Talebi Getirme
 app.get('/api/request/:id', (req, res) => {
     const found = requestsPool.find(r => String(r.requestId) === String(req.params.id));
     if (!found) return res.status(404).json({ success: false, message: 'Talep bulunamadı' });
     res.json({ success: true, data: found });
 });
 
-// 4. Sarraf Teklifi Ekleme (Jetonlu ise bakiyeden 1 hak düşer)
 app.post('/api/request/quote', (req, res) => {
     const { requestId, jewelerCode, offerPrice, note } = req.body;
     console.log(`[Teklif Girişi]: #${requestId} için ${jewelerCode} -> ${offerPrice} TL`);
@@ -477,7 +449,6 @@ app.post('/api/request/quote', (req, res) => {
     res.json({ success: true, quotes: target.quotes });
 });
 
-// 5. Kazanan Sarraf & Randevu Bildirimi
 app.post('/api/request/notify-winner', async (req, res) => {
     try {
         const { requestId, jewelerCode, agreedPrice, customerName, customerPhone } = req.body;
