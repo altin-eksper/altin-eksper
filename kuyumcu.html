@@ -47,7 +47,11 @@ body{
 }
 .submit-btn{
     width:100%; background:linear-gradient(135deg, #f59e0b, #d97706); color:#0f172a;
-    border:none; padding:14px; border-radius:8px; font-weight:800; font-size:16px; cursor:pointer;
+    border:none; padding:14px; border-radius:8px; font-weight:800; font-size:16px; cursor:pointer; transition:0.2s;
+}
+.submit-btn:hover{ filter:brightness(1.05); }
+.submit-btn.revise-btn{
+    background:linear-gradient(135deg, #0284c7, #0369a1); color:#fff;
 }
 .photo-modal{
     display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
@@ -159,16 +163,20 @@ body{
 </div>
 
 <script>
-const BACKEND_API_URL = 'https://altin-eksper.onrender.com/api';
+const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'https://altin-eksper.onrender.com/api';
 const urlParams = new URLSearchParams(window.location.search);
 const reqId = urlParams.get('req') || '';
 let loggedJeweler = null;
+let hasGivenOffer = false;
 
 async function initPortal() {
-    let jewelerId = localStorage.getItem('loggedJewelerId');
+    let jewelerId = urlParams.get('jeweler') || localStorage.getItem('loggedJewelerId');
     if (!jewelerId) {
         jewelerId = prompt("Sarraf / Kuyumcu Kodunuzu Giriniz (Örn: SARRAF_01 veya SARRAF_0885):");
-        if (jewelerId) localStorage.setItem('loggedJewelerId', jewelerId.trim().toUpperCase());
+    }
+    if (jewelerId) {
+        jewelerId = jewelerId.trim().toUpperCase();
+        localStorage.setItem('loggedJewelerId', jewelerId);
     }
     
     if (jewelerId) {
@@ -193,11 +201,33 @@ async function initPortal() {
         const data = await res.json();
         if (data.success && data.data) {
             renderAuction(data.data);
+            checkExistingOffer(data.data);
         } else {
             document.getElementById('auctionDetails').innerHTML = '⚠️ Bu ihale sona ermiş veya silinmiş.';
         }
     } catch(e) {
         document.getElementById('auctionDetails').textContent = 'Sunucuya bağlanılamadı.';
+    }
+}
+
+function checkExistingOffer(req) {
+    const jId = loggedJeweler ? loggedJeweler.id : localStorage.getItem('loggedJewelerId');
+    if (!jId) return;
+
+    const myQuote = (req.quotes || []).find(q => q.jewelerCode === jId);
+    if (myQuote) {
+        hasGivenOffer = true;
+        document.getElementById('offerPrice').value = myQuote.offerPrice;
+        if (myQuote.note) document.getElementById('offerNote').value = myQuote.note;
+        
+        const btn = document.getElementById('btnSubmitOffer');
+        btn.textContent = 'Teklifi Güncelle (Revize Et)';
+        btn.classList.add('revise-btn');
+
+        const resultBox = document.getElementById('offerResult');
+        resultBox.style.display = 'block';
+        resultBox.style.color = '#38bdf8';
+        resultBox.innerHTML = `ℹ️ Bu ihaleye daha önce <b>${Number(myQuote.offerPrice).toLocaleString('tr-TR')} ₺</b> teklif verdiniz. Dilerseniz yukarıdan güncelleyebilirsiniz.`;
     }
 }
 
@@ -309,7 +339,7 @@ async function handleSendOffer(e) {
     const resultBox = document.getElementById('offerResult');
     const offerPrice = Number(document.getElementById('offerPrice').value);
     const offerNote = document.getElementById('offerNote').value.trim();
-    const jewelerCode = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || 'SARRAF');
+    const jewelerCode = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || 'SARRAF_01');
 
     btn.disabled = true;
     btn.textContent = 'İletiliyor...';
@@ -324,22 +354,31 @@ async function handleSendOffer(e) {
         if (data.success) {
             resultBox.style.display = 'block';
             resultBox.style.color = '#4ade80';
-            resultBox.innerHTML = '✅ <b>Teklifiniz başarıyla müşteriye iletildi!</b><br>Müşteri onaylarsa WhatsApp üzerinden anlık randevu kodu alacaksınız.';
-            document.getElementById('offerPrice').disabled = true;
-            btn.style.display = 'none';
+            resultBox.innerHTML = hasGivenOffer 
+                ? '✅ <b>Teklifiniz başarıyla güncellendi!</b><br>Müşteri canlı ekranında yeni fiyatınız görünmektedir.' 
+                : '✅ <b>Teklifiniz başarıyla müşteriye iletildi!</b><br>Müşteri onaylarsa WhatsApp üzerinden anlık randevu kodu alacaksınız.';
+            
+            btn.textContent = 'Teklifi Güncelle (Revize Et)';
+            btn.classList.add('revise-btn');
+            btn.disabled = false;
+            hasGivenOffer = true;
+
+            // Kalan bakiye bilgisi geldiyse ekranda güncelle
+            if (data.remainingCredits !== null && loggedJeweler) {
+                loggedJeweler.credits = data.remainingCredits;
+                updateBalanceDisplay();
+            }
         } else {
             resultBox.style.display = 'block';
             resultBox.style.color = '#f87171';
             resultBox.textContent = 'Hata: ' + data.message;
             btn.disabled = false;
-            btn.textContent = 'Teklifi Müşteriye İlet';
         }
     } catch(err) {
         resultBox.style.display = 'block';
         resultBox.style.color = '#f87171';
         resultBox.textContent = 'Bağlantı hatası oluştu.';
         btn.disabled = false;
-        btn.textContent = 'Teklifi Müşteriye İlet';
     }
 }
 
