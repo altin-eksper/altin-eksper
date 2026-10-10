@@ -3321,7 +3321,7 @@ function restoreFromBackupFile(event) {
     };
     reader.readAsText(file);
 }
-// 1. ESNAF / SARRAF KATIL PENCERESİNİ AÇMA & İL/İLÇE MOTORU
+// 1. ESNAF / SARRAF KATIL PENCERESİNİ AÇMA & CITIES.JS BAĞLANTISI
 function openJewelerApplyModal() {
     populateJewelerCities();
     const modal = document.getElementById('jewelerApplyModal');
@@ -3334,35 +3334,21 @@ function openJewelerApplyModal() {
 
 function populateJewelerCities() {
     const citySel = document.getElementById('jCity');
-    // Sayfanın ana müşteri il kutusunu alıyoruz (çünkü onda tüm 81 il yüklü)
-    const mainCitySelect = document.getElementById('citySelect') || document.getElementById('customerCity');
-    
     if (!citySel) return;
 
-    if (mainCitySelect && mainCitySelect.options.length > 1) {
+    if (typeof TURKEY_CITIES_DATA !== 'undefined') {
+        const cityList = Object.keys(TURKEY_CITIES_DATA);
         citySel.innerHTML = '<option value="">İl Seçin...</option>';
-        for (let i = 0; i < mainCitySelect.options.length; i++) {
-            const opt = mainCitySelect.options[i];
-            if (opt.value) {
-                citySel.innerHTML += `<option value="${opt.value}">${opt.text}</option>`;
-            }
-        }
-    } else {
-        // cities.js içindeki muhtemel tüm değişkenleri tara
-        const source = (typeof TURKEY_CITIES !== 'undefined') ? TURKEY_CITIES :
-                       (typeof CITIES_DATA !== 'undefined') ? CITIES_DATA :
-                       (typeof cities !== 'undefined') ? cities :
-                       (typeof CITIES !== 'undefined') ? CITIES :
-                       (typeof ilIlceListesi !== 'undefined') ? ilIlceListesi : {};
-        
-        citySel.innerHTML = '<option value="">İl Seçin...</option>';
-        Object.keys(source).sort((a,b) => a.localeCompare(b, 'tr')).forEach(c => {
+        cityList.forEach(c => {
             citySel.innerHTML += `<option value="${c}">${c}</option>`;
         });
-    }
 
-    citySel.value = "Antalya";
-    onJewelerCityChange();
+        // Varsayılan olarak Antalya'yı seç ve ilçelerini getir
+        if (cityList.includes("Antalya")) {
+            citySel.value = "Antalya";
+            onJewelerCityChange();
+        }
+    }
 }
 
 function onJewelerCityChange() {
@@ -3373,22 +3359,8 @@ function onJewelerCityChange() {
     const selectedCity = citySel.value;
     distSel.innerHTML = '<option value="">İlçe Seçin...</option>';
 
-    // Ana müşteri ilçe fonksiyonunu veya veri objesini kullan
-    const source = (typeof TURKEY_CITIES !== 'undefined') ? TURKEY_CITIES :
-                   (typeof CITIES_DATA !== 'undefined') ? CITIES_DATA :
-                   (typeof cities !== 'undefined') ? cities :
-                   (typeof CITIES !== 'undefined') ? CITIES :
-                   (typeof ilIlceListesi !== 'undefined') ? ilIlceListesi : {};
-
-    const districts = source[selectedCity] || [];
-    if (districts.length > 0) {
-        districts.forEach(d => {
-            const val = typeof d === 'object' ? (d.name || d.ilce) : d;
-            distSel.innerHTML += `<option value="${val}">${val}</option>`;
-        });
-    } else if (typeof getDistrictsByCity === 'function') {
-        const dList = getDistrictsByCity(selectedCity) || [];
-        dList.forEach(d => {
+    if (typeof TURKEY_CITIES_DATA !== 'undefined' && TURKEY_CITIES_DATA[selectedCity]) {
+        TURKEY_CITIES_DATA[selectedCity].forEach(d => {
             distSel.innerHTML += `<option value="${d}">${d}</option>`;
         });
     }
