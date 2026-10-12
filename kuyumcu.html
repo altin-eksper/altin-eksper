@@ -163,7 +163,7 @@ body{
 </div>
 
 <script>
-const BACKEND_API_URL = window.location.origin.includes('http') ? (window.location.origin + '/api') : 'https://altin-eksper.onrender.com/api';
+const BACKEND_API_URL = '/api';
 const urlParams = new URLSearchParams(window.location.search);
 const reqId = urlParams.get('req') || '';
 let loggedJeweler = null;
