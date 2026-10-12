@@ -61,6 +61,14 @@ body{
     border:1px solid #475569; padding:12px; border-radius:8px; cursor:pointer;
     display:flex; gap:10px; align-items:flex-start; background:#0f172a; margin-bottom:10px;
 }
+.balance-pulse {
+    animation: balancePop 0.4s ease-in-out;
+}
+@keyframes balancePop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); color: #facc15; }
+    100% { transform: scale(1); }
+}
 </style>
 </head>
 <body>
@@ -168,6 +176,35 @@ const urlParams = new URLSearchParams(window.location.search);
 const reqId = urlParams.get('req') || '';
 let loggedJeweler = null;
 let hasGivenOffer = false;
+let balanceWatcherInterval = null;
+
+async function fetchJewelerStatus(jewelerId) {
+    if (!jewelerId) return null;
+    try {
+        const res = await fetch(BACKEND_API_URL + '/jeweler/status/' + jewelerId);
+        const data = await res.json();
+        if (data.success && data.data) {
+            return data.data;
+        }
+    } catch(e) {}
+    return null;
+}
+
+function startLiveBalanceWatcher(jewelerId) {
+    if (balanceWatcherInterval) clearInterval(balanceWatcherInterval);
+    // Her 4 saniyede bir arka planda bakiyeyi sessizce günceller
+    balanceWatcherInterval = setInterval(async () => {
+        if (!jewelerId) return;
+        const freshData = await fetchJewelerStatus(jewelerId);
+        if (freshData && loggedJeweler) {
+            if (freshData.credits !== loggedJeweler.credits || freshData.membershipType !== loggedJeweler.membershipType) {
+                loggedJeweler.credits = freshData.credits;
+                loggedJeweler.membershipType = freshData.membershipType;
+                updateBalanceDisplay(true);
+            }
+        }
+    }, 4000);
+}
 
 async function initPortal() {
     let jewelerId = urlParams.get('jeweler') || localStorage.getItem('loggedJewelerId');
@@ -180,15 +217,13 @@ async function initPortal() {
     }
     
     if (jewelerId) {
-        try {
-            const res = await fetch(BACKEND_API_URL + '/jeweler/status/' + jewelerId);
-            const data = await res.json();
-            if (data.success && data.data) {
-                loggedJeweler = data.data;
-                document.getElementById('jewelerTitle').textContent = loggedJeweler.name + ' (' + loggedJeweler.id + ')';
-                updateBalanceDisplay();
-            }
-        } catch(e) {}
+        const data = await fetchJewelerStatus(jewelerId);
+        if (data) {
+            loggedJeweler = data;
+            document.getElementById('jewelerTitle').textContent = loggedJeweler.name + ' (' + loggedJeweler.id + ')';
+            updateBalanceDisplay();
+            startLiveBalanceWatcher(jewelerId);
+        }
     }
 
     if (!reqId) {
@@ -231,15 +266,22 @@ function checkExistingOffer(req) {
     }
 }
 
-function updateBalanceDisplay() {
+function updateBalanceDisplay(withPulse = false) {
     const bBadge = document.getElementById('balanceBadge');
-    if (!loggedJeweler) return;
+    if (!loggedJeweler || !bBadge) return;
+    
     if (loggedJeweler.membershipType === 'subscription') {
-        bBadge.textContent = '👑 VIP Aylık Sınırsız';
+        bBadge.innerHTML = '👑 VIP Aylık Sınırsız';
         bBadge.style.color = '#facc15';
     } else {
-        bBadge.textContent = '🪙 Kalan: ' + (loggedJeweler.credits || 0) + ' Jeton';
+        bBadge.innerHTML = `🪙 Kalan: <span id="jewelerCreditCount">${loggedJeweler.credits ?? 0}</span> Jeton`;
         bBadge.style.color = '#38bdf8';
+    }
+
+    if (withPulse) {
+        bBadge.classList.remove('balance-pulse');
+        void bBadge.offsetWidth; // Reflow tetikle
+        bBadge.classList.add('balance-pulse');
     }
 }
 
@@ -363,10 +405,10 @@ async function handleSendOffer(e) {
             btn.disabled = false;
             hasGivenOffer = true;
 
-            // Kalan bakiye bilgisi geldiyse ekranda güncelle
-            if (data.remainingCredits !== null && loggedJeweler) {
+            // ANLIK SAYAÇ GÜNCELLEMESİ (-1 Jeton)
+            if (data.remainingCredits !== null && data.remainingCredits !== undefined && loggedJeweler) {
                 loggedJeweler.credits = data.remainingCredits;
-                updateBalanceDisplay();
+                updateBalanceDisplay(true);
             }
         } else {
             resultBox.style.display = 'block';
