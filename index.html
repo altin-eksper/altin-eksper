@@ -3611,6 +3611,14 @@ async function confirmChosenOffer(requestId, jewelerCode, agreedPrice, customerN
     }
 }
 // ================= BAŞLANGIÇ YÖNETİMİ =================
+function getActiveAuctionFromStorage() {
+    try {
+        const stored = localStorage.getItem('activeAuction');
+        return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+        return null;
+    }
+}
 function startApp() {
     initCityDropdowns();
     updateHeaderProfile();
