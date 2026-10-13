@@ -80,6 +80,34 @@ const INITIAL_JEWELERS = [
     }
 ];
 
+function sanitizeJewelers(list) {
+    if (!Array.isArray(list)) return INITIAL_JEWELERS;
+    
+    // Eksik id alanlarını onar
+    list.forEach((j, idx) => {
+        if (!j.id) {
+            j.id = j.code || ('SARRAF_' + String(idx + 1).padStart(2, '0'));
+        }
+        if (j.credits === undefined || j.credits === null) {
+            j.credits = 0;
+        }
+        if (!j.membershipType) {
+            j.membershipType = 'token';
+        }
+        if (!j.status) {
+            j.status = 'ACTIVE';
+        }
+    });
+
+    // Güneş Sarrafiye listede yoksa başa ekle
+    const hasGunes = list.some(j => (j.name && j.name.toLowerCase().includes('güneş')) || j.id === 'SARRAF_01');
+    if (!hasGunes) {
+        list.unshift(INITIAL_JEWELERS[0]);
+    }
+
+    return list;
+}
+
 function loadDatabase() {
     try {
         if (!fs.existsSync(DB_FILE)) {
@@ -92,7 +120,11 @@ function loadDatabase() {
             return initialData;
         }
         const fileContent = fs.readFileSync(DB_FILE, 'utf-8');
-        return JSON.parse(fileContent);
+        const parsed = JSON.parse(fileContent);
+        parsed.jewelers = sanitizeJewelers(parsed.jewelers);
+        parsed.completedDeals = parsed.completedDeals || [];
+        parsed.pendingPayments = parsed.pendingPayments || [];
+        return parsed;
     } catch (e) {
         console.error('[DB Yükleme Hatası]:', e);
         return { jewelers: INITIAL_JEWELERS, completedDeals: [], pendingPayments: [] };
@@ -117,6 +149,9 @@ const persistedData = loadDatabase();
 let JEWELERS_DIRECTORY = persistedData.jewelers || INITIAL_JEWELERS;
 let completedDeals = persistedData.completedDeals || [];
 let pendingPayments = persistedData.pendingPayments || [];
+
+// Açılış onarımını diske sabitle
+saveDatabase();
 
 // Canlı Talep Deposu (Bellek Havuzu - 15 dk sürelidir)
 let requestsPool = [];
@@ -229,9 +264,21 @@ app.post('/api/jeweler/apply', async (req, res) => {
     }
 });
 
+// Hata korumalı esnek kuyumcu bakiye yükleme (id, code ve name destekli)
 app.post('/api/admin/jeweler/topup', (req, res) => {
     const { jewelerId, addCredits, extendDays, activate } = req.body;
-    const jeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerId || j.name === jewelerId);
+    
+    if (!jewelerId) {
+        return res.status(400).json({ success: false, message: 'Kuyumcu kimliği belirtilmedi.' });
+    }
+
+    const searchKey = String(jewelerId).trim().toLowerCase();
+    const jeweler = JEWELERS_DIRECTORY.find(j => {
+        const idMatch = j.id && String(j.id).trim().toLowerCase() === searchKey;
+        const codeMatch = j.code && String(j.code).trim().toLowerCase() === searchKey;
+        const nameMatch = j.name && String(j.name).trim().toLowerCase() === searchKey;
+        return idMatch || codeMatch || nameMatch;
+    });
 
     if (!jeweler) {
         return res.status(404).json({ success: false, message: 'Kuyumcu bulunamadı.' });
@@ -239,9 +286,9 @@ app.post('/api/admin/jeweler/topup', (req, res) => {
 
     if (activate) jeweler.status = 'ACTIVE';
 
-    if (addCredits) {
+    if (addCredits !== undefined && addCredits !== null) {
         jeweler.membershipType = 'token';
-        jeweler.credits = (jeweler.credits || 0) + Number(addCredits);
+        jeweler.credits = Math.max(0, (Number(jeweler.credits) || 0) + Number(addCredits));
     }
 
     if (extendDays) {
@@ -259,7 +306,13 @@ app.post('/api/admin/jeweler/topup', (req, res) => {
 });
 
 app.get('/api/jeweler/status/:id', (req, res) => {
-    const jeweler = JEWELERS_DIRECTORY.find(j => j.id === req.params.id);
+    const searchId = String(req.params.id).trim().toLowerCase();
+    const jeweler = JEWELERS_DIRECTORY.find(j => 
+        (j.id && String(j.id).trim().toLowerCase() === searchId) || 
+        (j.code && String(j.code).trim().toLowerCase() === searchId) || 
+        (j.name && String(j.name).trim().toLowerCase() === searchId)
+    );
+
     if (!jeweler) return res.status(404).json({ success: false, message: 'Kuyumcu bulunamadı.' });
 
     res.json({
@@ -285,7 +338,12 @@ app.get('/api/admin/jewelers', (req, res) => {
 app.post('/api/jeweler/purchase-package', async (req, res) => {
     try {
         const { jewelerId, packageId, paymentMethod, senderName, note } = req.body;
-        const jeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerId || j.name === jewelerId);
+        const searchKey = String(jewelerId).trim().toLowerCase();
+        const jeweler = JEWELERS_DIRECTORY.find(j => 
+            (j.id && String(j.id).trim().toLowerCase() === searchKey) ||
+            (j.code && String(j.code).trim().toLowerCase() === searchKey) ||
+            (j.name && String(j.name).trim().toLowerCase() === searchKey)
+        );
 
         if (!jeweler) {
             return res.status(404).json({ success: false, message: 'Kuyumcu kaydı bulunamadı.' });
@@ -350,7 +408,7 @@ app.post('/api/admin/payment/approve', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Sipariş bulunamadı.' });
         }
 
-        const jeweler = JEWELERS_DIRECTORY.find(j => j.id === order.jewelerId);
+        const jeweler = JEWELERS_DIRECTORY.find(j => j.id === order.jewelerId || j.name === order.jewelerName);
         if (!jeweler) {
             return res.status(404).json({ success: false, message: 'İlgili kuyumcu hesabı bulunamadı.' });
         }
@@ -359,10 +417,10 @@ app.post('/api/admin/payment/approve', async (req, res) => {
 
         if (order.packageId === 'token_25') {
             jeweler.membershipType = 'token';
-            jeweler.credits = (jeweler.credits || 0) + 25;
+            jeweler.credits = (Number(jeweler.credits) || 0) + 25;
         } else if (order.packageId === 'token_75') {
             jeweler.membershipType = 'token';
-            jeweler.credits = (jeweler.credits || 0) + 75;
+            jeweler.credits = (Number(jeweler.credits) || 0) + 75;
         } else if (order.packageId === 'subscription_vip') {
             jeweler.membershipType = 'subscription';
             const now = new Date();
@@ -502,20 +560,27 @@ app.post('/api/request/quote', (req, res) => {
         return res.status(404).json({ success: false, message: 'İhale süresi dolmuş veya bulunamadı.' });
     }
 
-    const jeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerCode || j.name === jewelerCode);
-    if (jeweler) {
-        if (jeweler.status !== 'ACTIVE') {
-            return res.status(403).json({ success: false, message: 'Üyeliğiniz aktif değil.' });
-        }
+    const searchKey = String(jewelerCode).trim().toLowerCase();
+    const jeweler = JEWELERS_DIRECTORY.find(j => 
+        (j.id && String(j.id).trim().toLowerCase() === searchKey) || 
+        (j.code && String(j.code).trim().toLowerCase() === searchKey) || 
+        (j.name && String(j.name).trim().toLowerCase() === searchKey)
+    );
+
+    if (jeweler && jeweler.status !== 'ACTIVE') {
+        return res.status(403).json({ success: false, message: 'Üyeliğiniz aktif değil.' });
     }
 
     target.quotes = target.quotes || [];
-    const idx = target.quotes.findIndex(q => q.jewelerCode === jewelerCode);
+    const idx = target.quotes.findIndex(q => {
+        const qCode = String(q.jewelerCode).trim().toLowerCase();
+        return qCode === searchKey || (jeweler && qCode === String(jeweler.id).toLowerCase());
+    });
 
     if (idx !== -1) {
         // AYNI KUYUMCU TEKLİFİNİ REVİZE EDİYOR (Tekrar jeton düşmez!)
         target.quotes[idx] = { 
-            jewelerCode, 
+            jewelerCode: jeweler ? jeweler.id : jewelerCode, 
             offerPrice: Number(offerPrice), 
             note: note || target.quotes[idx].note,
             updatedAt: new Date().toISOString()
@@ -524,7 +589,7 @@ app.post('/api/request/quote', (req, res) => {
     } else {
         // İLK KEZ TEKLİF VERİLİYOR (Sabit 1 jeton katılım bedeli)
         if (jeweler && jeweler.membershipType === 'token') {
-            if (jeweler.credits <= 0) {
+            if ((jeweler.credits || 0) <= 0) {
                 return res.status(403).json({ success: false, message: 'Yetersiz bakiye! Teklif vermek için paket yenileyin.' });
             }
             jeweler.credits -= 1;
@@ -533,7 +598,7 @@ app.post('/api/request/quote', (req, res) => {
         }
 
         target.quotes.push({ 
-            jewelerCode, 
+            jewelerCode: jeweler ? jeweler.id : jewelerCode, 
             offerPrice: Number(offerPrice), 
             note, 
             createdAt: new Date().toISOString() 
@@ -561,7 +626,13 @@ app.post('/api/request/notify-winner', async (req, res) => {
             console.log(`[İhale Tamamlandı]: #${requestId} kazanan: ${jewelerCode} | Tutar: ${finalPrice.toLocaleString('tr-TR')} TL`);
         }
 
-        const targetJeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerCode || j.name === jewelerCode);
+        const searchKey = String(jewelerCode).trim().toLowerCase();
+        const targetJeweler = JEWELERS_DIRECTORY.find(j => 
+            (j.id && String(j.id).trim().toLowerCase() === searchKey) || 
+            (j.code && String(j.code).trim().toLowerCase() === searchKey) || 
+            (j.name && String(j.name).trim().toLowerCase() === searchKey)
+        );
+
         const jewelerPhone = targetJeweler ? targetJeweler.phone : WHATSAPP_CONFIG.adminPhone;
         const jewelerName = targetJeweler ? targetJeweler.name : jewelerCode;
         const jewelerAddress = (targetJeweler && targetJeweler.address) ? targetJeweler.address : 'Muratpaşa / Antalya';
@@ -577,7 +648,7 @@ app.post('/api/request/notify-winner', async (req, res) => {
             deductedTokens = calculateSuccessFeeTokens(finalPrice);
             
             // Bakiyeden düş (0'ın altına düşürmez)
-            targetJeweler.credits = Math.max(0, (targetJeweler.credits || 0) - deductedTokens);
+            targetJeweler.credits = Math.max(0, (Number(targetJeweler.credits) || 0) - deductedTokens);
             remainingCredits = targetJeweler.credits;
             saveDatabase();
 

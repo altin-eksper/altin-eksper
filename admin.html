@@ -212,25 +212,47 @@ async function loadDashboard() {
         const reportData = await resReport.json();
 
         if (reportData.success) {
-            document.getElementById('statDeals').textContent = reportData.stats.totalDeals || 0;
-            document.getElementById('statTurnover').textContent = Number(reportData.stats.totalTurnover || 0).toLocaleString('tr-TR') + ' ₺';
-            document.getElementById('statTokens').textContent = (reportData.stats.totalTokensUsed || 0) + ' 🪙';
-            document.getElementById('statRevenue').textContent = Number(reportData.stats.estimatedPlatformRevenue || 0).toLocaleString('tr-TR') + ' ₺';
+            document.getElementById('statDeals').textContent = reportData.stats?.totalDeals || 0;
+            document.getElementById('statTurnover').textContent = Number(reportData.stats?.totalTurnover || 0).toLocaleString('tr-TR') + ' ₺';
+            document.getElementById('statTokens').textContent = (reportData.stats?.totalTokensUsed || 0) + ' 🪙';
+            document.getElementById('statRevenue').textContent = Number(reportData.stats?.estimatedPlatformRevenue || 0).toLocaleString('tr-TR') + ' ₺';
 
             // Kuyumcular tablosu
             const jTbody = document.getElementById('jewelersTbody');
-            jTbody.innerHTML = (reportData.jewelers || []).map(j => `
-                <tr>
-                    <td><b>${j.name}</b> <span style="color:#94a3b8; font-size:11px;">(${j.id})</span></td>
-                    <td>${(j.districts || []).join(', ')}</td>
-                    <td><a href="https://wa.me/${j.phone}" target="_blank" style="color:#38bdf8; text-decoration:none;">${j.phone}</a></td>
-                    <td>${j.membershipType === 'subscription' ? '<span class="badge-vip">VIP Sınırsız</span>' : '<span class="badge-token">Jetonlu</span>'}</td>
-                    <td><b style="color:#38bdf8; font-size:14px;">${j.credits ?? 0} Jeton</b></td>
-                    <td>
-                        <button class="btn-action btn-topup" onclick="promptTopup('${j.id}', '${j.name}')">+ Jeton Yükle</button>
-                    </td>
-                </tr>
-            `).join('');
+            const jewelersList = reportData.jewelers || [];
+
+            if (jewelersList.length === 0) {
+                jTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Kayıtlı sarraf bulunmuyor.</td></tr>';
+            } else {
+                jTbody.innerHTML = jewelersList.map(j => {
+                    // id, code veya name hangisi varsa yakala (undefined hatasını çözer)
+                    const jId = j.id || j.code || j.name || 'SARRAF';
+                    const jName = j.name || j.firmName || jId;
+                    
+                    // Bölgeleri güvenli şekilde formatla
+                    let districtStr = '-';
+                    if (Array.isArray(j.districts)) {
+                        districtStr = j.districts.join(', ');
+                    } else if (j.district) {
+                        districtStr = j.district;
+                    } else if (j.city) {
+                        districtStr = j.city;
+                    }
+
+                    return `
+                        <tr>
+                            <td><b>${jName}</b> <span style="color:#94a3b8; font-size:11px;">(${jId})</span></td>
+                            <td>${districtStr}</td>
+                            <td><a href="https://wa.me/${j.phone}" target="_blank" style="color:#38bdf8; text-decoration:none;">${j.phone || '-'}</a></td>
+                            <td>${j.membershipType === 'subscription' ? '<span class="badge-vip">VIP Sınırsız</span>' : '<span class="badge-token">Jetonlu</span>'}</td>
+                            <td><b style="color:#38bdf8; font-size:14px;">${j.credits ?? 0} Jeton</b></td>
+                            <td>
+                                <button class="btn-action btn-topup" onclick="promptTopup('${jId}', '${jName.replace(/'/g, "\\'")}')">+ Jeton Yükle</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
 
             // Tamamlanan ihaleler tablosu
             const dTbody = document.getElementById('dealsTbody');
@@ -289,7 +311,7 @@ async function promptTopup(jewelerId, jewelerName) {
         const res = await fetch('/api/admin/jeweler/topup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ jewelerId, addCredits: Number(credits), activate: true })
+            body: JSON.stringify({ jewelerId: jewelerId, addCredits: Number(credits), activate: true })
         });
         const data = await res.json();
         if (data.success) {
