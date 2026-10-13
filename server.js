@@ -353,6 +353,10 @@ app.get('/api/jeweler/status/:id', (req, res) => {
 app.get('/api/admin/jewelers', adminAuthMiddleware, (req, res) => {
     res.json({ success: true, jewelers: JEWELERS_DIRECTORY });
 });
+// Herkese Açık Aktif Kuyumcular Listesi (index.html için şifresiz)
+app.get('/api/jewelers', (req, res) => {
+    res.json({ success: true, jewelers: JEWELERS_DIRECTORY });
+});
 
 // ================= ÖDEME & JETON SATIN ALMA ALTYAPISI =================
 

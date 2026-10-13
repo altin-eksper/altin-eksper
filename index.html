@@ -2087,7 +2087,7 @@ async function renderDirectoryTable() {
 
     let jewelers = [];
     try {
-        const res = await fetch(BACKEND_API_URL + '/admin/jewelers');
+        const res = await fetch(BACKEND_API_URL + '/jewelers');
         const data = await res.json();
         if (data.success && data.jewelers) {
             jewelers = data.jewelers;
