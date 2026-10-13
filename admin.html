@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Altın Eksper — Yönetim & Muhasebe Paneli</title>
+<style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+        padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #334155;
+        padding-bottom: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .brand { font-size: 22px; font-weight: 800; color: #f59e0b; }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+    .stat-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 18px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .stat-label { font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+    .stat-val { font-size: 26px; font-weight: 800; color: #f8fafc; margin-top: 8px; }
+    .table-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 28px;
+        overflow-x: auto;
+    }
+    .table-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #38bdf8;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th {
+        background: #0f172a;
+        padding: 12px 14px;
+        color: #94a3b8;
+        font-weight: 600;
+        border-bottom: 1px solid #334155;
+    }
+    td { padding: 12px 14px; border-bottom: 1px solid #334155; vertical-align: middle; }
+    .badge-token {
+        background: #0284c7;
+        color: #fff;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .badge-vip {
+        background: #ca8a04;
+        color: #fff;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .btn-action {
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .btn-topup { background: #10b981; color: #fff; }
+    .btn-topup:hover { background: #059669; }
+    .btn-approve { background: #3b82f6; color: #fff; }
+    .btn-approve:hover { background: #2563eb; }
+    .btn-refresh {
+        background: #f59e0b;
+        color: #0f172a;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+    .btn-refresh:hover { background: #d97706; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <div class="brand">ALTIN EKSPER — YÖNETİM MERKEZİ</div>
+            <div style="font-size:13px; color:#94a3b8; margin-top:2px;">
+                Canlı İşlem Hacmi, Sarraf Bakiyeleri ve Komisyon Raporu
+            </div>
+        </div>
+        <button class="btn-refresh" onclick="loadDashboard()">🔄 Verileri Yenile</button>
+    </div>
+
+    <!-- ÖZET METRİKLER -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Toplam Başarılı İşlem</div>
+            <div id="statDeals" class="stat-val">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Toplam Bağlanan Ciro</div>
+            <div id="statTurnover" class="stat-val" style="color:#4ade80;">0 ₺</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Kesilen Başarı Jetonu (‰2)</div>
+            <div id="statTokens" class="stat-val" style="color:#38bdf8;">0 🪙</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Tahmini Platform Geliri</div>
+            <div id="statRevenue" class="stat-val" style="color:#facc15;">0 ₺</div>
+        </div>
+    </div>
+
+    <!-- BEKLEYEN ÖDEME BİLDİRİMLERİ (HAVALE / EFT TEYİTLERİ) -->
+    <div class="table-card" id="paymentsSection">
+        <div class="table-title">
+            <span>💳 Bekleyen Paket & Jeton Ödemeleri</span>
+            <span id="pendingCountBadge" style="font-size:12px; color:#94a3b8;"></span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sipariş No</th>
+                    <th>Sarraf</th>
+                    <th>Paket</th>
+                    <th>Dekont İsim / Gönderen</th>
+                    <th>Tarih</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody id="paymentsTbody">
+                <tr><td colspan="6" style="text-align:center; color:#64748b;">Yükleniyor...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SARRAFLAR & BAKİYE YÖNETİMİ -->
+    <div class="table-card">
+        <div class="table-title">🏪 Kayıtlı Sarraflar & Anlık Jeton Durumu</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Kod / Ünvan</th>
+                    <th>Hizmet Bölgeleri</th>
+                    <th>WhatsApp Hattı</th>
+                    <th>Üyelik Tipi</th>
+                    <th>Mevcut Bakiye</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody id="jewelersTbody">
+                <tr><td colspan="6" style="text-align:center; color:#64748b;">Yükleniyor...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- TAMAMLANAN ANLAŞMALAR DÖKÜMÜ -->
+    <div class="table-card">
+        <div class="table-title">📋 Tamamlanan İhale & Binde 2 Başarı Kesintileri</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tarih & Saat</th>
+                    <th>İhale No</th>
+                    <th>Müşteri</th>
+                    <th>Kazanan Sarraf</th>
+                    <th>İşlem Tutarı</th>
+                    <th>Kesilen Jeton (‰2)</th>
+                </tr>
+            </thead>
+            <tbody id="dealsTbody">
+                <tr><td colspan="6" style="text-align:center; color:#64748b;">Yükleniyor...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+async function loadDashboard() {
+    try {
+        // 1. Muhasebe ve kuyumcu verilerini çek
+        const resReport = await fetch('/api/admin/commission-report');
+        const reportData = await resReport.json();
+
+        if (reportData.success) {
+            document.getElementById('statDeals').textContent = reportData.stats.totalDeals || 0;
+            document.getElementById('statTurnover').textContent = Number(reportData.stats.totalTurnover || 0).toLocaleString('tr-TR') + ' ₺';
+            document.getElementById('statTokens').textContent = (reportData.stats.totalTokensUsed || 0) + ' 🪙';
+            document.getElementById('statRevenue').textContent = Number(reportData.stats.estimatedPlatformRevenue || 0).toLocaleString('tr-TR') + ' ₺';
+
+            // Kuyumcular tablosu
+            const jTbody = document.getElementById('jewelersTbody');
+            jTbody.innerHTML = (reportData.jewelers || []).map(j => `
+                <tr>
+                    <td><b>${j.name}</b> <span style="color:#94a3b8; font-size:11px;">(${j.id})</span></td>
+                    <td>${(j.districts || []).join(', ')}</td>
+                    <td><a href="https://wa.me/${j.phone}" target="_blank" style="color:#38bdf8; text-decoration:none;">${j.phone}</a></td>
+                    <td>${j.membershipType === 'subscription' ? '<span class="badge-vip">VIP Sınırsız</span>' : '<span class="badge-token">Jetonlu</span>'}</td>
+                    <td><b style="color:#38bdf8; font-size:14px;">${j.credits ?? 0} Jeton</b></td>
+                    <td>
+                        <button class="btn-action btn-topup" onclick="promptTopup('${j.id}', '${j.name}')">+ Jeton Yükle</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Tamamlanan ihaleler tablosu
+            const dTbody = document.getElementById('dealsTbody');
+            if (!reportData.deals || reportData.deals.length === 0) {
+                dTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Henüz tamamlanmış işlem kaydı yok.</td></tr>';
+            } else {
+                dTbody.innerHTML = reportData.deals.map(d => `
+                    <tr>
+                        <td style="color:#94a3b8;">${new Date(d.completedAt).toLocaleString('tr-TR')}</td>
+                        <td><b>#${d.requestId}</b></td>
+                        <td>${d.customerName || 'Müşteri'}</td>
+                        <td>${d.jewelerName}</td>
+                        <td><b style="color:#4ade80;">${Number(d.agreedPrice).toLocaleString('tr-TR')} ₺</b></td>
+                        <td><b style="color:#38bdf8;">-${d.deductedTokens} 🪙</b></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // 2. Bekleyen ödemeleri çek
+        const resPayments = await fetch('/api/admin/payments');
+        const payData = await resPayments.json();
+        const pTbody = document.getElementById('paymentsTbody');
+
+        if (payData.success && payData.payments) {
+            const pending = payData.payments.filter(p => p.status === 'PENDING_APPROVAL');
+            document.getElementById('pendingCountBadge').textContent = `(${pending.length} adet onay bekliyor)`;
+
+            if (pending.length === 0) {
+                pTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Onay bekleyen ödeme bildirimi bulunmuyor.</td></tr>';
+            } else {
+                pTbody.innerHTML = pending.map(p => `
+                    <tr>
+                        <td><b>#${p.orderId}</b></td>
+                        <td>${p.jewelerName} (${p.jewelerId})</td>
+                        <td><span class="badge-token">${p.packageName}</span></td>
+                        <td><b>${p.senderName}</b></td>
+                        <td style="color:#94a3b8;">${new Date(p.createdAt).toLocaleTimeString('tr-TR')}</td>
+                        <td>
+                            <button class="btn-action btn-approve" onclick="approvePayment('${p.orderId}')">✓ Onayla & Yükle</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+    } catch (e) {
+        console.error('Veri yükleme hatası:', e);
+    }
+}
+
+async function promptTopup(jewelerId, jewelerName) {
+    const credits = prompt(`Sayın Yönetici,\n${jewelerName} (${jewelerId}) hesabına eklenecek jeton miktarını yazın:`, "25");
+    if (!credits || isNaN(credits)) return;
+
+    try {
+        const res = await fetch('/api/admin/jeweler/topup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jewelerId, addCredits: Number(credits), activate: true })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(`✅ ${credits} jeton başarıyla tanımlandı!`);
+            loadDashboard();
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    } catch (err) {
+        alert('Sunucu hatası.');
+    }
+}
+
+async function approvePayment(orderId) {
+    if (!confirm(`#${orderId} numaralı ödemeyi banka hesabınızda teyit ettiniz mi? Onay verildiğinde kuyumcuya jetonu yüklenecek ve WhatsApp bildirimi gönderilecektir.`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/admin/payment/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('✅ Ödeme onaylandı, jeton kuyumcuya yüklendi ve WhatsApp fişi gönderildi!');
+            loadDashboard();
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    } catch (e) {
+        alert('Sunucu bağlantı hatası.');
+    }
+}
+
+// Sayfa açıldığında yükle
+loadDashboard();
+</script>
+</body>
+</html>

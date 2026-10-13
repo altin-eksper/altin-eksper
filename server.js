@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -37,16 +38,10 @@ function calculateSuccessFeeTokens(dealAmountTL) {
     return tokens;
 }
 
-// ================= META WHATSAPP CLOUD API AYARLARI =================
-const WHATSAPP_CONFIG = {
-    phoneNumberId: '1293164497207661',
-    accessToken: 'EAAY3ClF5SXgBSgKOGZAf4f2hIzEYFjjbLMmOpQ790tWqSYKnFCrCpKUgp8It3BAAPZCXhIGpIXWHlz0MhOd2ZCeE7tWxyOlUc9rGH0QbOyFpnvNZCIZAbtpVOa4NOZBg9DKrWUOd6MfqXPttArAyeAkzUc6dN9GyfmWWSR0eBoJnt95qMdR65QDRtHZC4hOWzi47QZDZD',
-    apiVersion: 'v21.0',
-    adminPhone: '905399321893' // Sistem yöneticisi WhatsApp bildirim hattı
-};
+// ================= KALICI VERİTABANI MOTORU (FILE-PERSISTENCE) =================
+const DB_FILE = path.join(__dirname, 'database.json');
 
-// ================= ONAYLI & BAKİYELİ KUYUMCULAR LİSTESİ =================
-let JEWELERS_DIRECTORY = [
+const INITIAL_JEWELERS = [
     {
         id: 'SARRAF_01',
         name: 'Güneş Sarrafiye',
@@ -85,6 +80,55 @@ let JEWELERS_DIRECTORY = [
     }
 ];
 
+function loadDatabase() {
+    try {
+        if (!fs.existsSync(DB_FILE)) {
+            const initialData = {
+                jewelers: INITIAL_JEWELERS,
+                completedDeals: [],
+                pendingPayments: []
+            };
+            fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
+            return initialData;
+        }
+        const fileContent = fs.readFileSync(DB_FILE, 'utf-8');
+        return JSON.parse(fileContent);
+    } catch (e) {
+        console.error('[DB Yükleme Hatası]:', e);
+        return { jewelers: INITIAL_JEWELERS, completedDeals: [], pendingPayments: [] };
+    }
+}
+
+function saveDatabase() {
+    try {
+        const payload = {
+            jewelers: JEWELERS_DIRECTORY,
+            completedDeals: completedDeals,
+            pendingPayments: pendingPayments
+        };
+        fs.writeFileSync(DB_FILE, JSON.stringify(payload, null, 2), 'utf-8');
+    } catch (e) {
+        console.error('[DB Kaydetme Hatası]:', e);
+    }
+}
+
+// Dosyadan verileri yükle
+const persistedData = loadDatabase();
+let JEWELERS_DIRECTORY = persistedData.jewelers || INITIAL_JEWELERS;
+let completedDeals = persistedData.completedDeals || [];
+let pendingPayments = persistedData.pendingPayments || [];
+
+// Canlı Talep Deposu (Bellek Havuzu - 15 dk sürelidir)
+let requestsPool = [];
+
+// ================= META WHATSAPP CLOUD API AYARLARI =================
+const WHATSAPP_CONFIG = {
+    phoneNumberId: '1293164497207661',
+    accessToken: 'EAAY3ClF5SXgBSgKOGZAf4f2hIzEYFjjbLMmOpQ790tWqSYKnFCrCpKUgp8It3BAAPZCXhIGpIXWHlz0MhOd2ZCeE7tWxyOlUc9rGH0QbOyFpnvNZCIZAbtpVOa4NOZBg9DKrWUOd6MfqXPttArAyeAkzUc6dN9GyfmWWSR0eBoJnt95qMdR65QDRtHZC4hOWzi47QZDZD',
+    apiVersion: 'v21.0',
+    adminPhone: '905399321893' // Sistem yöneticisi WhatsApp bildirim hattı
+};
+
 // WhatsApp Mesaj Gönderme Motoru
 async function sendWhatsAppMessage(toPhone, messageText) {
     if (!toPhone || !WHATSAPP_CONFIG.accessToken) return null;
@@ -120,24 +164,19 @@ async function sendWhatsAppMessage(toPhone, messageText) {
     }
 }
 
-// Canlı Talep Deposu (Hafıza Havuzu)
-let requestsPool = [];
-
-// Bekleyen Ödeme Talepleri Deposu
-let pendingPayments = [];
-
-// Tamamlanan Başarılı Anlaşmalar & Komisyon Havuzu
-let completedDeals = [];
-
 // Süresi dolan (15 dk) talepleri otomatik temizleme
 setInterval(() => {
     const now = Date.now();
     requestsPool = requestsPool.filter(r => !r.expiresAt || new Date(r.expiresAt).getTime() > now);
 }, 30000);
 
-// Ana Sayfa Rotası
+// Ana Sayfa & Yönetim Rotası
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // ================= KUYUMCU ÜYELİK & BAKİYE YÖNETİMİ =================
@@ -164,6 +203,7 @@ app.post('/api/jeweler/apply', async (req, res) => {
         };
 
         JEWELERS_DIRECTORY.push(newJeweler);
+        saveDatabase();
 
         const adminAlert = 
 `💼 *YENİ KUYUMCU BAŞVURUSU!*
@@ -214,6 +254,7 @@ app.post('/api/admin/jeweler/topup', (req, res) => {
         jeweler.subscriptionExpiresAt = baseDate.toISOString();
     }
 
+    saveDatabase();
     res.json({ success: true, message: 'Kuyumcu hesabı güncellendi.', jeweler });
 });
 
@@ -271,6 +312,7 @@ app.post('/api/jeweler/purchase-package', async (req, res) => {
         };
 
         pendingPayments.unshift(newOrder);
+        saveDatabase();
 
         const paymentAlert = 
 `💳 *YENİ PAKET / JETON ÖDEME BİLDİRİMİ!*
@@ -332,6 +374,7 @@ app.post('/api/admin/payment/approve', async (req, res) => {
         }
 
         order.status = 'APPROVED';
+        saveDatabase();
 
         const approvalNotice = 
 `✅ *ÖDEMENİZ ONAYLANDI & BAKİYENİZ YÜKLENDİ!*
@@ -485,6 +528,7 @@ app.post('/api/request/quote', (req, res) => {
                 return res.status(403).json({ success: false, message: 'Yetersiz bakiye! Teklif vermek için paket yenileyin.' });
             }
             jeweler.credits -= 1;
+            saveDatabase();
             console.log(`[Bakiye Düştü]: ${jeweler.name} teklif için 1 jeton harcadı. Kalan jeton: ${jeweler.credits}`);
         }
 
@@ -514,7 +558,7 @@ app.post('/api/request/notify-winner', async (req, res) => {
             target.status = 'COMPLETED';
             target.winnerCode = jewelerCode;
             target.agreedPrice = finalPrice;
-            console.log(`[İhale Tamamlandı]: #${requestId} kazanan: ${jewelerCode} - Tutar: ${finalPrice.toLocaleString('tr-TR')} TL`);
+            console.log(`[İhale Tamamlandı]: #${requestId} kazanan: ${jewelerCode} | Tutar: ${finalPrice.toLocaleString('tr-TR')} TL`);
         }
 
         const targetJeweler = JEWELERS_DIRECTORY.find(j => j.id === jewelerCode || j.name === jewelerCode);
@@ -535,11 +579,12 @@ app.post('/api/request/notify-winner', async (req, res) => {
             // Bakiyeden düş (0'ın altına düşürmez)
             targetJeweler.credits = Math.max(0, (targetJeweler.credits || 0) - deductedTokens);
             remainingCredits = targetJeweler.credits;
+            saveDatabase();
 
             console.log(`[Binde 2 Başarı Jetonu Kesildi]: ${targetJeweler.name} | İşlem: ${finalPrice.toLocaleString('tr-TR')} TL | Kesilen: ${deductedTokens} Jeton | Kalan Bakiye: ${targetJeweler.credits}`);
         }
 
-        // Başarılı anlaşmayı muhasebe havuzuna kaydet
+        // Başarılı anlaşmayı kalıcı muhasebe havuzuna kaydet
         const dealRecord = {
             dealId: 'DL_' + Date.now().toString().slice(-6),
             requestId,
@@ -556,31 +601,32 @@ app.post('/api/request/notify-winner', async (req, res) => {
             completedAt: new Date().toISOString()
         };
         completedDeals.unshift(dealRecord);
+        saveDatabase();
 
-        // 1. Kazanan Sarrafa WhatsApp Bildirimi
+        // 1. Kazanan Sarrafa Profesyonel WhatsApp Bildirimi
         const tokenDeductNote = (targetJeweler && targetJeweler.membershipType === 'token')
             ? `🪙 *Kullanılan Başarı Jetonu (‰2):* ${deductedTokens} Adet\n🪙 *Kalan Jeton Bakiyeniz:* ${targetJeweler.credits}`
             : `👑 *Üyelik Durumu:* VIP Sınırsız Paket`;
 
         const winnerMessage = 
-`🎉 *TEBRİKLER! İHALE SİZDE KALDI*
+`🎉 *İŞLEM ONAYLANDI — MÜŞTERİ YÖNLENDİRİLDİ*
 
 Sayın *${jewelerName}*, verdiğiniz teklif müşteri tarafından onaylandı!
 
-🏷 *İhale No:* #${requestId}
+🏷 *Talep No:* #${requestId}
 👤 *Müşteri Adı:* ${customerName || 'Müşteri'}
-💰 *Anlaşılan Tutar:* ${finalPrice.toLocaleString('tr-TR')} ₺
+💰 *Bağlanan Tutar:* ${finalPrice.toLocaleString('tr-TR')} ₺
 📌 *Müşteri İletişim:* ${customerPhone || 'Girilmedi'}
 ${tokenDeductNote}
 
-Müşteriye mağazanızın açık adresi, harita konumu ve randevu kodu tanımlandı. Müşteri kısa süre içinde mağazanıza gelecektir.`;
+Müşteriye mağazanızın açık adresi, harita konumu ve randevu kodu iletildi. Müşteri kısa süre içinde mağazanıza gelecektir.`;
 
         await sendWhatsAppMessage(jewelerPhone, winnerMessage);
 
-        // 2. Müşteriye WhatsApp Randevu & Konum Fişi Bildirimi
+        // 2. Müşteriye Kurumsal Randevu & Konum Fişi Bildirimi
         if (customerPhone) {
             const customerAppointmentMsg = 
-`🎉 *TEBRİKLER! İŞLEMİNİZ ONAYLANDI*
+`✨ *ALTIN EKSPER — İŞLEM RANDEVUNUZ HAZIR*
 
 Sayın *${customerName || 'Müşterimiz'}*, altın satış işleminiz için anlaşmalı sarrafımız bilgilendirildi.
 
@@ -628,9 +674,11 @@ app.get('/api/admin/commission-report', (req, res) => {
             totalDeals: completedDeals.length,
             totalTurnover,
             totalCommission,
-            totalTokensUsed
+            totalTokensUsed,
+            estimatedPlatformRevenue: totalTokensUsed * TOKEN_UNIT_VALUE_TL
         },
-        deals: completedDeals
+        deals: completedDeals,
+        jewelers: JEWELERS_DIRECTORY
     });
 });
 
