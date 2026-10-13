@@ -104,12 +104,79 @@
         font-weight: 800;
         cursor: pointer;
     }
-    .btn-refresh:hover { background: #d97706; }
+    .btn-logout {
+        background: #ef4444;
+        color: #fff;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    /* GİRİŞ EKRANI MODAL */
+    #loginModal {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.95);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    .login-box {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 32px;
+        width: 100%;
+        max-width: 380px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .login-input {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid #475569;
+        background: #0f172a;
+        color: #f8fafc;
+        font-size: 16px;
+        margin: 18px 0;
+        outline: none;
+        text-align: center;
+        letter-spacing: 2px;
+    }
+    .login-btn {
+        width: 100%;
+        background: #f59e0b;
+        color: #0f172a;
+        font-weight: 800;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 15px;
+        cursor: pointer;
+    }
 </style>
 </head>
 <body>
 
-<div class="container">
+<!-- ŞİFRE GİRİŞ MODALI -->
+<div id="loginModal">
+    <div class="login-box">
+        <div style="font-size: 40px; margin-bottom: 8px;">🔐</div>
+        <div style="font-size: 18px; font-weight: 800; color: #f59e0b;">YÖNETİCİ GİRİŞİ</div>
+        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Altın Eksper Yönetim Paneli</div>
+        <input type="password" id="adminPasswordInput" class="login-input" placeholder="Yönetici Şifresi" onkeypress="if(event.key==='Enter') verifyLogin()">
+        <button class="login-btn" onclick="verifyLogin()">Güvenli Giriş Yap</button>
+        <div id="loginError" style="color: #ef4444; font-size: 12px; margin-top: 10px; display: none;">Hatalı şifre girdiniz!</div>
+    </div>
+</div>
+
+<!-- ANA YÖNETİM PANELİ -->
+<div class="container" id="panelContainer" style="display: none;">
     <div class="header">
         <div>
             <div class="brand">ALTIN EKSPER — YÖNETİM MERKEZİ</div>
@@ -117,7 +184,10 @@
                 Canlı İşlem Hacmi, Sarraf Bakiyeleri ve Komisyon Raporu
             </div>
         </div>
-        <button class="btn-refresh" onclick="loadDashboard()">🔄 Verileri Yenile</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn-refresh" onclick="loadDashboard()">🔄 Verileri Yenile</button>
+            <button class="btn-logout" onclick="logout()">Çıkış Yap</button>
+        </div>
     </div>
 
     <!-- ÖZET METRİKLER -->
@@ -205,10 +275,49 @@
 </div>
 
 <script>
+function getAdminAuthKey() {
+    return sessionStorage.getItem('ALTIN_EKSPER_ADMIN_KEY') || '';
+}
+
+function verifyLogin() {
+    const input = document.getElementById('adminPasswordInput').value.trim();
+    if (!input) return;
+
+    fetch('/api/admin/verify-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminKey: input })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            sessionStorage.setItem('ALTIN_EKSPER_ADMIN_KEY', input);
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('panelContainer').style.display = 'block';
+            loadDashboard();
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+        }
+    })
+    .catch(() => {
+        document.getElementById('loginError').style.display = 'block';
+    });
+}
+
+function logout() {
+    sessionStorage.removeItem('ALTIN_EKSPER_ADMIN_KEY');
+    location.reload();
+}
+
 async function loadDashboard() {
+    const adminKey = getAdminAuthKey();
+    if (!adminKey) return;
+
     try {
-        // 1. Muhasebe ve kuyumcu verilerini çek
-        const resReport = await fetch('/api/admin/commission-report');
+        const resReport = await fetch('/api/admin/commission-report', {
+            headers: { 'x-admin-key': adminKey }
+        });
+        if (resReport.status === 401) { logout(); return; }
         const reportData = await resReport.json();
 
         if (reportData.success) {
@@ -217,7 +326,6 @@ async function loadDashboard() {
             document.getElementById('statTokens').textContent = (reportData.stats?.totalTokensUsed || 0) + ' 🪙';
             document.getElementById('statRevenue').textContent = Number(reportData.stats?.estimatedPlatformRevenue || 0).toLocaleString('tr-TR') + ' ₺';
 
-            // Kuyumcular tablosu
             const jTbody = document.getElementById('jewelersTbody');
             const jewelersList = reportData.jewelers || [];
 
@@ -225,19 +333,9 @@ async function loadDashboard() {
                 jTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Kayıtlı sarraf bulunmuyor.</td></tr>';
             } else {
                 jTbody.innerHTML = jewelersList.map(j => {
-                    // id, code veya name hangisi varsa yakala (undefined hatasını çözer)
                     const jId = j.id || j.code || j.name || 'SARRAF';
                     const jName = j.name || j.firmName || jId;
-                    
-                    // Bölgeleri güvenli şekilde formatla
-                    let districtStr = '-';
-                    if (Array.isArray(j.districts)) {
-                        districtStr = j.districts.join(', ');
-                    } else if (j.district) {
-                        districtStr = j.district;
-                    } else if (j.city) {
-                        districtStr = j.city;
-                    }
+                    let districtStr = Array.isArray(j.districts) ? j.districts.join(', ') : (j.district || j.city || '-');
 
                     return `
                         <tr>
@@ -254,7 +352,6 @@ async function loadDashboard() {
                 }).join('');
             }
 
-            // Tamamlanan ihaleler tablosu
             const dTbody = document.getElementById('dealsTbody');
             if (!reportData.deals || reportData.deals.length === 0) {
                 dTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Henüz tamamlanmış işlem kaydı yok.</td></tr>';
@@ -272,8 +369,9 @@ async function loadDashboard() {
             }
         }
 
-        // 2. Bekleyen ödemeleri çek
-        const resPayments = await fetch('/api/admin/payments');
+        const resPayments = await fetch('/api/admin/payments', {
+            headers: { 'x-admin-key': adminKey }
+        });
         const payData = await resPayments.json();
         const pTbody = document.getElementById('paymentsTbody');
 
@@ -310,7 +408,10 @@ async function promptTopup(jewelerId, jewelerName) {
     try {
         const res = await fetch('/api/admin/jeweler/topup', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-admin-key': getAdminAuthKey()
+            },
             body: JSON.stringify({ jewelerId: jewelerId, addCredits: Number(credits), activate: true })
         });
         const data = await res.json();
@@ -326,30 +427,38 @@ async function promptTopup(jewelerId, jewelerName) {
 }
 
 async function approvePayment(orderId) {
-    if (!confirm(`#${orderId} numaralı ödemeyi banka hesabınızda teyit ettiniz mi? Onay verildiğinde kuyumcuya jetonu yüklenecek ve WhatsApp bildirimi gönderilecektir.`)) {
-        return;
-    }
+    if (!confirm(`#${orderId} numaralı ödemeyi onaylamak istiyor musunuz?`)) return;
 
     try {
         const res = await fetch('/api/admin/payment/approve', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-admin-key': getAdminAuthKey()
+            },
             body: JSON.stringify({ orderId })
         });
         const data = await res.json();
         if (data.success) {
-            alert('✅ Ödeme onaylandı, jeton kuyumcuya yüklendi ve WhatsApp fişi gönderildi!');
+            alert('✅ Ödeme onaylandı ve bakiye yüklendi!');
             loadDashboard();
         } else {
             alert('Hata: ' + data.message);
         }
     } catch (e) {
-        alert('Sunucu bağlantı hatası.');
+        alert('Sunucu hatası.');
     }
 }
 
-// Sayfa açıldığında yükle
-loadDashboard();
+// Oturum kontrolü
+document.addEventListener('DOMContentLoaded', () => {
+    const key = getAdminAuthKey();
+    if (key) {
+        document.getElementById('loginModal').style.display = 'none';
+        document.getElementById('panelContainer').style.display = 'block';
+        loadDashboard();
+    }
+});
 </script>
 </body>
 </html>

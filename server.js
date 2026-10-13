@@ -10,6 +10,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// ================= GÜVENLİK & YÖNETİCİ ŞİFRESİ =================
+const ADMIN_SECRET_KEY = process.env.ADMIN_KEY || 'Adali2026!';
+
+function adminAuthMiddleware(req, res, next) {
+    const providedKey = req.headers['x-admin-key'] || req.body?.adminKey;
+    if (providedKey === ADMIN_SECRET_KEY) {
+        return next();
+    }
+    return res.status(401).json({ success: false, message: 'Yetkisiz erişim. Geçerli yönetici şifresi gereklidir.' });
+}
+
+// Şifre doğrulama rotası
+app.post('/api/admin/verify-auth', (req, res) => {
+    const { adminKey } = req.body;
+    if (adminKey === ADMIN_SECRET_KEY) {
+        return res.json({ success: true, message: 'Giriş başarılı.' });
+    }
+    return res.status(401).json({ success: false, message: 'Geçersiz şifre.' });
+});
+
 // ================= AYARLAR & ADİL GELİR MOTORU =================
 // 1 Jetonun ortalama TL karşılığı (25 Jeton = 750 TL referansı)
 const TOKEN_UNIT_VALUE_TL = 30; 
@@ -264,8 +284,8 @@ app.post('/api/jeweler/apply', async (req, res) => {
     }
 });
 
-// Hata korumalı esnek kuyumcu bakiye yükleme (id, code ve name destekli)
-app.post('/api/admin/jeweler/topup', (req, res) => {
+// Hata korumalı esnek kuyumcu bakiye yükleme (Admin Şifre Korumalı)
+app.post('/api/admin/jeweler/topup', adminAuthMiddleware, (req, res) => {
     const { jewelerId, addCredits, extendDays, activate } = req.body;
     
     if (!jewelerId) {
@@ -329,7 +349,8 @@ app.get('/api/jeweler/status/:id', (req, res) => {
     });
 });
 
-app.get('/api/admin/jewelers', (req, res) => {
+// Admin Şifre Korumalı Kuyumcu Listesi
+app.get('/api/admin/jewelers', adminAuthMiddleware, (req, res) => {
     res.json({ success: true, jewelers: JEWELERS_DIRECTORY });
 });
 
@@ -395,11 +416,13 @@ Admin panelinden ödemeyi teyit edip tek tıkla onaylayabilirsiniz.`;
     }
 });
 
-app.get('/api/admin/payments', (req, res) => {
+// Admin Şifre Korumalı Ödemeler
+app.get('/api/admin/payments', adminAuthMiddleware, (req, res) => {
     res.json({ success: true, payments: pendingPayments });
 });
 
-app.post('/api/admin/payment/approve', async (req, res) => {
+// Admin Şifre Korumalı Ödeme Onayı
+app.post('/api/admin/payment/approve', adminAuthMiddleware, async (req, res) => {
     try {
         const { orderId } = req.body;
         const order = pendingPayments.find(p => p.orderId === orderId);
@@ -727,8 +750,8 @@ ${mapUrl}
     }
 });
 
-// ================= KOMİSYON & BAŞARILI İHALE MUHASEBE RAPORU =================
-app.get('/api/admin/commission-report', (req, res) => {
+// ================= KOMİSYON & BAŞARILI İHALE MUHASEBE RAPORU (Admin Şifre Korumalı) =================
+app.get('/api/admin/commission-report', adminAuthMiddleware, (req, res) => {
     let totalTurnover = 0;
     let totalCommission = 0;
     let totalTokensUsed = 0;
