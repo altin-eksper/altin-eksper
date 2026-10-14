@@ -34,28 +34,68 @@ app.post('/api/admin/verify-auth', (req, res) => {
 // 1 Jetonun ortalama TL karşılığı (25 Jeton = 750 TL referansı)
 const TOKEN_UNIT_VALUE_TL = 30; 
 
-// Başarılı anlaşmalarda esnaftan alınacak binde komisyon oranı (Binde 2 = 0.002)
-const COMMISSION_RATE = 0.002; 
+// Ürün bazlı dinamik başarı komisyonu hesaplama fonksiyonu
+// KURAL: Bilezik, 22k Hurda ve 24k Gram için Binde 1 (0.001); diğer ürünler için Binde 2 (0.002)
+function calculateDealCommissionAndTokens(items, agreedPrice) {
+    const finalPrice = Number(agreedPrice) || 0;
+    if (finalPrice <= 0) return { commissionTL: 0, tokens: 2, appliedRateText: '‰2' };
 
-// Binde 2 Başarı Jetonu Hesaplama Fonksiyonu
-function calculateSuccessFeeTokens(dealAmountTL) {
-    const amount = Number(dealAmountTL) || 0;
-    if (amount <= 0) return 2; // Hata veya sıfır durumunda taban bedel
+    let totalCommissionTL = 0;
+    let appliedRateText = '‰2';
 
-    // Binde 2 TL karşılığı
-    const commissionTL = amount * COMMISSION_RATE;
+    if (!items || !Array.isArray(items) || items.length === 0) {
+        // Ürün listesi yoksa varsayılan binde 2
+        totalCommissionTL = finalPrice * 0.002;
+        appliedRateText = '‰2';
+    } else {
+        // Sepetteki kalemlerin gösterge tutarlarını toplayalım
+        let totalReferenceVal = 0;
+        items.forEach(it => {
+            const val = parseFloat(String(it.amount || '0').replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
+            totalReferenceVal += val;
+        });
 
-    // TL bedelini jeton sayısına çevirip yukarı yuvarla
-    let tokens = Math.ceil(commissionTL / TOKEN_UNIT_VALUE_TL);
+        let weightedRateSum = 0;
+
+        items.forEach(it => {
+            const itVal = parseFloat(String(it.amount || '0').replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
+            const itemRatio = totalReferenceVal > 0 ? (itVal / totalReferenceVal) : (1 / items.length);
+            const itemRealTL = finalPrice * itemRatio;
+
+            const pCode = String(it.productCode || '').toLowerCase().trim();
+            const karat = String(it.karat || '').trim();
+
+            // Binde 1 (‰1) Kriteri:
+            // 1. Bilezik (bracelet)
+            // 2. 22 Ayar Hurda (scrap + 22k)
+            // 3. 24 Ayar Gram Has (gram + 24k)
+            const isBindeBir = (pCode === 'bracelet') || 
+                               (pCode === 'scrap' && karat === '22') || 
+                               (pCode === 'gram' && karat === '24');
+
+            const rate = isBindeBir ? 0.001 : 0.002;
+            weightedRateSum += (rate * itemRatio);
+            totalCommissionTL += (itemRealTL * rate);
+        });
+
+        appliedRateText = weightedRateSum <= 0.0012 ? '‰1' : (weightedRateSum >= 0.0018 ? '‰2' : '‰1 - ‰2 (Karma)');
+    }
+
+    // TL komisyonunu jeton adedine çevirip yukarı yuvarla
+    let tokens = Math.ceil(totalCommissionTL / TOKEN_UNIT_VALUE_TL);
 
     // Taban ve Tavan Sınırları (Esnaf Dostu Koruma)
-    const MIN_TOKENS = 2;  // En küçük işlem için asgari 2 jeton
+    const MIN_TOKENS = 1;  // Düşük tutarlı ‰1 işlemlerde taban 1 jeton
     const MAX_TOKENS = 50; // Yüksek hacimli işlemler için tavan 50 jeton
 
     if (tokens < MIN_TOKENS) tokens = MIN_TOKENS;
     if (tokens > MAX_TOKENS) tokens = MAX_TOKENS;
 
-    return tokens;
+    return {
+        commissionTL: Math.round(totalCommissionTL),
+        tokens: tokens,
+        appliedRateText: appliedRateText
+    };
 }
 
 // ================= KALICI VERİTABANI MOTORU (FILE-PERSISTENCE) =================
@@ -103,7 +143,6 @@ const INITIAL_JEWELERS = [
 function sanitizeJewelers(list) {
     if (!Array.isArray(list)) return INITIAL_JEWELERS;
     
-    // Eksik id alanlarını onar
     list.forEach((j, idx) => {
         if (!j.id) {
             j.id = j.code || ('SARRAF_' + String(idx + 1).padStart(2, '0'));
@@ -119,7 +158,6 @@ function sanitizeJewelers(list) {
         }
     });
 
-    // Güneş Sarrafiye listede yoksa başa ekle
     const hasGunes = list.some(j => (j.name && j.name.toLowerCase().includes('güneş')) || j.id === 'SARRAF_01');
     if (!hasGunes) {
         list.unshift(INITIAL_JEWELERS[0]);
@@ -164,16 +202,14 @@ function saveDatabase() {
     }
 }
 
-// Dosyadan verileri yükle
 const persistedData = loadDatabase();
 let JEWELERS_DIRECTORY = persistedData.jewelers || INITIAL_JEWELERS;
 let completedDeals = persistedData.completedDeals || [];
 let pendingPayments = persistedData.pendingPayments || [];
 
-// Açılış onarımını diske sabitle
 saveDatabase();
 
-// Canlı Talep Deposu (Bellek Havuzu - 15 dk sürelidir)
+// Canlı Talep Deposu (15 dk sürelidir)
 let requestsPool = [];
 
 // ================= META WHATSAPP CLOUD API AYARLARI =================
@@ -181,10 +217,9 @@ const WHATSAPP_CONFIG = {
     phoneNumberId: '1293164497207661',
     accessToken: 'EAAY3ClF5SXgBSgKOGZAf4f2hIzEYFjjbLMmOpQ790tWqSYKnFCrCpKUgp8It3BAAPZCXhIGpIXWHlz0MhOd2ZCeE7tWxyOlUc9rGH0QbOyFpnvNZCIZAbtpVOa4NOZBg9DKrWUOd6MfqXPttArAyeAkzUc6dN9GyfmWWSR0eBoJnt95qMdR65QDRtHZC4hOWzi47QZDZD',
     apiVersion: 'v21.0',
-    adminPhone: '905399321893' // Sistem yöneticisi WhatsApp bildirim hattı
+    adminPhone: '905399321893'
 };
 
-// WhatsApp Mesaj Gönderme Motoru
 async function sendWhatsAppMessage(toPhone, messageText) {
     if (!toPhone || !WHATSAPP_CONFIG.accessToken) return null;
 
@@ -244,8 +279,6 @@ app.post('/api/jeweler/apply', async (req, res) => {
         }
 
         const newId = 'SARRAF_' + String(Date.now()).slice(-4);
-        
-        // PİLOT DÖNEM HEDİYESİ: Yeni katılan dükkana otomatik 10 teklif jetonu
         const WELCOME_BONUS_CREDITS = 10;
 
         const newJeweler = {
@@ -258,13 +291,12 @@ app.post('/api/jeweler/apply', async (req, res) => {
             membershipType: planType === 'subscription' ? 'subscription' : 'token',
             credits: WELCOME_BONUS_CREDITS,
             subscriptionExpiresAt: null,
-            status: 'ACTIVE' // Esnaf hemen test edebilsin diye aktif başlatılır
+            status: 'ACTIVE'
         };
 
         JEWELERS_DIRECTORY.push(newJeweler);
         saveDatabase();
 
-        // 1. Yöneticiye WhatsApp Bilgilendirmesi
         const adminAlert = 
 `💼 *YENİ KUYUMCU KAYDI (10 HEDİYE JETONLU)!*
 
@@ -278,7 +310,6 @@ Esnaf şu an aktif ve bölgedeki yeni ihalelere anında teklif verebilir.`;
 
         await sendWhatsAppMessage(WHATSAPP_CONFIG.adminPhone, adminAlert);
 
-        // 2. Kuyumcunun Telefonuna Hoş Geldin ve Kod Mesajı
         const jewelerWelcomeMsg = 
 `🎉 *ALTIN EKSPER AİLESİNE HOŞ GELDİNİZ!*
 
@@ -302,7 +333,6 @@ Bölgenizdeki müşteriler altın satmak istediğinde WhatsApp üzerinden canlı
     }
 });
 
-// Hata korumalı esnek kuyumcu bakiye yükleme (Admin Şifre Korumalı)
 app.post('/api/admin/jeweler/topup', adminAuthMiddleware, (req, res) => {
     const { jewelerId, addCredits, extendDays, activate } = req.body;
     
@@ -367,7 +397,6 @@ app.get('/api/jeweler/status/:id', (req, res) => {
     });
 });
 
-// ================= KUYUMCUNUN KENDİ GEÇMİŞ İŞLEMLERİ & MUHASEBESİ =================
 app.get('/api/jeweler/deals/:id', (req, res) => {
     const searchId = String(req.params.id).trim().toLowerCase();
     const jeweler = JEWELERS_DIRECTORY.find(j => 
@@ -401,12 +430,10 @@ app.get('/api/jeweler/deals/:id', (req, res) => {
     });
 });
 
-// Admin Şifre Korumalı Kuyumcu Listesi
 app.get('/api/admin/jewelers', adminAuthMiddleware, (req, res) => {
     res.json({ success: true, jewelers: JEWELERS_DIRECTORY });
 });
 
-// Herkese Açık Aktif Kuyumcular Listesi
 app.get('/api/jewelers', (req, res) => {
     res.json({ success: true, jewelers: JEWELERS_DIRECTORY });
 });
@@ -684,7 +711,7 @@ app.post('/api/request/quote', (req, res) => {
     });
 });
 
-// ================= İHALE ONAYI & BİNDE 2 BAŞARI DÜŞÜMÜ =================
+// ================= İHALE ONAYI & DİNAMİK BAŞARI DÜŞÜMÜ (‰1 veya ‰2) =================
 app.post('/api/request/notify-winner', async (req, res) => {
     try {
         const { requestId, jewelerCode, agreedPrice, customerName, customerPhone } = req.body;
@@ -710,16 +737,17 @@ app.post('/api/request/notify-winner', async (req, res) => {
         const jewelerAddress = (targetJeweler && targetJeweler.address) ? targetJeweler.address : 'Muratpaşa / Antalya';
         const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(jewelerAddress);
 
-        let deductedTokens = 0;
-        let calculatedCommissionTL = finalPrice * COMMISSION_RATE;
+        // Dinamik Başarı Jetonu & Komisyon Hesaplama (Bilezik, 22k Hurda, 24k Gram için ‰1, Diğerleri ‰2)
+        const feeCalculation = calculateDealCommissionAndTokens(target?.items, finalPrice);
+        const calculatedCommissionTL = feeCalculation.commissionTL;
+        const deductedTokens = (targetJeweler && targetJeweler.membershipType === 'token') ? feeCalculation.tokens : 0;
         let remainingCredits = null;
 
         if (targetJeweler && targetJeweler.membershipType === 'token') {
-            deductedTokens = calculateSuccessFeeTokens(finalPrice);
             targetJeweler.credits = Math.max(0, (Number(targetJeweler.credits) || 0) - deductedTokens);
             remainingCredits = targetJeweler.credits;
             saveDatabase();
-            console.log(`[Binde 2 Kesildi]: ${targetJeweler.name} | Tutar: ${finalPrice.toLocaleString('tr-TR')} TL | Kesilen: ${deductedTokens} Jeton | Kalan: ${targetJeweler.credits}`);
+            console.log(`[Adil Kesinti]: ${targetJeweler.name} | Tutar: ${finalPrice.toLocaleString('tr-TR')} TL | Oran: ${feeCalculation.appliedRateText} | Kesilen: ${deductedTokens} Jeton (${calculatedCommissionTL} TL) | Kalan: ${targetJeweler.credits}`);
         }
 
         const dealRecord = {
@@ -735,13 +763,14 @@ app.post('/api/request/notify-winner', async (req, res) => {
             deductedTokens: deductedTokens,
             remainingCredits: remainingCredits,
             commissionTL: calculatedCommissionTL,
+            commissionRateText: feeCalculation.appliedRateText,
             completedAt: new Date().toISOString()
         };
         completedDeals.unshift(dealRecord);
         saveDatabase();
 
         const tokenDeductNote = (targetJeweler && targetJeweler.membershipType === 'token')
-            ? `🪙 *Kullanılan Başarı Jetonu (‰2):* ${deductedTokens} Adet\n🪙 *Kalan Jeton Bakiyeniz:* ${targetJeweler.credits}`
+            ? `🪙 *Kullanılan Başarı Jetonu (${feeCalculation.appliedRateText}):* ${deductedTokens} Adet\n🪙 *Kalan Jeton Bakiyeniz:* ${targetJeweler.credits}`
             : `👑 *Üyelik Durumu:* VIP Sınırsız Paket`;
 
         const winnerMessage = 
@@ -780,10 +809,11 @@ ${mapUrl}
 
         res.json({ 
             success: true, 
-            message: `Kazanan sarrafa ve müşteriye randevu bildirimleri iletildi. Tutar bazlı (${deductedTokens} jeton) başarı bedeli düşüldü.`,
+            message: `Kazanan sarrafa ve müşteriye randevu bildirimleri iletildi. Ürün bazlı adil (${feeCalculation.appliedRateText} -> ${deductedTokens} jeton) başarı bedeli düşüldü.`,
             deal: dealRecord,
             remainingCredits: remainingCredits,
-            deductedTokens: deductedTokens
+            deductedTokens: deductedTokens,
+            appliedRateText: feeCalculation.appliedRateText
         });
     } catch (err) {
         console.error('Notify winner error:', err);
