@@ -349,10 +349,47 @@ app.get('/api/jeweler/status/:id', (req, res) => {
     });
 });
 
+// ================= KUYUMCUNUN KENDİ GEÇMİŞ İŞLEMLERİ & MUHASEBESİ =================
+// Kuyumcunun sadece kendisine ait olan tamamlanan anlaşmaları getiren güvenli rota
+app.get('/api/jeweler/deals/:id', (req, res) => {
+    const searchId = String(req.params.id).trim().toLowerCase();
+    const jeweler = JEWELERS_DIRECTORY.find(j => 
+        (j.id && String(j.id).trim().toLowerCase() === searchId) || 
+        (j.code && String(j.code).trim().toLowerCase() === searchId) || 
+        (j.name && String(j.name).trim().toLowerCase() === searchId)
+    );
+
+    if (!jeweler) {
+        return res.status(404).json({ success: false, message: 'Kuyumcu bulunamadı.' });
+    }
+
+    // Yalnızca bu kuyumcuya ait olan tamamlanan anlaşmaları filtrele
+    const myDeals = completedDeals.filter(d => {
+        const dJewelerId = String(d.jewelerId || '').trim().toLowerCase();
+        const dJewelerName = String(d.jewelerName || '').trim().toLowerCase();
+        return dJewelerId === searchId || 
+               (jeweler.id && dJewelerId === String(jeweler.id).toLowerCase()) ||
+               (jeweler.code && dJewelerId === String(jeweler.code).toLowerCase()) ||
+               (jeweler.name && dJewelerName === String(jeweler.name).toLowerCase());
+    });
+
+    res.json({ 
+        success: true, 
+        jeweler: {
+            id: jeweler.id,
+            name: jeweler.name,
+            credits: jeweler.credits,
+            membershipType: jeweler.membershipType
+        },
+        deals: myDeals 
+    });
+});
+
 // Admin Şifre Korumalı Kuyumcu Listesi
 app.get('/api/admin/jewelers', adminAuthMiddleware, (req, res) => {
     res.json({ success: true, jewelers: JEWELERS_DIRECTORY });
 });
+
 // Herkese Açık Aktif Kuyumcular Listesi (index.html için şifresiz)
 app.get('/api/jewelers', (req, res) => {
     res.json({ success: true, jewelers: JEWELERS_DIRECTORY });

@@ -13,7 +13,7 @@ body{
 }
 .card{
     background:#1e293b; border:1px solid #334155; border-radius:12px;
-    padding:18px; max-width:600px; margin:0 auto 16px; box-shadow:0 10px 25px rgba(0,0,0,0.3);
+    padding:18px; max-width:640px; margin:0 auto 16px; box-shadow:0 10px 25px rgba(0,0,0,0.3);
 }
 .header{
     display:flex; justify-content:space-between; align-items:center;
@@ -69,6 +69,24 @@ body{
     50% { transform: scale(1.15); color: #facc15; }
     100% { transform: scale(1); }
 }
+
+/* FİLTRE & MUHASEBE STİLLERİ */
+.filter-btn {
+    background:#0f172a; color:#94a3b8; border:1px solid #334155;
+    padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700;
+    cursor:pointer; transition:0.2s;
+}
+.filter-btn:hover { color:#fff; border-color:#64748b; }
+.filter-btn.active {
+    background:#f59e0b; color:#0f172a; border-color:#f59e0b;
+}
+.date-input {
+    background:#0f172a; border:1px solid #334155; color:#f8fafc;
+    padding:4px 8px; border-radius:6px; font-size:11px; outline:none;
+}
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1); cursor:pointer;
+}
 </style>
 </head>
 <body>
@@ -116,6 +134,69 @@ body{
         <button type="submit" id="btnSubmitOffer" class="submit-btn">Teklifi Müşteriye İlet</button>
     </form>
     <div id="offerResult" style="margin-top:12px; font-size:13px; text-align:center; display:none;"></div>
+</div>
+
+<!-- KUYUMCUNUN KENDİ CİRO VE İŞLEM GEÇMİŞİ KARTI -->
+<div class="card" id="historyCard">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; border-bottom:1px solid #334155; padding-bottom:10px;">
+        <div>
+            <div style="font-weight:800; font-size:15px; color:#f59e0b;">📊 Mağaza İşlem & Ciro Geçmişim</div>
+            <div style="font-size:11px; color:#94a3b8;">Altın Eksper ile dükkanınıza bağlanan işlemler</div>
+        </div>
+        <!-- HIZLI DÖNEM BUTONLARI -->
+        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+            <button type="button" class="filter-btn active" id="btnMyAll" onclick="setMyFilter('all')">Tümü</button>
+            <button type="button" class="filter-btn" id="btnMyToday" onclick="setMyFilter('today')">Bugün</button>
+            <button type="button" class="filter-btn" id="btnMyMonth" onclick="setMyFilter('month')">Bu Ay</button>
+            <button type="button" class="filter-btn" id="btnMyYear" onclick="setMyFilter('year')">Bu Yıl</button>
+        </div>
+    </div>
+
+    <!-- ÖZEL TARİH ARALIĞI SEÇİCİ -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px; gap:8px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:11px; color:#94a3b8;">Aralık:</span>
+            <input type="date" id="myStartDate" class="date-input">
+            <span style="color:#64748b; font-size:11px;">-</span>
+            <input type="date" id="myEndDate" class="date-input">
+            <button type="button" class="filter-btn" onclick="applyMyCustomRange()" style="background:#0284c7; color:#fff; border-color:#0284c7;">Uygula</button>
+        </div>
+        <span id="myFilterBadge" style="font-size:11px; color:#38bdf8; font-weight:700;">(Tüm Zamanlar)</span>
+    </div>
+
+    <!-- MAĞAZA ÖZET METRİKLERİ -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin:14px 0;">
+        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155;">
+            <div style="font-size:11px; color:#94a3b8; font-weight:600;">KAZANILAN İŞLEM</div>
+            <div id="myDealsCount" style="font-size:20px; font-weight:800; color:#f8fafc; margin-top:4px;">0</div>
+        </div>
+        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155;">
+            <div style="font-size:11px; color:#94a3b8; font-weight:600;">BAĞLANAN CİRO</div>
+            <div id="myTotalTurnover" style="font-size:20px; font-weight:800; color:#4ade80; margin-top:4px;">0 ₺</div>
+        </div>
+        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155;">
+            <div style="font-size:11px; color:#94a3b8; font-weight:600;">HARCANAN JETON (‰2)</div>
+            <div id="myTokensUsed" style="font-size:20px; font-weight:800; color:#38bdf8; margin-top:4px;">0 🪙</div>
+        </div>
+    </div>
+
+    <!-- GEÇMİŞ İŞLEM LİSTESİ TABLOSU -->
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
+            <thead>
+                <tr style="border-bottom:1px solid #334155; color:#94a3b8;">
+                    <th style="padding:8px 6px;">Tarih</th>
+                    <th style="padding:8px 6px;">Talep No</th>
+                    <th style="padding:8px 6px;">Müşteri</th>
+                    <th style="padding:8px 6px;">Alınan Tutar</th>
+                    <th style="padding:8px 6px;">Jeton (‰2)</th>
+                </tr>
+            </thead>
+            <tbody id="myDealsTbody">
+                <tr><td colspan="5" style="text-align:center; padding:14px; color:#64748b;">Yükleniyor...</td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- FOTOĞRAF BÜYÜTME MODALI -->
@@ -178,6 +259,12 @@ let loggedJeweler = null;
 let hasGivenOffer = false;
 let balanceWatcherInterval = null;
 
+// Kuyumcuya Özel İşlem Geçmişi Hafızası
+let MY_RAW_DEALS = [];
+let MY_FILTER_MODE = 'all'; // all, today, month, year, custom
+let MY_START_DATE = null;
+let MY_END_DATE = null;
+
 async function fetchJewelerStatus(jewelerId) {
     if (!jewelerId) return null;
     try {
@@ -192,7 +279,6 @@ async function fetchJewelerStatus(jewelerId) {
 
 function startLiveBalanceWatcher(jewelerId) {
     if (balanceWatcherInterval) clearInterval(balanceWatcherInterval);
-    // Her 4 saniyede bir arka planda bakiyeyi sessizce günceller
     balanceWatcherInterval = setInterval(async () => {
         if (!jewelerId) return;
         const freshData = await fetchJewelerStatus(jewelerId);
@@ -201,6 +287,7 @@ function startLiveBalanceWatcher(jewelerId) {
                 loggedJeweler.credits = freshData.credits;
                 loggedJeweler.membershipType = freshData.membershipType;
                 updateBalanceDisplay(true);
+                loadMyDeals(jewelerId);
             }
         }
     }, 4000);
@@ -223,6 +310,7 @@ async function initPortal() {
             document.getElementById('jewelerTitle').textContent = loggedJeweler.name + ' (' + loggedJeweler.id + ')';
             updateBalanceDisplay();
             startLiveBalanceWatcher(jewelerId);
+            loadMyDeals(jewelerId);
         }
     }
 
@@ -242,6 +330,124 @@ async function initPortal() {
         }
     } catch(e) {
         document.getElementById('auctionDetails').textContent = 'Sunucuya bağlanılamadı.';
+    }
+}
+
+// Kuyumcunun sadece kendi anlaşmalarını sunucudan çeker
+async function loadMyDeals(jewelerId) {
+    if (!jewelerId) return;
+    try {
+        const res = await fetch(BACKEND_API_URL + '/jeweler/deals/' + jewelerId);
+        const data = await res.json();
+        if (data.success && data.deals) {
+            MY_RAW_DEALS = data.deals;
+            applyMyFilterAndRender();
+        }
+    } catch (e) {
+        console.error('Kişisel işlem geçmişi yüklenemedi:', e);
+    }
+}
+
+// Filtre Değiştirme
+function setMyFilter(mode) {
+    MY_FILTER_MODE = mode;
+    ['btnMyAll', 'btnMyToday', 'btnMyMonth', 'btnMyYear'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+    });
+
+    if (mode === 'all') document.getElementById('btnMyAll').classList.add('active');
+    if (mode === 'today') document.getElementById('btnMyToday').classList.add('active');
+    if (mode === 'month') document.getElementById('btnMyMonth').classList.add('active');
+    if (mode === 'year') document.getElementById('btnMyYear').classList.add('active');
+
+    document.getElementById('myStartDate').value = '';
+    document.getElementById('myEndDate').value = '';
+
+    applyMyFilterAndRender();
+}
+
+function applyMyCustomRange() {
+    const sVal = document.getElementById('myStartDate').value;
+    const eVal = document.getElementById('myEndDate').value;
+
+    if (!sVal && !eVal) {
+        alert('Lütfen bir başlangıç veya bitiş tarihi seçin.');
+        return;
+    }
+
+    MY_FILTER_MODE = 'custom';
+    MY_START_DATE = sVal ? new Date(sVal + 'T00:00:00') : null;
+    MY_END_DATE = eVal ? new Date(eVal + 'T23:59:59') : null;
+
+    ['btnMyAll', 'btnMyToday', 'btnMyMonth', 'btnMyYear'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+    });
+
+    applyMyFilterAndRender();
+}
+
+function applyMyFilterAndRender() {
+    const now = new Date();
+    const filtered = MY_RAW_DEALS.filter(d => {
+        const dealDate = new Date(d.completedAt);
+
+        if (MY_FILTER_MODE === 'all') return true;
+        if (MY_FILTER_MODE === 'today') {
+            return dealDate.getDate() === now.getDate() &&
+                   dealDate.getMonth() === now.getMonth() &&
+                   dealDate.getFullYear() === now.getFullYear();
+        }
+        if (MY_FILTER_MODE === 'month') {
+            return dealDate.getMonth() === now.getMonth() &&
+                   dealDate.getFullYear() === now.getFullYear();
+        }
+        if (MY_FILTER_MODE === 'year') {
+            return dealDate.getFullYear() === now.getFullYear();
+        }
+        if (MY_FILTER_MODE === 'custom') {
+            if (MY_START_DATE && dealDate < MY_START_DATE) return false;
+            if (MY_END_DATE && dealDate > MY_END_DATE) return false;
+            return true;
+        }
+        return true;
+    });
+
+    let sumTurnover = 0;
+    let sumTokens = 0;
+
+    filtered.forEach(d => {
+        sumTurnover += Number(d.agreedPrice || 0);
+        sumTokens += Number(d.deductedTokens || 0);
+    });
+
+    document.getElementById('myDealsCount').textContent = filtered.length;
+    document.getElementById('myTotalTurnover').textContent = sumTurnover.toLocaleString('tr-TR') + ' ₺';
+    document.getElementById('myTokensUsed').textContent = sumTokens + ' 🪙';
+
+    const badge = document.getElementById('myFilterBadge');
+    if (MY_FILTER_MODE === 'all') badge.textContent = '(Tüm Zamanlar)';
+    else if (MY_FILTER_MODE === 'today') badge.textContent = '(Bugün)';
+    else if (MY_FILTER_MODE === 'month') badge.textContent = '(Bu Ay)';
+    else if (MY_FILTER_MODE === 'year') badge.textContent = '(Bu Yıl)';
+    else if (MY_FILTER_MODE === 'custom') {
+        const s = MY_START_DATE ? MY_START_DATE.toLocaleDateString('tr-TR') : '...';
+        const e = MY_END_DATE ? MY_END_DATE.toLocaleDateString('tr-TR') : '...';
+        badge.textContent = `(${s} - ${e})`;
+    }
+
+    const tbody = document.getElementById('myDealsTbody');
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:14px; color:#64748b;">Seçili dönemde tamamlanmış işlem kaydınız bulunmuyor.</td></tr>';
+    } else {
+        tbody.innerHTML = filtered.map(d => `
+            <tr style="border-bottom:1px solid #334155;">
+                <td style="padding:8px 6px; color:#94a3b8;">${new Date(d.completedAt).toLocaleDateString('tr-TR')}</td>
+                <td style="padding:8px 6px;"><b>#${d.requestId}</b></td>
+                <td style="padding:8px 6px;">${d.customerName || 'Müşteri'}</td>
+                <td style="padding:8px 6px;"><b style="color:#4ade80;">${Number(d.agreedPrice).toLocaleString('tr-TR')} ₺</b></td>
+                <td style="padding:8px 6px;"><b style="color:#38bdf8;">-${d.deductedTokens} 🪙</b></td>
+            </tr>
+        `).join('');
     }
 }
 
@@ -280,7 +486,7 @@ function updateBalanceDisplay(withPulse = false) {
 
     if (withPulse) {
         bBadge.classList.remove('balance-pulse');
-        void bBadge.offsetWidth; // Reflow tetikle
+        void bBadge.offsetWidth;
         bBadge.classList.add('balance-pulse');
     }
 }
@@ -405,7 +611,6 @@ async function handleSendOffer(e) {
             btn.disabled = false;
             hasGivenOffer = true;
 
-            // ANLIK SAYAÇ GÜNCELLEMESİ (-1 Jeton)
             if (data.remainingCredits !== null && data.remainingCredits !== undefined && loggedJeweler) {
                 loggedJeweler.credits = data.remainingCredits;
                 updateBalanceDisplay(true);
