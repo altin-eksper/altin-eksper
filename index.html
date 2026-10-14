@@ -963,9 +963,9 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
                 </label>
             </div>
 
-            <button type="submit" id="btnJewelerSubmit" class="primary" style="width:100%; padding:12px; font-size:14px; font-weight:700; background:#0f172a; color:#fff;">
-                Başvuruyu Gönder
-            </button>
+            <button type="button" id="btnJewelerSubmit" onclick="sendJewelerApplication(event)" class="primary" style="width:100%; padding:12px; font-size:14px; font-weight:700; background:#0f172a; color:#fff; cursor:pointer;">
+    Başvuruyu Gönder
+</button>
             <div id="jewelerApplyResult" style="margin-top:10px; font-size:12px; text-align:center; display:none;"></div>
         </form>
     </div>
@@ -3630,6 +3630,75 @@ function startApp() {
     const savedAuction = getActiveAuctionFromStorage();
     if (savedAuction) {
         reopenLiveAuctionModal();
+    }
+}
+async function sendJewelerApplication(event) {
+    if (event) event.preventDefault();
+
+    const btn = document.getElementById('btnJewelerSubmit');
+    const resultDiv = document.getElementById('jewelerApplyResult');
+    
+    const form = btn ? btn.closest('form') : document.querySelector('#jewelerApplyModal form');
+    if (!form) return;
+
+    const firmInput = form.querySelector('input[name="firmName"]') || form.querySelectorAll('input[type="text"]')[0];
+    const phoneInput = form.querySelector('input[name="phone"]') || form.querySelectorAll('input[type="text"]')[1] || form.querySelector('input[type="tel"]');
+    const citySelect = form.querySelector('select[name="city"]') || form.querySelectorAll('select')[0];
+    const districtSelect = form.querySelector('select[name="district"]') || form.querySelectorAll('select')[1];
+    const planInput = form.querySelector('input[name="planSelect"]:checked');
+
+    const firmName = firmInput ? firmInput.value.trim() : '';
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+    const city = citySelect ? citySelect.value : 'Antalya';
+    const district = districtSelect ? districtSelect.value : 'Muratpaşa';
+    const planType = planInput ? planInput.value : 'token_25';
+
+    if (!firmName || !phone) {
+        alert('Lütfen Firma Adı ve WhatsApp Telefon Numarasını eksiksiz doldurun.');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Gönderiliyor...';
+    if (resultDiv) {
+        resultDiv.style.display = 'block';
+        resultDiv.style.color = '#0284c7';
+        resultDiv.textContent = 'Başvurunuz sunucuya iletiliyor...';
+    }
+
+    try {
+        const response = await fetch('/api/jeweler/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ firmName, phone, city, district, planType })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('✅ Başvurunuz başarıyla alındı! Yönetici onayından sonra WhatsApp üzerinden bilgilendirileceksiniz.');
+            if (resultDiv) {
+                resultDiv.style.color = '#16a34a';
+                resultDiv.textContent = '✅ ' + data.message;
+            }
+            form.reset();
+            const modal = document.getElementById('jewelerApplyModal') || form.closest('.report-modal');
+            if (modal) {
+                setTimeout(() => { modal.style.display = 'none'; }, 1000);
+            }
+        } else {
+            alert('Hata: ' + (data.message || 'Başvuru tamamlanamadı.'));
+            if (resultDiv) {
+                resultDiv.style.color = '#dc2626';
+                resultDiv.textContent = '❌ ' + data.message;
+            }
+        }
+    } catch (err) {
+        console.error('Başvuru gönderim hatası:', err);
+        alert('Sunucuya bağlanırken bir hata oluştu.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Başvuruyu Gönder';
     }
 }
 </script>
