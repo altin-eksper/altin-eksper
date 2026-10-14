@@ -44,11 +44,9 @@ function calculateDealCommissionAndTokens(items, agreedPrice) {
     let appliedRateText = '‰2';
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-        // Ürün listesi yoksa varsayılan binde 2
         totalCommissionTL = finalPrice * 0.002;
         appliedRateText = '‰2';
     } else {
-        // Sepetteki kalemlerin gösterge tutarlarını toplayalım
         let totalReferenceVal = 0;
         items.forEach(it => {
             const val = parseFloat(String(it.amount || '0').replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
@@ -65,10 +63,7 @@ function calculateDealCommissionAndTokens(items, agreedPrice) {
             const pCode = String(it.productCode || '').toLowerCase().trim();
             const karat = String(it.karat || '').trim();
 
-            // Binde 1 (‰1) Kriteri:
-            // 1. Bilezik (bracelet)
-            // 2. 22 Ayar Hurda (scrap + 22k)
-            // 3. 24 Ayar Gram Has (gram + 24k)
+            // Binde 1 (‰1) Kriteri: Bilezik, 22k Hurda, 24k Gram Has
             const isBindeBir = (pCode === 'bracelet') || 
                                (pCode === 'scrap' && karat === '22') || 
                                (pCode === 'gram' && karat === '24');
@@ -81,12 +76,10 @@ function calculateDealCommissionAndTokens(items, agreedPrice) {
         appliedRateText = weightedRateSum <= 0.0012 ? '‰1' : (weightedRateSum >= 0.0018 ? '‰2' : '‰1 - ‰2 (Karma)');
     }
 
-    // TL komisyonunu jeton adedine çevirip yukarı yuvarla
     let tokens = Math.ceil(totalCommissionTL / TOKEN_UNIT_VALUE_TL);
 
-    // Taban ve Tavan Sınırları (Esnaf Dostu Koruma)
-    const MIN_TOKENS = 1;  // Düşük tutarlı ‰1 işlemlerde taban 1 jeton
-    const MAX_TOKENS = 50; // Yüksek hacimli işlemler için tavan 50 jeton
+    const MIN_TOKENS = 1;  
+    const MAX_TOKENS = 50; 
 
     if (tokens < MIN_TOKENS) tokens = MIN_TOKENS;
     if (tokens > MAX_TOKENS) tokens = MAX_TOKENS;
@@ -98,7 +91,7 @@ function calculateDealCommissionAndTokens(items, agreedPrice) {
     };
 }
 
-// ================= KALICI VERİTABANI MOTORU (FILE-PERSISTENCE) =================
+// ================= KALICI VERİTABANI MOTORU =================
 const DB_FILE = path.join(__dirname, 'database.json');
 
 const INITIAL_JEWELERS = [
@@ -257,7 +250,8 @@ async function sendWhatsAppMessage(toPhone, messageText) {
 // Süresi dolan (15 dk) talepleri otomatik temizleme
 setInterval(() => {
     const now = Date.now();
-    requestsPool = requestsPool.filter(r => !r.expiresAt || new Date(r.expiresAt).getTime() > now);
+    // Randevusu kesilmiş olanlar havuzda kalmaya devam etsin, dükkanda onaylanabilsin
+    requestsPool = requestsPool.filter(r => r.status === 'APPOINTMENT_SET' || !r.expiresAt || new Date(r.expiresAt).getTime() > now);
 }, 30000);
 
 // Ana Sayfa & Yönetim Rotası
@@ -641,7 +635,7 @@ ${itemsList}
 
 app.get('/api/requests', (req, res) => {
     const now = Date.now();
-    const active = requestsPool.filter(r => !r.expiresAt || new Date(r.expiresAt).getTime() > now);
+    const active = requestsPool.filter(r => r.status === 'APPOINTMENT_SET' || !r.expiresAt || new Date(r.expiresAt).getTime() > now);
     res.json({ success: true, requests: active });
 });
 
@@ -711,7 +705,7 @@ app.post('/api/request/quote', (req, res) => {
     });
 });
 
-// ================= İHALE ONAYI & DİNAMİK BAŞARI DÜŞÜMÜ (‰1 veya ‰2) =================
+// ================= 1. ADIM: MÜŞTERİ SEÇTİĞİNDE YALNIZCA RANDEVU KESİLİR (JETON HENÜZ DÜŞMEZ) =================
 app.post('/api/request/notify-winner', async (req, res) => {
     try {
         const { requestId, jewelerCode, agreedPrice, customerName, customerPhone } = req.body;
@@ -719,10 +713,10 @@ app.post('/api/request/notify-winner', async (req, res) => {
         const finalPrice = Number(agreedPrice) || 0;
         
         if (target) {
-            target.status = 'COMPLETED';
+            target.status = 'APPOINTMENT_SET'; // Randevu oluşturuldu, dükkanda teyit bekleniyor
             target.winnerCode = jewelerCode;
             target.agreedPrice = finalPrice;
-            console.log(`[İhale Tamamlandı]: #${requestId} kazanan: ${jewelerCode} | Tutar: ${finalPrice.toLocaleString('tr-TR')} TL`);
+            console.log(`[Randevu Kesildi]: #${requestId} kazanan: ${jewelerCode} | Ön Tutar: ${finalPrice.toLocaleString('tr-TR')} TL (Jeton düşüşü mağaza teyidine bırakıldı)`);
         }
 
         const searchKey = String(jewelerCode).trim().toLowerCase();
@@ -737,54 +731,21 @@ app.post('/api/request/notify-winner', async (req, res) => {
         const jewelerAddress = (targetJeweler && targetJeweler.address) ? targetJeweler.address : 'Muratpaşa / Antalya';
         const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(jewelerAddress);
 
-        // Dinamik Başarı Jetonu & Komisyon Hesaplama (Bilezik, 22k Hurda, 24k Gram için ‰1, Diğerleri ‰2)
-        const feeCalculation = calculateDealCommissionAndTokens(target?.items, finalPrice);
-        const calculatedCommissionTL = feeCalculation.commissionTL;
-        const deductedTokens = (targetJeweler && targetJeweler.membershipType === 'token') ? feeCalculation.tokens : 0;
-        let remainingCredits = null;
-
-        if (targetJeweler && targetJeweler.membershipType === 'token') {
-            targetJeweler.credits = Math.max(0, (Number(targetJeweler.credits) || 0) - deductedTokens);
-            remainingCredits = targetJeweler.credits;
-            saveDatabase();
-            console.log(`[Adil Kesinti]: ${targetJeweler.name} | Tutar: ${finalPrice.toLocaleString('tr-TR')} TL | Oran: ${feeCalculation.appliedRateText} | Kesilen: ${deductedTokens} Jeton (${calculatedCommissionTL} TL) | Kalan: ${targetJeweler.credits}`);
-        }
-
-        const dealRecord = {
-            dealId: 'DL_' + Date.now().toString().slice(-6),
-            requestId,
-            customerName: customerName || 'Müşteri',
-            customerPhone: customerPhone || '',
-            jewelerId: targetJeweler ? targetJeweler.id : jewelerCode,
-            jewelerName: jewelerName,
-            jewelerPhone: jewelerPhone,
-            jewelerAddress: jewelerAddress,
-            agreedPrice: finalPrice,
-            deductedTokens: deductedTokens,
-            remainingCredits: remainingCredits,
-            commissionTL: calculatedCommissionTL,
-            commissionRateText: feeCalculation.appliedRateText,
-            completedAt: new Date().toISOString()
-        };
-        completedDeals.unshift(dealRecord);
-        saveDatabase();
-
-        const tokenDeductNote = (targetJeweler && targetJeweler.membershipType === 'token')
-            ? `🪙 *Kullanılan Başarı Jetonu (${feeCalculation.appliedRateText}):* ${deductedTokens} Adet\n🪙 *Kalan Jeton Bakiyeniz:* ${targetJeweler.credits}`
-            : `👑 *Üyelik Durumu:* VIP Sınırsız Paket`;
+        const finishUrl = `https://altin-eksper.onrender.com/kuyumcu.html?req=${requestId}&jeweler=${targetJeweler ? targetJeweler.id : jewelerCode}`;
 
         const winnerMessage = 
-`🎉 *İŞLEM ONAYLANDI — MÜŞTERİ YÖNLENDİRİLDİ*
+`🎉 *YENİ İŞLEM RANDEVUSU OLUŞTURULDU!*
 
-Sayın *${jewelerName}*, verdiğiniz teklif müşteri tarafından onaylandı!
+Sayın *${jewelerName}*, verdiğiniz teklif müşteri tarafından seçildi!
 
 🏷 *Talep No:* #${requestId}
 👤 *Müşteri Adı:* ${customerName || 'Müşteri'}
-💰 *Bağlanan Tutar:* ${finalPrice.toLocaleString('tr-TR')} ₺
+💰 *Ön Teklif Tutarı:* ${finalPrice.toLocaleString('tr-TR')} ₺
 📌 *Müşteri İletişim:* ${customerPhone || 'Girilmedi'}
-${tokenDeductNote}
 
-Müşteriye mağazanızın açık adresi, harita konumu ve randevu kodu iletildi. Müşteri kısa süre içinde mağazanıza gelecektir.`;
+💡 *Esnaf Güvencesi:* Müşteri dükkanınıza gelip tartım yapılana kadar jetonunuz *düşmez*.
+Müşteri geldiğinde aşağıdaki linkten fiilen gerçekleşen nihai tutarı girip işlemi kapatabilirsiniz:
+👉 ${finishUrl}`;
 
         await sendWhatsAppMessage(jewelerPhone, winnerMessage);
 
@@ -795,7 +756,7 @@ Müşteriye mağazanızın açık adresi, harita konumu ve randevu kodu iletildi
 Sayın *${customerName || 'Müşterimiz'}*, altın satış işleminiz için anlaşmalı sarrafımız bilgilendirildi.
 
 🏪 *Yetkili Sarraf:* ${jewelerName}
-💰 *Taahhüt Edilen Tutar:* ${finalPrice.toLocaleString('tr-TR')} ₺
+💰 *Ön Teklif Tutarı:* ${finalPrice.toLocaleString('tr-TR')} ₺
 📍 *Mağaza Adresi:* ${jewelerAddress}
 🎟️ *Güvenlik / Randevu Kodu:* #${requestId}
 
@@ -809,15 +770,134 @@ ${mapUrl}
 
         res.json({ 
             success: true, 
-            message: `Kazanan sarrafa ve müşteriye randevu bildirimleri iletildi. Ürün bazlı adil (${feeCalculation.appliedRateText} -> ${deductedTokens} jeton) başarı bedeli düşüldü.`,
+            message: `Randevu başarıyla açıldı. Başarı jetonu müşteri mağazaya gelip alım yapıldığında fiili tutarla düşülecektir.`,
+            deal: {
+                requestId,
+                customerName: customerName || 'Müşteri',
+                customerPhone: customerPhone || '',
+                jewelerName,
+                jewelerAddress,
+                agreedPrice: finalPrice
+            }
+        });
+    } catch (err) {
+        console.error('Notify winner error:', err);
+        res.status(500).json({ success: false, message: 'Randevu bildirimi gönderilemedi.' });
+    }
+});
+
+// ================= 2. ADIM: MÜŞTERİ MAĞAZAYA GELDİĞİNDE GERÇEK TUTARLA JETON DÜŞÜMÜ =================
+app.post('/api/request/complete-deal', async (req, res) => {
+    try {
+        const { requestId, jewelerId, actualDealPrice } = req.body;
+        const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
+        const realPrice = Number(actualDealPrice) || 0;
+
+        if (realPrice <= 0) {
+            return res.status(400).json({ success: false, message: 'Lütfen dükkanda gerçekleşen geçerli bir alım tutarı giriniz.' });
+        }
+
+        const searchKey = String(jewelerId || target?.winnerCode).trim().toLowerCase();
+        const targetJeweler = JEWELERS_DIRECTORY.find(j => 
+            (j.id && String(j.id).trim().toLowerCase() === searchKey) || 
+            (j.code && String(j.code).trim().toLowerCase() === searchKey) || 
+            (j.name && String(j.name).trim().toLowerCase() === searchKey)
+        );
+
+        if (!targetJeweler) {
+            return res.status(404).json({ success: false, message: 'Kuyumcu hesabı bulunamadı.' });
+        }
+
+        // Dinamik komisyon hesabı: Fiilen gerçekleşen tutar üzerinden (Bilezik/22k Hurda/24k Gram ‰1, Diğerleri ‰2)
+        const feeCalculation = calculateDealCommissionAndTokens(target?.items, realPrice);
+        const calculatedCommissionTL = feeCalculation.commissionTL;
+        let deductedTokens = 0;
+        let remainingCredits = targetJeweler.credits;
+
+        if (targetJeweler.membershipType === 'token') {
+            deductedTokens = feeCalculation.tokens;
+            targetJeweler.credits = Math.max(0, (Number(targetJeweler.credits) || 0) - deductedTokens);
+            remainingCredits = targetJeweler.credits;
+            saveDatabase();
+            console.log(`[Dükkanda Tamamlandı]: ${targetJeweler.name} | Gerçekleşen: ${realPrice.toLocaleString('tr-TR')} TL | Oran: ${feeCalculation.appliedRateText} | Düşen: ${deductedTokens} Jeton | Kalan: ${remainingCredits}`);
+        }
+
+        if (target) {
+            target.status = 'COMPLETED';
+            target.actualDealPrice = realPrice;
+        }
+
+        const dealRecord = {
+            dealId: 'DL_' + Date.now().toString().slice(-6),
+            requestId: requestId,
+            customerName: target?.customerName || 'Müşteri',
+            customerPhone: target?.customerPhone || '',
+            jewelerId: targetJeweler.id,
+            jewelerName: targetJeweler.name,
+            jewelerPhone: targetJeweler.phone,
+            jewelerAddress: targetJeweler.address || '',
+            originalQuotedPrice: target?.agreedPrice || realPrice,
+            agreedPrice: realPrice, // Fiilen gerçekleşen tutar
+            deductedTokens: deductedTokens,
+            remainingCredits: remainingCredits,
+            commissionTL: calculatedCommissionTL,
+            commissionRateText: feeCalculation.appliedRateText,
+            completedAt: new Date().toISOString()
+        };
+
+        completedDeals.unshift(dealRecord);
+        saveDatabase();
+
+        const tokenNote = (targetJeweler.membershipType === 'token')
+            ? `🪙 *Düşen Başarı Jetonu (${feeCalculation.appliedRateText}):* ${deductedTokens} Adet\n🪙 *Kalan Jeton Bakiyeniz:* ${remainingCredits}`
+            : `👑 *Üyelik Durumu:* VIP Sınırsız Paket`;
+
+        const finishMsg = 
+`✅ *İŞLEM DÜKKANDA BAŞARIYLA TAMAMLANDI!*
+
+Sayın *${targetJeweler.name}*, #${requestId} nolu müşteri alım işleminiz kapatıldı.
+
+💰 *Fiilen Gerçekleşen Tutar:* ${realPrice.toLocaleString('tr-TR')} ₺
+📊 *Uygulanan Tarife:* ${feeCalculation.appliedRateText}
+${tokenNote}
+
+Hayırlı ve bereketli kazançlar dileriz!`;
+
+        await sendWhatsAppMessage(targetJeweler.phone, finishMsg);
+
+        res.json({
+            success: true,
+            message: `İşlem ${realPrice.toLocaleString('tr-TR')} TL üzerinden kapatıldı ve ${deductedTokens} jeton başarı bedeli düşüldü.`,
             deal: dealRecord,
             remainingCredits: remainingCredits,
             deductedTokens: deductedTokens,
             appliedRateText: feeCalculation.appliedRateText
         });
     } catch (err) {
-        console.error('Notify winner error:', err);
-        res.status(500).json({ success: false, message: 'Bildirim gönderilemedi.' });
+        console.error('Complete deal error:', err);
+        res.status(500).json({ success: false, message: 'İşlem tamamlanırken hata oluştu.' });
+    }
+});
+
+// ================= 3. ADIM: MÜŞTERİ GELMEDİ / İPTAL ROTASI =================
+app.post('/api/request/cancel-deal', async (req, res) => {
+    try {
+        const { requestId, jewelerId, reason } = req.body;
+        const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
+        
+        if (target) {
+            target.status = 'CANCELLED';
+            target.cancelReason = reason || 'Müşteri dükkana gelmedi.';
+        }
+
+        console.log(`[İhale İptal Edildi]: #${requestId} | Sebep: ${reason || 'Müşteri gelmedi'} (Sarraftan hiçbir jeton düşülmedi)`);
+
+        res.json({
+            success: true,
+            message: 'İhale başarıyla iptal edildi. Hesabınızdan hiçbir jeton kesilmemiştir.'
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'İptal işlemi başarısız.' });
     }
 });
 

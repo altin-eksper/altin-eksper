@@ -93,6 +93,47 @@ body{
 </head>
 <body>
 
+<!-- MÜŞTERİ MAĞAZAYA GELDİĞİNDE GÖRÜNEN KESİN ONAY KARTI -->
+<div class="card" id="dealFinalizeCard" style="display:none; border:2px solid #10b981; background:linear-gradient(135deg, #064e3b, #0f172a);">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #059669; padding-bottom:10px; margin-bottom:12px;">
+        <div>
+            <h3 style="margin:0; font-size:17px; color:#34d399; display:flex; align-items:center; gap:8px;">
+                🎉 Müşteri Teklifinizi Kabul Etti!
+            </h3>
+            <span style="font-size:12px; color:#a7f3d0;" id="dealCustomerLabel">Müşteri randevusu dükkanınıza yönlendirildi.</span>
+        </div>
+        <span style="background:#10b981; color:#fff; font-size:11px; font-weight:800; padding:4px 8px; border-radius:6px;">
+            Bekleyen Randevu
+        </span>
+    </div>
+
+    <p style="font-size:12.5px; color:#cbd5e1; margin:0 0 14px; line-height:1.5;">
+        Müşteri dükkanınıza geldiğinde fiziki tartım ve ayar kontrolünü yapınız. Nihai anlaşılan tutarı aşağıdan teyit ederek işlemi tamamlayabilirsiniz.
+    </p>
+
+    <div style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:12px; margin-bottom:14px;">
+        <label style="font-size:12px; font-weight:700; color:#94a3b8; display:block; margin-bottom:6px;">
+            Fiilen Gerçekleşen Alım Tutarı (TL):
+        </label>
+        <input type="number" id="actualDealPriceInput" placeholder="Örn: 85000" 
+               style="width:100%; padding:12px; font-size:18px; font-weight:800; color:#4ade80; background:#1e293b; border:1.5px solid #10b981; border-radius:6px; outline:none;">
+        <span style="font-size:11px; color:#94a3b8; margin-top:4px; display:block;">
+            💡 Başarı jetonu bu tutar üzerinden (Bilezik/Has: ‰1, Diğer: ‰2) kuruşu kuruşuna adil kesilir.
+        </span>
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" id="btnCompleteFinalDeal" onclick="submitFinalDealConfirmation()" 
+                style="flex:2; background:#10b981; color:#fff; border:none; padding:12px; border-radius:8px; font-size:14px; font-weight:800; cursor:pointer;">
+            ✓ Müşteri Geldi, İşlemi Tamamla & Jetonu Düş
+        </button>
+        <button type="button" onclick="cancelDealNoShow()" 
+                style="flex:1; background:#475569; color:#f87171; border:1px solid #64748b; padding:12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+            ✕ Gelmedi (İptal)
+        </button>
+    </div>
+</div>
+
 <div class="card">
     <div class="header">
         <div>
@@ -177,7 +218,7 @@ body{
             <div id="myTotalTurnover" style="font-size:20px; font-weight:800; color:#4ade80; margin-top:4px;">0 ₺</div>
         </div>
         <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155;">
-            <div style="font-size:11px; color:#94a3b8; font-weight:600;">HARCANAN JETON (‰2)</div>
+            <div style="font-size:11px; color:#94a3b8; font-weight:600;">HARCANAN JETON</div>
             <div id="myTokensUsed" style="font-size:20px; font-weight:800; color:#38bdf8; margin-top:4px;">0 🪙</div>
         </div>
     </div>
@@ -191,7 +232,7 @@ body{
                     <th style="padding:8px 6px;">Talep No</th>
                     <th style="padding:8px 6px;">Müşteri</th>
                     <th style="padding:8px 6px;">Alınan Tutar</th>
-                    <th style="padding:8px 6px;">Jeton (‰2)</th>
+                    <th style="padding:8px 6px;">Jeton Bedeli</th>
                 </tr>
             </thead>
             <tbody id="myDealsTbody">
@@ -206,7 +247,7 @@ body{
     <img id="bigPhotoImg" src="" style="max-width:100%; max-height:90vh; border-radius:8px;">
 </div>
 
-<!-- BAKİYE & JETON PAKETİ SATIN ALMA MODALI (GELİŞMİŞ IBAN VE DİNAMİK TUTARLI) -->
+<!-- BAKİYE & JETON PAKETİ SATIN ALMA MODALI -->
 <div id="packageModal" class="photo-modal">
     <div style="background:#1e293b; border:1px solid #475569; border-radius:12px; max-width:460px; width:100%; padding:20px; color:#f8fafc; position:relative; box-shadow:0 15px 30px rgba(0,0,0,0.5);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #334155; padding-bottom:10px;">
@@ -217,7 +258,6 @@ body{
             <button type="button" onclick="document.getElementById('packageModal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:20px; cursor:pointer;">✕</button>
         </div>
 
-        <!-- DİNAMİK PAKET SEÇİMİ -->
         <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
             <label class="plan-option" onclick="selectPlanPrice('750', 'token_25')">
                 <input type="radio" name="buyPlan" value="token_25" checked style="margin-top:3px;">
@@ -253,7 +293,6 @@ body{
             </label>
         </div>
 
-        <!-- BANKA & KOPYALANABİLİR IBAN ALANI -->
         <div style="background:#0f172a; border-radius:8px; padding:12px; font-size:12px; color:#cbd5e1; margin-bottom:12px; line-height:1.6; border:1px solid #334155;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                 <b style="color:#f8fafc;">🏦 Havale / FAST Bilgileri:</b>
@@ -271,7 +310,6 @@ body{
             </div>
         </div>
 
-        <!-- ÖDENECEK DİNAMİK TUTAR ÇUBUĞU -->
         <div style="background:#1e293b; border:1px solid #334155; padding:10px 12px; border-radius:6px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
             <span style="font-size:12px; color:#94a3b8;">Ödenecek Tutar:</span>
             <b id="paymentDueAmount" style="font-size:18px; color:#4ade80;">750 ₺</b>
@@ -292,10 +330,10 @@ const reqId = urlParams.get('req') || '';
 let loggedJeweler = null;
 let hasGivenOffer = false;
 let balanceWatcherInterval = null;
+let currentAuctionData = null;
 
-// Kuyumcuya Özel İşlem Geçmişi Hafızası
 let MY_RAW_DEALS = [];
-let MY_FILTER_MODE = 'all'; // all, today, month, year, custom
+let MY_FILTER_MODE = 'all';
 let MY_START_DATE = null;
 let MY_END_DATE = null;
 
@@ -357,8 +395,10 @@ async function initPortal() {
         const res = await fetch(BACKEND_API_URL + '/request/' + reqId);
         const data = await res.json();
         if (data.success && data.data) {
+            currentAuctionData = data.data;
             renderAuction(data.data);
             checkExistingOffer(data.data);
+            checkAppointmentState(data.data);
         } else {
             document.getElementById('auctionDetails').innerHTML = '⚠️ Bu ihale sona ermiş veya silinmiş.';
         }
@@ -367,7 +407,104 @@ async function initPortal() {
     }
 }
 
-// Kuyumcunun sadece kendi anlaşmalarını sunucudan çeker
+// Müşteri bu kuyumcuyu seçmişse dükkanda tamamlama kartını açar
+function checkAppointmentState(req) {
+    const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || '');
+    const finalizeCard = document.getElementById('dealFinalizeCard');
+    if (!finalizeCard) return;
+
+    const isWinner = (req.winnerCode && (req.winnerCode === jId || (loggedJeweler && req.winnerCode === loggedJeweler.name)));
+
+    if (req.status === 'APPOINTMENT_SET' && isWinner) {
+        finalizeCard.style.display = 'block';
+        const priceInput = document.getElementById('actualDealPriceInput');
+        if (priceInput && !priceInput.value) {
+            priceInput.value = req.agreedPrice || '';
+        }
+        const lbl = document.getElementById('dealCustomerLabel');
+        if (lbl) {
+            lbl.textContent = `Müşteri: ${req.customerName || 'Müşteri'} • Randevu Tutarı: ${Number(req.agreedPrice || 0).toLocaleString('tr-TR')} TL`;
+        }
+        finalizeCard.scrollIntoView({ behavior: 'smooth' });
+    } else if (req.status === 'COMPLETED') {
+        finalizeCard.style.display = 'none';
+        const resultBox = document.getElementById('offerResult');
+        if (resultBox && isWinner) {
+            resultBox.style.display = 'block';
+            resultBox.style.color = '#4ade80';
+            resultBox.innerHTML = `✅ <b>Bu işlem dükkanınızda başarıyla tamamlanmıştır.</b><br>Gerçekleşen Tutar: ${Number(req.actualDealPrice || req.agreedPrice).toLocaleString('tr-TR')} ₺`;
+        }
+    } else {
+        finalizeCard.style.display = 'none';
+    }
+}
+
+// Dükkanda gerçekleşen tutarla işlemi onaylama
+async function submitFinalDealConfirmation() {
+    const actualPrice = document.getElementById('actualDealPriceInput').value;
+    if (!actualPrice || Number(actualPrice) <= 0) {
+        alert("Lütfen dükkanda gerçekleşen alım tutarını giriniz.");
+        return;
+    }
+
+    if (!confirm(Number(actualPrice).toLocaleString('tr-TR') + " TL tutarındaki işlemi onaylayıp faturayı kapatmak istiyor musunuz?")) return;
+
+    const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || 'SARRAF_01');
+    const btn = document.getElementById('btnCompleteFinalDeal');
+    btn.disabled = true;
+    btn.textContent = 'İşlem Kapatılıyor...';
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/request/complete-deal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestId: reqId, jewelerId: jId, actualDealPrice: actualPrice })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            alert("✅ " + data.message);
+            if (loggedJeweler && data.remainingCredits !== null) {
+                loggedJeweler.credits = data.remainingCredits;
+                updateBalanceDisplay(true);
+            }
+            document.getElementById('dealFinalizeCard').style.display = 'none';
+            loadMyDeals(jId);
+            location.reload();
+        } else {
+            alert("Hata: " + data.message);
+            btn.disabled = false;
+            btn.textContent = '✓ Müşteri Geldi, İşlemi Tamamla & Jetonu Düş';
+        }
+    } catch (e) {
+        alert("Bağlantı hatası oluştu.");
+        btn.disabled = false;
+        btn.textContent = '✓ Müşteri Geldi, İşlemi Tamamla & Jetonu Düş';
+    }
+}
+
+// Müşteri dükkana gelmediğinde randevuyu sıfır kayıpla iptal etme
+async function cancelDealNoShow() {
+    if (!confirm("Müşteri dükkana gelmedi mi? Bu randevu iptal edilecek ve sizden hiçbir jeton düşülmeyecektir.")) return;
+
+    const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || 'SARRAF_01');
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/request/cancel-deal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestId: reqId, jewelerId: jId, reason: 'Müşteri mağazaya gelmedi.' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert("İşlem iptal edildi. Hesabınızdan hiçbir jeton kesilmemiştir.");
+            document.getElementById('dealFinalizeCard').style.display = 'none';
+        }
+    } catch (e) {
+        alert("İptal işlemi başarısız.");
+    }
+}
+
 async function loadMyDeals(jewelerId) {
     if (!jewelerId) return;
     try {
@@ -382,7 +519,6 @@ async function loadMyDeals(jewelerId) {
     }
 }
 
-// Filtre Değiştirme
 function setMyFilter(mode) {
     MY_FILTER_MODE = mode;
     ['btnMyAll', 'btnMyToday', 'btnMyMonth', 'btnMyYear'].forEach(id => {
@@ -486,7 +622,7 @@ function applyMyFilterAndRender() {
 }
 
 function checkExistingOffer(req) {
-    const jId = loggedJeweler ? loggedJeweler.id : localStorage.getItem('loggedJewelerId');
+    const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || '');
     if (!jId) return;
 
     const myQuote = (req.quotes || []).find(q => q.jewelerCode === jId);
@@ -574,7 +710,6 @@ function openPackagePurchaseModal() {
     document.getElementById('packageModal').style.display = 'flex';
 }
 
-// Seçilen pakete göre ödenecek tutarı günceller
 function selectPlanPrice(amountText, planValue) {
     const dueEl = document.getElementById('paymentDueAmount');
     if (dueEl) dueEl.textContent = amountText + ' ₺';
@@ -582,7 +717,6 @@ function selectPlanPrice(amountText, planValue) {
     if (radio) radio.checked = true;
 }
 
-// IBAN kopyalama fonksiyonu
 function copyIban() {
     const ibanEl = document.getElementById('ibanText');
     if (!ibanEl) return;
