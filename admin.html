@@ -166,7 +166,9 @@
         border-radius: 8px;
         font-weight: 800;
         cursor: pointer;
+        transition: 0.2s;
     }
+    .btn-refresh:hover { background: #d97706; }
     .btn-logout {
         background: #ef4444;
         color: #fff;
@@ -248,7 +250,7 @@
             </div>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <button class="btn-refresh" onclick="loadDashboard()">🔄 Verileri Yenile</button>
+            <button class="btn-refresh" id="btnMainRefresh" onclick="loadDashboard()">🔄 Verileri Yenile</button>
             <button class="btn-logout" onclick="logout()">Çıkış Yap</button>
         </div>
     </div>
@@ -402,24 +404,40 @@ async function loadDashboard() {
     const adminKey = getAdminAuthKey();
     if (!adminKey) return;
 
+    const btn = document.getElementById('btnMainRefresh');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Yenileniyor...';
+    }
+
     try {
+        // 1. Muhasebe ve Kuyumcu Verilerini Çek
         const resReport = await fetch('/api/admin/commission-report', {
             headers: { 'x-admin-key': adminKey }
         });
-        if (resReport.status === 401) { logout(); return; }
+        
+        if (resReport.status === 401) { 
+            logout(); 
+            return; 
+        }
+
         const reportData = await resReport.json();
 
         if (reportData.success) {
             RAW_REPORT_DATA = reportData;
             
-            // Kuyumcular tablosunu güncelle (filtreye bağlı değil)
+            // Kuyumcular tablosunu güncelle
             renderJewelersTable(reportData.jewelers || []);
 
             // Filtreli finansal metrikleri ve işlemleri çiz
             applyFilterAndRender();
         }
+    } catch (e) {
+        console.error('Rapor yükleme hatası:', e);
+    }
 
-        // Bekleyen ödemeleri çek
+    try {
+        // 2. Bekleyen Ödemeleri Çek
         const resPayments = await fetch('/api/admin/payments', {
             headers: { 'x-admin-key': adminKey }
         });
@@ -428,32 +446,42 @@ async function loadDashboard() {
 
         if (payData.success && payData.payments) {
             const pending = payData.payments.filter(p => p.status === 'PENDING_APPROVAL');
-            document.getElementById('pendingCountBadge').textContent = `(${pending.length} adet onay bekliyor)`;
+            const badge = document.getElementById('pendingCountBadge');
+            if (badge) badge.textContent = `(${pending.length} adet onay bekliyor)`;
 
-            if (pending.length === 0) {
-                pTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Onay bekleyen ödeme bildirimi bulunmuyor.</td></tr>';
-            } else {
-                pTbody.innerHTML = pending.map(p => `
-                    <tr>
-                        <td><b>#${p.orderId}</b></td>
-                        <td>${p.jewelerName} (${p.jewelerId})</td>
-                        <td><span class="badge-token">${p.packageName}</span></td>
-                        <td><b>${p.senderName}</b></td>
-                        <td style="color:#94a3b8;">${new Date(p.createdAt).toLocaleTimeString('tr-TR')}</td>
-                        <td>
-                            <button class="btn-action btn-approve" onclick="approvePayment('${p.orderId}')">✓ Onayla & Yükle</button>
-                        </td>
-                    </tr>
-                `).join('');
+            if (pTbody) {
+                if (pending.length === 0) {
+                    pTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Onay bekleyen ödeme bildirimi bulunmuyor.</td></tr>';
+                } else {
+                    pTbody.innerHTML = pending.map(p => `
+                        <tr>
+                            <td><b>#${p.orderId}</b></td>
+                            <td>${p.jewelerName} (${p.jewelerId})</td>
+                            <td><span class="badge-token">${p.packageName}</span></td>
+                            <td><b>${p.senderName}</b></td>
+                            <td style="color:#94a3b8;">${new Date(p.createdAt).toLocaleTimeString('tr-TR')}</td>
+                            <td>
+                                <button class="btn-action btn-approve" onclick="approvePayment('${p.orderId}')">✓ Onayla & Yükle</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
             }
         }
     } catch (e) {
-        console.error('Veri yükleme hatası:', e);
+        console.error('Ödeme veri hatası:', e);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '🔄 Verileri Yenile';
+        }
     }
 }
 
 function renderJewelersTable(jewelersList) {
     const jTbody = document.getElementById('jewelersTbody');
+    if (!jTbody) return;
+    
     if (jewelersList.length === 0) {
         jTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Kayıtlı sarraf bulunmuyor.</td></tr>';
         return;
@@ -483,17 +511,19 @@ function renderJewelersTable(jewelersList) {
 function setFilterMode(mode) {
     CURRENT_FILTER = mode;
     ['btnFilterAll', 'btnFilterToday', 'btnFilterMonth', 'btnFilterYear'].forEach(id => {
-        document.getElementById(id).classList.remove('active');
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
     });
 
-    if (mode === 'all') document.getElementById('btnFilterAll').classList.add('active');
-    if (mode === 'today') document.getElementById('btnFilterToday').classList.add('active');
-    if (mode === 'month') document.getElementById('btnFilterMonth').classList.add('active');
-    if (mode === 'year') document.getElementById('btnFilterYear').classList.add('active');
+    if (mode === 'all') document.getElementById('btnFilterAll')?.classList.add('active');
+    if (mode === 'today') document.getElementById('btnFilterToday')?.classList.add('active');
+    if (mode === 'month') document.getElementById('btnFilterMonth')?.classList.add('active');
+    if (mode === 'year') document.getElementById('btnFilterYear')?.classList.add('active');
 
-    // Takvim kutularını temizle
-    document.getElementById('filterStartDate').value = '';
-    document.getElementById('filterEndDate').value = '';
+    const sEl = document.getElementById('filterStartDate');
+    const eEl = document.getElementById('filterEndDate');
+    if (sEl) sEl.value = '';
+    if (eEl) eEl.value = '';
 
     applyFilterAndRender();
 }
@@ -512,7 +542,8 @@ function applyCustomDateRange() {
     CUSTOM_END_DATE = endVal ? new Date(endVal + 'T23:59:59') : null;
 
     ['btnFilterAll', 'btnFilterToday', 'btnFilterMonth', 'btnFilterYear'].forEach(id => {
-        document.getElementById(id).classList.remove('active');
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
     });
 
     applyFilterAndRender();
@@ -553,7 +584,6 @@ function applyFilterAndRender() {
         return true;
     });
 
-    // Filtrelenmiş finansal metrikleri hesapla
     let sumTurnover = 0;
     let sumTokens = 0;
 
@@ -565,39 +595,45 @@ function applyFilterAndRender() {
     const TOKEN_VAL = 30; // 1 Jeton = 30 TL
     const estimatedRev = sumTokens * TOKEN_VAL;
 
-    // Metrikleri DOM'a yaz
-    document.getElementById('statDeals').textContent = filtered.length;
-    document.getElementById('statTurnover').textContent = sumTurnover.toLocaleString('tr-TR') + ' ₺';
-    document.getElementById('statTokens').textContent = sumTokens + ' 🪙';
-    document.getElementById('statRevenue').textContent = estimatedRev.toLocaleString('tr-TR') + ' ₺';
+    const elDeals = document.getElementById('statDeals');
+    const elTurnover = document.getElementById('statTurnover');
+    const elTokens = document.getElementById('statTokens');
+    const elRev = document.getElementById('statRevenue');
 
-    // Badge etiketini güncelle
+    if (elDeals) elDeals.textContent = filtered.length;
+    if (elTurnover) elTurnover.textContent = sumTurnover.toLocaleString('tr-TR') + ' ₺';
+    if (elTokens) elTokens.textContent = sumTokens + ' 🪙';
+    if (elRev) elRev.textContent = estimatedRev.toLocaleString('tr-TR') + ' ₺';
+
     const badge = document.getElementById('filterLabelBadge');
-    if (CURRENT_FILTER === 'all') badge.textContent = '(Tüm Zamanlar)';
-    else if (CURRENT_FILTER === 'today') badge.textContent = '(Bugün)';
-    else if (CURRENT_FILTER === 'month') badge.textContent = '(Bu Ay)';
-    else if (CURRENT_FILTER === 'year') badge.textContent = '(Bu Yıl)';
-    else if (CURRENT_FILTER === 'custom') {
-        const s = CUSTOM_START_DATE ? CUSTOM_START_DATE.toLocaleDateString('tr-TR') : '...';
-        const e = CUSTOM_END_DATE ? CUSTOM_END_DATE.toLocaleDateString('tr-TR') : '...';
-        badge.textContent = `(${s} - ${e})`;
+    if (badge) {
+        if (CURRENT_FILTER === 'all') badge.textContent = '(Tüm Zamanlar)';
+        else if (CURRENT_FILTER === 'today') badge.textContent = '(Bugün)';
+        else if (CURRENT_FILTER === 'month') badge.textContent = '(Bu Ay)';
+        else if (CURRENT_FILTER === 'year') badge.textContent = '(Bu Yıl)';
+        else if (CURRENT_FILTER === 'custom') {
+            const s = CUSTOM_START_DATE ? CUSTOM_START_DATE.toLocaleDateString('tr-TR') : '...';
+            const e = CUSTOM_END_DATE ? CUSTOM_END_DATE.toLocaleDateString('tr-TR') : '...';
+            badge.textContent = `(${s} - ${e})`;
+        }
     }
 
-    // Tamamlanan ihaleler tablosunu çiz
     const dTbody = document.getElementById('dealsTbody');
-    if (filtered.length === 0) {
-        dTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Seçilen tarih aralığında tamamlanmış işlem bulunamadı.</td></tr>';
-    } else {
-        dTbody.innerHTML = filtered.map(d => `
-            <tr>
-                <td style="color:#94a3b8;">${new Date(d.completedAt).toLocaleString('tr-TR')}</td>
-                <td><b>#${d.requestId}</b></td>
-                <td>${d.customerName || 'Müşteri'}</td>
-                <td>${d.jewelerName}</td>
-                <td><b style="color:#4ade80;">${Number(d.agreedPrice).toLocaleString('tr-TR')} ₺</b></td>
-                <td><b style="color:#38bdf8;">-${d.deductedTokens} 🪙</b></td>
-            </tr>
-        `).join('');
+    if (dTbody) {
+        if (filtered.length === 0) {
+            dTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Seçilen tarih aralığında tamamlanmış işlem bulunamadı.</td></tr>';
+        } else {
+            dTbody.innerHTML = filtered.map(d => `
+                <tr>
+                    <td style="color:#94a3b8;">${new Date(d.completedAt).toLocaleString('tr-TR')}</td>
+                    <td><b>#${d.requestId}</b></td>
+                    <td>${d.customerName || 'Müşteri'}</td>
+                    <td>${d.jewelerName}</td>
+                    <td><b style="color:#4ade80;">${Number(d.agreedPrice).toLocaleString('tr-TR')} ₺</b></td>
+                    <td><b style="color:#38bdf8;">-${d.deductedTokens} 🪙</b></td>
+                </tr>
+            `).join('');
+        }
     }
 }
 
