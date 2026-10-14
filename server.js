@@ -244,6 +244,10 @@ app.post('/api/jeweler/apply', async (req, res) => {
         }
 
         const newId = 'SARRAF_' + String(Date.now()).slice(-4);
+        
+        // PİLOT DÖNEM HEDİYESİ: Yeni katılan dükkana otomatik 10 teklif jetonu
+        const WELCOME_BONUS_CREDITS = 10;
+
         const newJeweler = {
             id: newId,
             name: firmName,
@@ -252,30 +256,44 @@ app.post('/api/jeweler/apply', async (req, res) => {
             phone: phone,
             address: `${district || 'Merkez'} / ${city || 'Antalya'}`,
             membershipType: planType === 'subscription' ? 'subscription' : 'token',
-            credits: 0,
+            credits: WELCOME_BONUS_CREDITS,
             subscriptionExpiresAt: null,
-            status: 'PENDING'
+            status: 'ACTIVE' // Esnaf hemen test edebilsin diye aktif başlatılır
         };
 
         JEWELERS_DIRECTORY.push(newJeweler);
         saveDatabase();
 
+        // 1. Yöneticiye WhatsApp Bilgilendirmesi
         const adminAlert = 
-`💼 *YENİ KUYUMCU BAŞVURUSU!*
+`💼 *YENİ KUYUMCU KAYDI (10 HEDİYE JETONLU)!*
 
 🏢 *Firma:* ${firmName}
 📞 *Telefon:* ${phone}
-📍 *Bölge:* ${city || 'Antalya'} / ${district || 'Belirtilmedi'}
-📦 *Tercih Edilen Paket:* ${planType === 'subscription' ? 'Aylık Sınırsız' : 'Jeton / Hak Paketi'}
+📍 *Bölge:* ${city || 'Antalya'} / ${district || 'Muratpaşa'}
+🎁 *Başlangıç Hediyesi:* ${WELCOME_BONUS_CREDITS} İhale Jetonu Tanımlandı
 🆔 *Kuyumcu Kodu:* ${newId}
 
-Ödeme teyidinden sonra admin panelinden hesabı aktif edebilirsiniz.`;
+Esnaf şu an aktif ve bölgedeki yeni ihalelere anında teklif verebilir.`;
 
         await sendWhatsAppMessage(WHATSAPP_CONFIG.adminPhone, adminAlert);
 
+        // 2. Kuyumcunun Telefonuna Hoş Geldin ve Kod Mesajı
+        const jewelerWelcomeMsg = 
+`🎉 *ALTIN EKSPER AİLESİNE HOŞ GELDİNİZ!*
+
+Sayın *${firmName}*, sistem kaydınız başarıyla tamamlandı.
+
+🆔 *Sarraf Kodunuz:* ${newId}
+🎁 *Pilot Hediye Bakiyeniz:* ${WELCOME_BONUS_CREDITS} İhale Jetonu
+
+Bölgenizdeki müşteriler altın satmak istediğinde WhatsApp üzerinden canlı ihale bildirimleri almaya başlayacaksınız. Bol kazançlar dileriz!`;
+
+        await sendWhatsAppMessage(phone, jewelerWelcomeMsg);
+
         res.json({ 
             success: true, 
-            message: 'Başvurunuz alındı. Yetkilimiz en kısa sürede sizinle iletişime geçecektir.',
+            message: `Kaydınız alındı! Hesabınıza ${WELCOME_BONUS_CREDITS} deneme jetonu tanımlandı.`,
             jewelerId: newId 
         });
     } catch (err) {
@@ -350,7 +368,6 @@ app.get('/api/jeweler/status/:id', (req, res) => {
 });
 
 // ================= KUYUMCUNUN KENDİ GEÇMİŞ İŞLEMLERİ & MUHASEBESİ =================
-// Kuyumcunun sadece kendisine ait olan tamamlanan anlaşmaları getiren güvenli rota
 app.get('/api/jeweler/deals/:id', (req, res) => {
     const searchId = String(req.params.id).trim().toLowerCase();
     const jeweler = JEWELERS_DIRECTORY.find(j => 
@@ -363,7 +380,6 @@ app.get('/api/jeweler/deals/:id', (req, res) => {
         return res.status(404).json({ success: false, message: 'Kuyumcu bulunamadı.' });
     }
 
-    // Yalnızca bu kuyumcuya ait olan tamamlanan anlaşmaları filtrele
     const myDeals = completedDeals.filter(d => {
         const dJewelerId = String(d.jewelerId || '').trim().toLowerCase();
         const dJewelerName = String(d.jewelerName || '').trim().toLowerCase();
@@ -390,7 +406,7 @@ app.get('/api/admin/jewelers', adminAuthMiddleware, (req, res) => {
     res.json({ success: true, jewelers: JEWELERS_DIRECTORY });
 });
 
-// Herkese Açık Aktif Kuyumcular Listesi (index.html için şifresiz)
+// Herkese Açık Aktif Kuyumcular Listesi
 app.get('/api/jewelers', (req, res) => {
     res.json({ success: true, jewelers: JEWELERS_DIRECTORY });
 });
@@ -457,12 +473,10 @@ Admin panelinden ödemeyi teyit edip tek tıkla onaylayabilirsiniz.`;
     }
 });
 
-// Admin Şifre Korumalı Ödemeler
 app.get('/api/admin/payments', adminAuthMiddleware, (req, res) => {
     res.json({ success: true, payments: pendingPayments });
 });
 
-// Admin Şifre Korumalı Ödeme Onayı
 app.post('/api/admin/payment/approve', adminAuthMiddleware, async (req, res) => {
     try {
         const { orderId } = req.body;
@@ -531,7 +545,6 @@ app.post('/api/request/create', async (req, res) => {
         const targetDistrictRaw = (reqData.district || '').trim().toLowerCase();
         const now = new Date();
 
-        // Esnek İlçe ve Bölge Eşleştirmesi
         const matchedJewelers = JEWELERS_DIRECTORY.filter(j => {
             if (j.status !== 'ACTIVE') return false;
 
@@ -556,7 +569,6 @@ app.post('/api/request/create', async (req, res) => {
 
         console.log(`[Dağıtım]: #${reqData.requestId} için ${matchedJewelers.length} sarrafa WhatsApp gönderiliyor...`);
 
-        // Kuyumculara İhale Linki Gönder
         for (const jeweler of matchedJewelers) {
             const offerLink = `https://altin-eksper.onrender.com/kuyumcu.html?req=${reqData.requestId}&jeweler=${jeweler.id}`;
 
@@ -584,7 +596,6 @@ ${itemsList}
             await sendWhatsAppMessage(jeweler.phone, jewelerNotification);
         }
 
-        // Müşteriye Bilgi Mesajı Gönder
         if (reqData.customerPhone) {
             const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz ${reqData.district} bölgesindeki kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
             await sendWhatsAppMessage(reqData.customerPhone, customerMsg);
@@ -614,7 +625,6 @@ app.get('/api/request/:id', (req, res) => {
 });
 
 // ================= TEKLİF VERME & REVİZE ETME =================
-// Kural: Teklif verme sabit 1 jetondur. Revizede ekstra jeton düşmez.
 app.post('/api/request/quote', (req, res) => {
     const { requestId, jewelerCode, offerPrice, note } = req.body;
     console.log(`[Teklif Girişi]: #${requestId} için ${jewelerCode} -> ${offerPrice} TL`);
@@ -642,7 +652,6 @@ app.post('/api/request/quote', (req, res) => {
     });
 
     if (idx !== -1) {
-        // AYNI KUYUMCU TEKLİFİNİ REVİZE EDİYOR (Tekrar jeton düşmez!)
         target.quotes[idx] = { 
             jewelerCode: jeweler ? jeweler.id : jewelerCode, 
             offerPrice: Number(offerPrice), 
@@ -651,7 +660,6 @@ app.post('/api/request/quote', (req, res) => {
         };
         console.log(`[Teklif Revize Edildi]: ${jewelerCode} yeni teklif: ${offerPrice} TL`);
     } else {
-        // İLK KEZ TEKLİF VERİLİYOR (Sabit 1 jeton katılım bedeli)
         if (jeweler && jeweler.membershipType === 'token') {
             if ((jeweler.credits || 0) <= 0) {
                 return res.status(403).json({ success: false, message: 'Yetersiz bakiye! Teklif vermek için paket yenileyin.' });
@@ -676,7 +684,7 @@ app.post('/api/request/quote', (req, res) => {
     });
 });
 
-// ================= İHALE ONAYI, RANDEVU & BİNDE 2 BAŞARI JETONU DÜŞÜMÜ =================
+// ================= İHALE ONAYI & BİNDE 2 BAŞARI DÜŞÜMÜ =================
 app.post('/api/request/notify-winner', async (req, res) => {
     try {
         const { requestId, jewelerCode, agreedPrice, customerName, customerPhone } = req.body;
@@ -702,24 +710,18 @@ app.post('/api/request/notify-winner', async (req, res) => {
         const jewelerAddress = (targetJeweler && targetJeweler.address) ? targetJeweler.address : 'Muratpaşa / Antalya';
         const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(jewelerAddress);
 
-        // --- BİNDE 2 (‰2) DİNAMİK BAŞARI JETON DÜŞÜMÜ ---
         let deductedTokens = 0;
         let calculatedCommissionTL = finalPrice * COMMISSION_RATE;
         let remainingCredits = null;
 
         if (targetJeweler && targetJeweler.membershipType === 'token') {
-            // İşlem büyüklüğüne göre dinamik binde 2 jeton adedini hesapla
             deductedTokens = calculateSuccessFeeTokens(finalPrice);
-            
-            // Bakiyeden düş (0'ın altına düşürmez)
             targetJeweler.credits = Math.max(0, (Number(targetJeweler.credits) || 0) - deductedTokens);
             remainingCredits = targetJeweler.credits;
             saveDatabase();
-
-            console.log(`[Binde 2 Başarı Jetonu Kesildi]: ${targetJeweler.name} | İşlem: ${finalPrice.toLocaleString('tr-TR')} TL | Kesilen: ${deductedTokens} Jeton | Kalan Bakiye: ${targetJeweler.credits}`);
+            console.log(`[Binde 2 Kesildi]: ${targetJeweler.name} | Tutar: ${finalPrice.toLocaleString('tr-TR')} TL | Kesilen: ${deductedTokens} Jeton | Kalan: ${targetJeweler.credits}`);
         }
 
-        // Başarılı anlaşmayı kalıcı muhasebe havuzuna kaydet
         const dealRecord = {
             dealId: 'DL_' + Date.now().toString().slice(-6),
             requestId,
@@ -738,7 +740,6 @@ app.post('/api/request/notify-winner', async (req, res) => {
         completedDeals.unshift(dealRecord);
         saveDatabase();
 
-        // 1. Kazanan Sarrafa Profesyonel WhatsApp Bildirimi
         const tokenDeductNote = (targetJeweler && targetJeweler.membershipType === 'token')
             ? `🪙 *Kullanılan Başarı Jetonu (‰2):* ${deductedTokens} Adet\n🪙 *Kalan Jeton Bakiyeniz:* ${targetJeweler.credits}`
             : `👑 *Üyelik Durumu:* VIP Sınırsız Paket`;
@@ -758,7 +759,6 @@ Müşteriye mağazanızın açık adresi, harita konumu ve randevu kodu iletildi
 
         await sendWhatsAppMessage(jewelerPhone, winnerMessage);
 
-        // 2. Müşteriye Kurumsal Randevu & Konum Fişi Bildirimi
         if (customerPhone) {
             const customerAppointmentMsg = 
 `✨ *ALTIN EKSPER — İŞLEM RANDEVUNUZ HAZIR*
@@ -791,7 +791,7 @@ ${mapUrl}
     }
 });
 
-// ================= KOMİSYON & BAŞARILI İHALE MUHASEBE RAPORU (Admin Şifre Korumalı) =================
+// ================= KOMİSYON & MUHASEBE RAPORU =================
 app.get('/api/admin/commission-report', adminAuthMiddleware, (req, res) => {
     let totalTurnover = 0;
     let totalCommission = 0;
