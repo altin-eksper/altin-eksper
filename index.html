@@ -666,15 +666,26 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
                 📄 Değerleme Fişi (PDF)
             </button>
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button type="button" id="submitRequestBtn" class="wa-btn" 
-        style="background:#25d366; color:#fff; padding:10px 18px; font-size:14px; font-weight:700; cursor:pointer; position:relative; z-index:100;" 
-        onclick="triggerWhatsAppOffer(event)">
-    📲 WhatsApp ile Teklif İste (0536 043 42 07)
-</button>
-            <button type="button" class="secondary admin-only-btn" style="display:none;" onclick="copyKuyumcuTemplate()">
-                📋 Metni Kopyala
-            </button>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+            <!-- MÜŞTERİ KVKK & SÖZLEŞME ONAY KUTUSU -->
+            <div style="display:flex; align-items:center; gap:6px; font-size:12px; color:#475569;">
+                <input type="checkbox" id="kvkkCustomerConsent" style="width:16px; height:16px; cursor:pointer;" required>
+                <label for="kvkkCustomerConsent" style="margin:0; font-size:12px; color:#64748b; cursor:pointer; font-weight:500;">
+                    <a href="javascript:void(0)" onclick="openLegalModal('kvkk')" style="color:#f59e0b; text-decoration:underline;">KVKK Aydınlatma Metni</a>'ni ve 
+                    <a href="javascript:void(0)" onclick="openLegalModal('terms')" style="color:#f59e0b; text-decoration:underline;">Kullanıcı Sözleşmesi</a>'ni onaylıyorum.
+                </label>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" id="submitRequestBtn" class="wa-btn" 
+                        style="background:#25d366; color:#fff; padding:10px 18px; font-size:14px; font-weight:700; cursor:pointer; position:relative; z-index:100;" 
+                        onclick="triggerWhatsAppOffer(event)">
+                    📲 WhatsApp ile Teklif İste (0536 043 42 07)
+                </button>
+                <button type="button" class="secondary admin-only-btn" style="display:none;" onclick="copyKuyumcuTemplate()">
+                    📋 Metni Kopyala
+                </button>
+            </div>
         </div>
     </div>
     <!-- ================= CANLI MÜŞTERİ TEKLİF PANOSU ================= -->
@@ -910,7 +921,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
             <button type="button" class="secondary" style="padding:4px 8px;" onclick="document.getElementById('jewelerApplyModal').style.display='none'">✕</button>
         </div>
 
-        <form id="jewelerApplyForm" onsubmit="handleJewelerApply(event)">
+        <form id="jewelerApplyForm" onsubmit="sendJewelerApplication(event)">
             <div style="margin-bottom:12px;">
                 <label>Kuyumcu / Firma Adı *</label>
                 <input type="text" id="jFirmName" required placeholder="Örn: Güneş Sarrafiye">
@@ -923,7 +934,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
                 <div>
-               <label>İl *</label>
+                    <label>İl *</label>
                     <select id="jCity" required onchange="onJewelerCityChange()" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; background:#fff;">
                         <option value="">İl Seçin...</option>
                     </select>
@@ -937,7 +948,7 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
             </div>
 
             <label style="margin-bottom:6px;">Paket Tercihi *</label>
-            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
                 <label style="display:flex; align-items:flex-start; gap:10px; padding:10px; border:1.5px solid #cbd5e1; border-radius:8px; cursor:pointer; background:#fff;">
                     <input type="radio" name="planSelect" value="token_25" checked style="width:auto; margin-top:3px;">
                     <div>
@@ -963,11 +974,33 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
                 </label>
             </div>
 
-            <button type="button" id="btnJewelerSubmit" onclick="sendJewelerApplication(event)" class="primary" style="width:100%; padding:12px; font-size:14px; font-weight:700; background:#0f172a; color:#fff; cursor:pointer;">
-    Başvuruyu Gönder
-</button>
+            <!-- KUYUMCU İŞ ORTAKLIĞI SÖZLEŞMESİ ONAYI -->
+            <div style="display:flex; align-items:center; gap:6px; font-size:12px; color:#475569; margin-bottom:14px;">
+                <input type="checkbox" id="kvkkJewelerConsent" style="width:16px; height:16px; cursor:pointer;" required>
+                <label for="kvkkJewelerConsent" style="margin:0; font-size:11px; color:#64748b; cursor:pointer; font-weight:500;">
+                    <a href="javascript:void(0)" onclick="openLegalModal('jewelerTerms')" style="color:#f59e0b; text-decoration:underline;">Sarraf İş Ortaklığı ve KVKK Sözleşmesi</a>'ni kabul ediyorum.
+                </label>
+            </div>
+
+            <button type="submit" id="btnJewelerSubmit" class="primary" style="width:100%; padding:12px; font-size:14px; font-weight:700; background:#0f172a; color:#fff; cursor:pointer;">
+                Başvuruyu Gönder
+            </button>
             <div id="jewelerApplyResult" style="margin-top:10px; font-size:12px; text-align:center; display:none;"></div>
         </form>
+    </div>
+</div>
+
+<!-- HUKUKİ METİNLER (KVKK & SÖZLEŞMELER) MODALI -->
+<div id="legalModal" class="report-modal" style="display:none; z-index:999999;">
+    <div class="report-modal-content" style="max-width:620px; border-radius:12px; max-height:85vh; display:flex; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1e293b; padding-bottom:10px;">
+            <h3 id="legalModalTitle" style="margin:0; font-size:17px; color:#1e293b;">Sözleşme</h3>
+            <button type="button" class="secondary" style="padding:4px 8px;" onclick="closeLegalModal()">✕</button>
+        </div>
+        <div id="legalModalBody" style="padding:16px 0; overflow-y:auto; font-size:12.5px; line-height:1.6; color:#334155;"></div>
+        <div style="display:flex; justify-content:flex-end; border-top:1px solid #e2e8f0; padding-top:10px;">
+            <button type="button" class="primary" style="padding:7px 18px; font-size:12px;" onclick="closeLegalModal()">Anladım, Kapat</button>
+        </div>
     </div>
 </div>
 
@@ -1191,7 +1224,6 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
         </div>
     </div>
 </div>
-
 <script>
 const ALTIN_EKSPER_PHONE = '905360434207';
 const BACKEND_API_URL = '/api';
@@ -1341,6 +1373,7 @@ async function loadLivePrices() {
         }
     }
 }
+
 // ==================== İL & İLÇE DROPDOWN MANTIĞI ====================
 function initCityDropdowns() {
     const pSel = document.getElementById('provinceSelect');
@@ -1709,7 +1742,6 @@ function resetWorkbenchClean() {
     document.getElementById('quotesContainer').innerHTML = '';
     document.querySelectorAll('.inbox-item').forEach(function(el) { el.classList.remove('selected'); });
     
-    // Açılışta hiçbir ürün satırı zorla eklenmez (Tertemiz boş tablo)
     addQuoteRow('K001');
     addQuoteRow('K002');
     evaluateBestQuote();
@@ -3321,6 +3353,59 @@ function restoreFromBackupFile(event) {
     };
     reader.readAsText(file);
 }
+
+// ================= HUKUKİ METİNLER (KVKK & SÖZLEŞMELER) MODAL YÖNETİMİ =================
+function openLegalModal(type) {
+    const modal = document.getElementById('legalModal');
+    const title = document.getElementById('legalModalTitle');
+    const body = document.getElementById('legalModalBody');
+    if (!modal || !title || !body) return;
+
+    if (type === 'kvkk') {
+        title.textContent = 'KVKK Aydınlatma ve Açık Rıza Metni';
+        body.innerHTML = `
+            <p><b>1. Veri Sorumlusu:</b> Altın Eksper platformu, 6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) uyarınca veri sorumlusu sıfatıyla hareket etmektedir.</p>
+            <p><b>2. İşlenen Kişisel Veriler:</b> Ad-soyad, telefon numarası, il/ilçe/konum bilgisi ve satışa konu ziynet/altın eşyalarına ait teknik özellikler (ayar, gramaj vb.).</p>
+            <p><b>3. Veri İşleme Amaçları:</b></p>
+            <ul>
+                <li>Müşteri ile hedef bölgedeki anlaşmalı kuyumcular arasında fiyat tekliflerinin toplanması,</li>
+                <li>Müşterinin teklifi onaylaması durumunda randevu, mağaza adresi ve konum yönlendirme bildirimlerinin iletilmesi,</li>
+                <li>Sistem güvenliğinin ve sahte işlem denetiminin sağlanması.</li>
+            </ul>
+            <p><b>4. Verilerin Aktarımı:</b> Kişisel verileriniz asla 3. şahıslara veya reklam firmalarına satılmaz/aktarılmaz. İletişim bilgileriniz yalnızca sizin kabul ettiğiniz teklifi sunan anlaşmalı sarraf ile randevu koordinasyonu amacıyla paylaşılır.</p>
+            <p><b>5. Haklarınız:</b> KVKK’nın 11. maddesi kapsamında dilediğiniz zaman verilerinizin silinmesini, anonimleştirilmesini veya işlenme durumunu talep edebilirsiniz.</p>
+        `;
+    } else if (type === 'terms') {
+        title.textContent = 'Müşteri Kullanıcı & Aracılık Hizmet Sözleşmesi';
+        body.innerHTML = `
+            <p><b>1. Taraflar & Kapsam:</b> Bu sözleşme, Altın Eksper üzerinden nakit altın satış talebi oluşturan Müşteri ile bağımsız teknoloji sağlayıcı sıfatındaki Altın Eksper arasındadır.</p>
+            <p><b>2. Platformun Rolü (Aracı Hizmet Sağlayıcı):</b> Altın Eksper doğrudan alıcı ya da satıcı değildir. Bağımsız sarraflar ile altın satmak isteyen nihai tüketicileri buluşturan dijital pazar yeri ortamıdır.</p>
+            <p><b>3. Ön Teklif ve Fiziki Ekspertiz Şartı:</b></p>
+            <ul>
+                <li>Platform üzerinden kuyumcular tarafından verilen teklifler, müşterinin girdiği ayar ve tahmini ağırlık beyanına dayalı <b>ön tekliflerdir</b>.</li>
+                <li>Nihai alım ve ödeme işlemi, anlaşmalı sarrafın fiziki mağazasında yapılacak hassas tartım, mihenk taşı/ayar teyidi ve eksper kontrolünün ardından tarafların karşılıklı mutabakatı ile kesinleşir.</li>
+                <li>Gramajda eksiklik, düşük ayar veya imitasyon tespiti halinde sarraf teklifini revize etme veya işlemi reddetme hakkına sahiptir.</li>
+            </ul>
+            <p><b>4. Menşe ve Hukuki Sorumluluk:</b> Satışa sunulan ziynet eşyalarının mülkiyetinin satıcıya ait olduğu ve yasal menşei satıcının sorumluluğundadır. Sahte veya çalıntı ürünlere ilişkin tüm cezai sorumluluk münhasıran satıcıya aittir.</p>
+            <p><b>5. Ücretsiz Müşteri Deneyimi:</b> Platformun müşteriden herhangi bir hizmet bedeli veya komisyon talebi bulunmamaktadır.</p>
+        `;
+    } else if (type === 'jewelerTerms') {
+        title.textContent = 'Sarraf İş Ortaklığı ve Platform Sözleşmesi';
+        body.innerHTML = `
+            <p><b>1. Kapsam:</b> Bu sözleşme, Altın Eksper ağına dahil olarak bölgesindeki müşteri ihalelerine teklif veren yetkili sarrafların hak ve yükümlülüklerini düzenler.</p>
+            <p><b>2. Teklif Ahlakı ve Bağlayıcılık:</b> Sarraf, platform üzerinden verdiği fiyat teklifini, müşterinin beyan ettiği özelliklerin fiziki kontrolde doğrulanması şartıyla mağazasında eksiksiz ve kesintisiz ödemeyi taahhüt eder.</p>
+            <p><b>3. Bakiye & Başarı Jetonu Modeli:</b> Sarraf, ihalelere katılım ve işlem tamamlandığında uygulanan binde iki (‰2) başarı kesintisi kurallarını kabul eder.</p>
+            <p><b>4. Müşteri İletişim Güvenliği:</b> Sarraf, kendisine yönlendirilen müşterinin telefon ve adres bilgilerini yalnızca ilgili ihale işlemi amacıyla kullanacağını, harici pazarlama amacıyla kaydetmeyeceğini taahhüt eder.</p>
+        `;
+    }
+    modal.style.display = 'flex';
+}
+
+function closeLegalModal() {
+    const modal = document.getElementById('legalModal');
+    if (modal) modal.style.display = 'none';
+}
+
 // 1. ESNAF / SARRAF KATIL PENCERESİNİ AÇMA & CITIES.JS BAĞLANTISI
 function openJewelerApplyModal() {
     populateJewelerCities();
@@ -3343,7 +3428,6 @@ function populateJewelerCities() {
             citySel.innerHTML += `<option value="${c}">${c}</option>`;
         });
 
-        // Varsayılan olarak Antalya'yı seç ve ilçelerini getir
         if (cityList.includes("Antalya")) {
             citySel.value = "Antalya";
             onJewelerCityChange();
@@ -3369,6 +3453,12 @@ function onJewelerCityChange() {
 // 2. WHATSAPP TEKLİF İSTE BUTONUNUN GÜVENLİ TETİKLENMESİ
 async function triggerWhatsAppOffer(e) {
     if (e) e.preventDefault();
+
+    const consent = document.getElementById('kvkkCustomerConsent');
+    if (consent && !consent.checked) {
+        alert("Lütfen devam etmek için 'KVKK Aydınlatma Metni' ve 'Kullanıcı Sözleşmesi' kutucuğunu onaylayınız.");
+        return;
+    }
 
     const btn = document.getElementById('submitRequestBtn');
     const cName = document.getElementById('customerNote')?.value.trim() || 'Müşteri';
@@ -3428,11 +3518,11 @@ async function triggerWhatsAppOffer(e) {
 
     startListeningCustomerOffers(tempId, expiresAt, cName, cPhone);
 }
+
 // ================= SES & BİLDİRİM MOTORU =================
 let customerLivePollInterval = null;
 let lastKnownQuoteCount = 0;
 
-// 1. Cihaza Çan/Zil Sesi Çalma
 function playOfferDingSound() {
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -3458,7 +3548,6 @@ function playOfferDingSound() {
     } catch (e) {}
 }
 
-// 2. Tarayıcı / Cihaz Bildirimi Gönderme
 function sendDeviceNotification(jewelerName, offerPrice) {
     if (!("Notification" in window)) return;
 
@@ -3478,7 +3567,6 @@ function sendDeviceNotification(jewelerName, offerPrice) {
     }
 }
 
-// 3. Canlı Paneli Açma ve Sunucuyu Dinlemeye Başlama
 function startListeningCustomerOffers(requestId, expiresAtIso, customerName, customerPhone) {
     const card = document.getElementById('customerLiveOffersCard');
     const subtitle = document.getElementById('liveOfferSubtitle');
@@ -3534,7 +3622,6 @@ function startListeningCustomerOffers(requestId, expiresAtIso, customerName, cus
     }, 2500);
 }
 
-// 4. Teklifleri Ekrana Kart Olarak Çizdirme
 function renderLiveOffersToPanel(quotes, requestId, customerName, customerPhone) {
     const list = document.getElementById('customerLiveOffersList');
     const countBadge = document.getElementById('liveOfferCount');
@@ -3572,7 +3659,6 @@ function renderLiveOffersToPanel(quotes, requestId, customerName, customerPhone)
     }).join('');
 }
 
-// 5. Müşteri Teklifi Kabul Ettiğinde
 async function confirmChosenOffer(requestId, jewelerCode, agreedPrice, customerName, customerPhone) {
     if (!confirm(`${jewelerCode} teklifini kabul etmek istiyor musunuz?`)) return;
 
@@ -3610,6 +3696,7 @@ async function confirmChosenOffer(requestId, jewelerCode, agreedPrice, customerN
         alert('İşlem onaylanırken bir hata oluştu.');
     }
 }
+
 // ================= BAŞLANGIÇ YÖNETİMİ =================
 function getActiveAuctionFromStorage() {
     try {
@@ -3619,6 +3706,7 @@ function getActiveAuctionFromStorage() {
         return null;
     }
 }
+
 function startApp() {
     initCityDropdowns();
     updateHeaderProfile();
@@ -3632,19 +3720,26 @@ function startApp() {
         reopenLiveAuctionModal();
     }
 }
+
 async function sendJewelerApplication(event) {
     if (event) event.preventDefault();
+
+    const consent = document.getElementById('kvkkJewelerConsent');
+    if (consent && !consent.checked) {
+        alert("Lütfen devam etmek için 'Sarraf İş Ortaklığı ve KVKK Sözleşmesi' kutucuğunu onaylayınız.");
+        return;
+    }
 
     const btn = document.getElementById('btnJewelerSubmit');
     const resultDiv = document.getElementById('jewelerApplyResult');
     
-    const form = btn ? btn.closest('form') : document.querySelector('#jewelerApplyModal form');
+    const form = document.getElementById('jewelerApplyForm');
     if (!form) return;
 
-    const firmInput = form.querySelector('input[name="firmName"]') || form.querySelectorAll('input[type="text"]')[0];
-    const phoneInput = form.querySelector('input[name="phone"]') || form.querySelectorAll('input[type="text"]')[1] || form.querySelector('input[type="tel"]');
-    const citySelect = form.querySelector('select[name="city"]') || form.querySelectorAll('select')[0];
-    const districtSelect = form.querySelector('select[name="district"]') || form.querySelectorAll('select')[1];
+    const firmInput = document.getElementById('jFirmName');
+    const phoneInput = document.getElementById('jPhone');
+    const citySelect = document.getElementById('jCity');
+    const districtSelect = document.getElementById('jDistrict');
     const planInput = form.querySelector('input[name="planSelect"]:checked');
 
     const firmName = firmInput ? firmInput.value.trim() : '';
@@ -3676,13 +3771,13 @@ async function sendJewelerApplication(event) {
         const data = await response.json();
 
         if (data.success) {
-            alert('✅ Başvurunuz başarıyla alındı! Yönetici onayından sonra WhatsApp üzerinden bilgilendirileceksiniz.');
+            alert('✅ ' + (data.message || 'Başvurunuz başarıyla alındı!'));
             if (resultDiv) {
                 resultDiv.style.color = '#16a34a';
                 resultDiv.textContent = '✅ ' + data.message;
             }
             form.reset();
-            const modal = document.getElementById('jewelerApplyModal') || form.closest('.report-modal');
+            const modal = document.getElementById('jewelerApplyModal');
             if (modal) {
                 setTimeout(() => { modal.style.display = 'none'; }, 1000);
             }
