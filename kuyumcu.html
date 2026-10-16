@@ -89,9 +89,16 @@ body{
 .date-input::-webkit-calendar-picker-indicator {
     filter: invert(1); cursor:pointer;
 }
+
+/* CANLI SES BİLDİRİM BUTONU */
+.sound-toggle-btn {
+    background:#1e293b; border:1px solid #334155; color:#38bdf8;
+    padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;
+    cursor:pointer; display:inline-flex; align-items:center; gap:4px;
+}
 </style>
 </head>
-<body>
+<body onclick="initAudioContextOnce()">
 
 <!-- MÜŞTERİ MAĞAZAYA GELDİĞİNDE GÖRÜNEN KESİN ONAY KARTI (4 HANELİ PIN KORUMALI) -->
 <div class="card" id="dealFinalizeCard" style="display:none; border:2px solid #10b981; background:linear-gradient(135deg, #064e3b, #0f172a);">
@@ -148,7 +155,12 @@ body{
     <div class="header">
         <div>
             <div class="brand">ALTIN EKSPER</div>
-            <div style="font-size:12px; color:#94a3b8;">Canlı Satış İhalesi</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:2px;">
+                <span style="font-size:12px; color:#94a3b8;">Canlı Satış İhalesi</span>
+                <button type="button" class="sound-toggle-btn" id="soundTestBtn" onclick="testNotificationSound(event)">
+                    🔔 Zil Aktif
+                </button>
+            </div>
         </div>
         <div id="countdownTimer" class="timer-badge">⏱ 15:00</div>
     </div>
@@ -341,11 +353,79 @@ let loggedJeweler = null;
 let hasGivenOffer = false;
 let balanceWatcherInterval = null;
 let currentAuctionData = null;
+let lastKnownStatus = null;
 
 let MY_RAW_DEALS = [];
 let MY_FILTER_MODE = 'all';
 let MY_START_DATE = null;
 let MY_END_DATE = null;
+
+// ================= SES & TİTREŞİM MOTORU (WEB AUDIO API) =================
+let audioCtx = null;
+
+function initAudioContextOnce() {
+    if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            audioCtx = new AudioContext();
+        }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+// Ding-Dong Kasa / Bildirim Melodisi
+function playCashBellSound() {
+    try {
+        initAudioContextOnce();
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+
+        // 1. Ton (Ding - 587.33 Hz / D5)
+        const osc1 = audioCtx.createOscillator();
+        const gain1 = audioCtx.createGain();
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(587.33, now);
+        gain1.gain.setValueAtTime(0.3, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+        osc1.connect(gain1);
+        gain1.connect(audioCtx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.6);
+
+        // 2. Ton (Dong - 880.00 Hz / A5)
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880.00, now + 0.15);
+        gain2.gain.setValueAtTime(0.4, now + 0.15);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.start(now + 0.15);
+        osc2.stop(now + 1.2);
+
+        // Mobil Titreşim
+        if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 300]);
+        }
+    } catch (e) {
+        console.log('Ses çalınamadı:', e);
+    }
+}
+
+function testNotificationSound(e) {
+    if (e) e.stopPropagation();
+    initAudioContextOnce();
+    playCashBellSound();
+    const btn = document.getElementById('soundTestBtn');
+    if (btn) {
+        btn.textContent = '🔊 Çalındı!';
+        setTimeout(() => { btn.textContent = '🔔 Zil Aktif'; }, 1500);
+    }
+}
 
 async function fetchJewelerStatus(jewelerId) {
     if (!jewelerId) return null;
@@ -371,6 +451,25 @@ function startLiveBalanceWatcher(jewelerId) {
                 updateBalanceDisplay(true);
                 loadMyDeals(jewelerId);
             }
+        }
+
+        // İhale Durumunu da Canlı Dinle (Müşteri Teklifi Kabul Ettiğinde Anında Ses Çalsın)
+        if (reqId) {
+            try {
+                const rRes = await fetch(BACKEND_API_URL + '/request/' + reqId);
+                const rData = await rRes.json();
+                if (rData.success && rData.data) {
+                    const currentReq = rData.data;
+                    const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || '');
+                    const isWinner = (currentReq.winnerCode && (currentReq.winnerCode === jId || (loggedJeweler && currentReq.winnerCode === loggedJeweler.name)));
+
+                    if (currentReq.status === 'APPOINTMENT_SET' && isWinner && lastKnownStatus !== 'APPOINTMENT_SET') {
+                        lastKnownStatus = 'APPOINTMENT_SET';
+                        playCashBellSound(); // 🔔 Müşteri kabul edince zil çal!
+                        checkAppointmentState(currentReq);
+                    }
+                }
+            } catch(err) {}
         }
     }, 4000);
 }
@@ -406,9 +505,12 @@ async function initPortal() {
         const data = await res.json();
         if (data.success && data.data) {
             currentAuctionData = data.data;
+            lastKnownStatus = currentAuctionData.status;
             renderAuction(data.data);
             checkExistingOffer(data.data);
             checkAppointmentState(data.data);
+            // Sayfa ilk yüklendiğinde yeni ihale açılmışsa kuyumcuyu sesle karşıla
+            setTimeout(() => { playCashBellSound(); }, 800);
         } else {
             document.getElementById('auctionDetails').innerHTML = '⚠️ Bu ihale sona ermiş veya silinmiş.';
         }
@@ -485,6 +587,7 @@ async function submitFinalDealConfirmation() {
 
         const data = await res.json();
         if (data.success) {
+            playCashBellSound(); // Kapanış sesi
             alert("✅ " + data.message);
             if (loggedJeweler && data.remainingCredits !== null) {
                 loggedJeweler.credits = data.remainingCredits;
@@ -793,6 +896,7 @@ async function submitPackageOrder() {
 
 async function handleSendOffer(e) {
     e.preventDefault();
+    initAudioContextOnce();
     const btn = document.getElementById('btnSubmitOffer');
     const resultBox = document.getElementById('offerResult');
     const offerPrice = Number(document.getElementById('offerPrice').value);
