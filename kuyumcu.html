@@ -368,7 +368,7 @@ let MY_START_DATE = null;
 let MY_END_DATE = null;
 
 // ================= İKİ DURUMLU (AÇIK / KAPALI) VE iOS UYUMLU SES MOTORU =================
-let isSoundEnabled = true; // Varsayılan olarak açık
+let isSoundEnabled = true;
 let audioCtx = null;
 
 function initAudioContextOnce() {
@@ -392,13 +392,10 @@ function toggleSoundSystem(e) {
     const btn = document.getElementById('soundToggleBtn');
 
     if (isSoundEnabled) {
-        // ZİL AÇILDI
         btn.innerHTML = '🔔 Zil: Açık';
         btn.className = 'sound-toggle-btn active';
-        // iOS kullanıcısına zilin çalıştığını teyit etmek için anında ses çal
         playCashBellSound(true);
     } else {
-        // ZİL KAPATILDI
         btn.innerHTML = '🔕 Zil: Kapalı';
         btn.className = 'sound-toggle-btn inactive';
     }
@@ -414,11 +411,10 @@ function playCashBellSound(forcePlay = false) {
 
         const now = audioCtx.currentTime;
 
-        // 1. Ton (Ding - Net Tiz Ton)
         const osc1 = audioCtx.createOscillator();
         const gain1 = audioCtx.createGain();
         osc1.type = 'triangle';
-        osc1.frequency.setValueAtTime(659.25, now); // E5
+        osc1.frequency.setValueAtTime(659.25, now);
         gain1.gain.setValueAtTime(0.5, now);
         gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
         osc1.connect(gain1);
@@ -426,11 +422,10 @@ function playCashBellSound(forcePlay = false) {
         osc1.start(now);
         osc1.stop(now + 0.5);
 
-        // 2. Ton (Dong - Rezonans Tonu)
         const osc2 = audioCtx.createOscillator();
         const gain2 = audioCtx.createGain();
         osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(880.00, now + 0.12); // A5
+        osc2.frequency.setValueAtTime(880.00, now + 0.12);
         gain2.gain.setValueAtTime(0.6, now + 0.12);
         gain2.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
         osc2.connect(gain2);
@@ -438,7 +433,6 @@ function playCashBellSound(forcePlay = false) {
         osc2.start(now + 0.12);
         osc2.stop(now + 1.1);
 
-        // Mobil Titreşim
         if (navigator.vibrate) {
             navigator.vibrate([200, 100, 250]);
         }
@@ -473,7 +467,7 @@ function startLiveBalanceWatcher(jewelerId) {
             }
         }
 
-        // İhale Durumunu da Canlı Dinle (Müşteri Teklifi Kabul Ettiğinde Anında Ses Çalsın)
+        // İhale Durumunu Canlı Dinle (Farklı cihazdan kapatıldıysa ekrandan anında düşür)
         if (reqId) {
             try {
                 const rRes = await fetch(BACKEND_API_URL + '/request/' + reqId);
@@ -483,15 +477,23 @@ function startLiveBalanceWatcher(jewelerId) {
                     const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || '');
                     const isWinner = (currentReq.winnerCode && (currentReq.winnerCode === jId || (loggedJeweler && currentReq.winnerCode === loggedJeweler.name)));
 
+                    // 1. Müşteri Teklifi Kabul Ettiğinde
                     if (currentReq.status === 'APPOINTMENT_SET' && isWinner && lastKnownStatus !== 'APPOINTMENT_SET') {
                         lastKnownStatus = 'APPOINTMENT_SET';
-                        playCashBellSound(); // 🔔 Müşteri kabul edince otomatik çal
+                        playCashBellSound();
                         checkAppointmentState(currentReq);
+                    }
+
+                    // 2. İşlem Başka Bir Cihazdan (PC / Mobil) Tamamlandıysa Açık Olan Onay Kartını Anında Kaldır
+                    if (currentReq.status === 'COMPLETED' && lastKnownStatus !== 'COMPLETED') {
+                        lastKnownStatus = 'COMPLETED';
+                        checkAppointmentState(currentReq);
+                        loadMyDeals(jId);
                     }
                 }
             } catch(err) {}
         }
-    }, 4000);
+    }, 3000); // 3 saniyede bir hızlı ve kesintisiz senkronizasyon
 }
 
 async function initPortal() {
@@ -529,7 +531,6 @@ async function initPortal() {
             renderAuction(data.data);
             checkExistingOffer(data.data);
             checkAppointmentState(data.data);
-            // Sayfa yüklendiğinde yeni ihaleyi bildirmek için çal
             setTimeout(() => { playCashBellSound(); }, 800);
         } else {
             document.getElementById('auctionDetails').innerHTML = '⚠️ Bu ihale sona ermiş veya silinmiş.';
@@ -539,7 +540,7 @@ async function initPortal() {
     }
 }
 
-// Müşteri bu kuyumcuyu seçmişse dükkanda tamamlama kartını açar
+// Müşteri bu kuyumcuyu seçmişse dükkanda tamamlama kartını açar / Başka cihazdan tamamlandıysa kilitler
 function checkAppointmentState(req) {
     const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || '');
     const finalizeCard = document.getElementById('dealFinalizeCard');
@@ -559,6 +560,7 @@ function checkAppointmentState(req) {
         }
         finalizeCard.scrollIntoView({ behavior: 'smooth' });
     } else if (req.status === 'COMPLETED') {
+        // İŞLEM TAMAMLANDI: Onay formunu tamamen yok et, ikinci kez kapatılmasına izin verme!
         finalizeCard.style.display = 'none';
         const resultBox = document.getElementById('offerResult');
         if (resultBox && isWinner) {
@@ -566,12 +568,18 @@ function checkAppointmentState(req) {
             resultBox.style.color = '#4ade80';
             resultBox.innerHTML = `✅ <b>Bu işlem dükkanınızda başarıyla tamamlanmıştır.</b><br>Gerçekleşen Tutar: ${Number(req.actualDealPrice || req.agreedPrice).toLocaleString('tr-TR')} ₺`;
         }
+        // Teklif formunu da devre dışı bırak
+        const offerBtn = document.getElementById('btnSubmitOffer');
+        if (offerBtn) {
+            offerBtn.disabled = true;
+            offerBtn.textContent = 'İşlem Kapatıldı ✓';
+        }
     } else {
         finalizeCard.style.display = 'none';
     }
 }
 
-// Dükkanda gerçekleşen tutar ve 4 haneli PIN ile işlemi onaylama
+// Dükkanda gerçekleşen tutar ve 4 haneli PIN ile işlemi onaylama (Çift tıklama & mükerrer korumalı)
 async function submitFinalDealConfirmation() {
     const actualPrice = document.getElementById('actualDealPriceInput').value;
     const pin = document.getElementById('customerPinInput').value.trim();
@@ -618,8 +626,14 @@ async function submitFinalDealConfirmation() {
             location.reload();
         } else {
             alert("⚠️ " + data.message);
-            btn.disabled = false;
-            btn.textContent = '✓ PIN Doğrula & İşlemi Tamamla';
+            // Eğer işlem başka bir cihazdan zaten kapatılmışsa formu doğrudan kapat
+            if (data.message && data.message.includes('zaten')) {
+                document.getElementById('dealFinalizeCard').style.display = 'none';
+                loadMyDeals(jId);
+            } else {
+                btn.disabled = false;
+                btn.textContent = '✓ PIN Doğrula & İşlemi Tamamla';
+            }
         }
     } catch (e) {
         alert("Bağlantı hatası oluştu.");

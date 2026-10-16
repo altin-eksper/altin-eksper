@@ -795,12 +795,29 @@ ${mapUrl}
     }
 });
 
-// ================= 2. ADIM: MÜŞTERİ MAĞAZAYA GELDİĞİNDE PIN & GERÇEK TUTARLA JETON DÜŞÜMÜ =================
+// ================= 2. ADIM: MÜŞTERİ MAĞAZAYA GELDİĞİNDE PIN & GERÇEK TUTARLA JETON DÜŞÜMÜ (MÜKERRER KAPATMA KORUMALI) =================
 app.post('/api/request/complete-deal', async (req, res) => {
     try {
         const { requestId, jewelerId, actualDealPrice, customerPin } = req.body;
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
         const realPrice = Number(actualDealPrice) || 0;
+
+        // 🔒 KİLİT 1: Talep havuzda zaten COMPLETED olarak işaretlenmiş mi?
+        if (target && target.status === 'COMPLETED') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Bu ihale işlemi başka bir cihazdan veya yetkili tarafından zaten kapatılmıştır! Mükerrer işlem yapılamaz.' 
+            });
+        }
+
+        // 🔒 KİLİT 2: Veritabanındaki tamamlanmış işlemler listesinde bu Talep No var mı?
+        const alreadyInCompletedList = completedDeals.some(d => String(d.requestId).trim() === String(requestId).trim());
+        if (alreadyInCompletedList) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Bu işlem (#${requestId}) sistemde zaten tamamlanmış görünüyor. Tekrar bakiye kesilmemesi için işlem durduruldu.` 
+            });
+        }
 
         if (realPrice <= 0) {
             return res.status(400).json({ success: false, message: 'Lütfen dükkanda gerçekleşen geçerli bir alım tutarı giriniz.' });
