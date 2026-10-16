@@ -90,11 +90,17 @@ body{
     filter: invert(1); cursor:pointer;
 }
 
-/* CANLI SES BİLDİRİM BUTONU */
+/* ZİL AÇ / KAPAT TOGGLE BUTONU */
 .sound-toggle-btn {
-    background:#1e293b; border:1px solid #334155; color:#38bdf8;
-    padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;
-    cursor:pointer; display:inline-flex; align-items:center; gap:4px;
+    padding:6px 12px; border-radius:20px; font-size:11px; font-weight:800;
+    cursor:pointer; display:inline-flex; align-items:center; gap:5px;
+    transition: 0.2s ease-in-out;
+}
+.sound-toggle-btn.active {
+    background:#064e3b; border:1px solid #10b981; color:#34d399;
+}
+.sound-toggle-btn.inactive {
+    background:#1e293b; border:1px solid #475569; color:#94a3b8;
 }
 </style>
 </head>
@@ -155,10 +161,11 @@ body{
     <div class="header">
         <div>
             <div class="brand">ALTIN EKSPER</div>
-            <div style="display:flex; align-items:center; gap:8px; margin-top:2px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
                 <span style="font-size:12px; color:#94a3b8;">Canlı Satış İhalesi</span>
-                <button type="button" class="sound-toggle-btn" id="soundTestBtn" onclick="testNotificationSound(event)">
-                    🔔 Zil Aktif
+                <!-- AÇILIR / KAPANIR ZİL BUTONU -->
+                <button type="button" class="sound-toggle-btn active" id="soundToggleBtn" onclick="toggleSoundSystem(event)">
+                    🔔 Zil: Açık
                 </button>
             </div>
         </div>
@@ -360,7 +367,8 @@ let MY_FILTER_MODE = 'all';
 let MY_START_DATE = null;
 let MY_END_DATE = null;
 
-// ================= SES & TİTREŞİM MOTORU (WEB AUDIO API) =================
+// ================= İKİ DURUMLU (AÇIK / KAPALI) VE iOS UYUMLU SES MOTORU =================
+let isSoundEnabled = true; // Varsayılan olarak açık
 let audioCtx = null;
 
 function initAudioContextOnce() {
@@ -375,55 +383,67 @@ function initAudioContextOnce() {
     }
 }
 
+// ZİLİ AÇ / ZİLİ KAPAT BUTON İŞLEVİ
+function toggleSoundSystem(e) {
+    if (e) e.stopPropagation();
+    initAudioContextOnce();
+
+    isSoundEnabled = !isSoundEnabled;
+    const btn = document.getElementById('soundToggleBtn');
+
+    if (isSoundEnabled) {
+        // ZİL AÇILDI
+        btn.innerHTML = '🔔 Zil: Açık';
+        btn.className = 'sound-toggle-btn active';
+        // iOS kullanıcısına zilin çalıştığını teyit etmek için anında ses çal
+        playCashBellSound(true);
+    } else {
+        // ZİL KAPATILDI
+        btn.innerHTML = '🔕 Zil: Kapalı';
+        btn.className = 'sound-toggle-btn inactive';
+    }
+}
+
 // Ding-Dong Kasa / Bildirim Melodisi
-function playCashBellSound() {
+function playCashBellSound(forcePlay = false) {
+    if (!isSoundEnabled && !forcePlay) return;
+
     try {
         initAudioContextOnce();
         if (!audioCtx) return;
 
         const now = audioCtx.currentTime;
 
-        // 1. Ton (Ding - 587.33 Hz / D5)
+        // 1. Ton (Ding - Net Tiz Ton)
         const osc1 = audioCtx.createOscillator();
         const gain1 = audioCtx.createGain();
         osc1.type = 'triangle';
-        osc1.frequency.setValueAtTime(587.33, now);
-        gain1.gain.setValueAtTime(0.3, now);
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+        osc1.frequency.setValueAtTime(659.25, now); // E5
+        gain1.gain.setValueAtTime(0.5, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
         osc1.connect(gain1);
         gain1.connect(audioCtx.destination);
         osc1.start(now);
-        osc1.stop(now + 0.6);
+        osc1.stop(now + 0.5);
 
-        // 2. Ton (Dong - 880.00 Hz / A5)
+        // 2. Ton (Dong - Rezonans Tonu)
         const osc2 = audioCtx.createOscillator();
         const gain2 = audioCtx.createGain();
         osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(880.00, now + 0.15);
-        gain2.gain.setValueAtTime(0.4, now + 0.15);
-        gain2.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+        osc2.frequency.setValueAtTime(880.00, now + 0.12); // A5
+        gain2.gain.setValueAtTime(0.6, now + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
         osc2.connect(gain2);
         gain2.connect(audioCtx.destination);
-        osc2.start(now + 0.15);
-        osc2.stop(now + 1.2);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 1.1);
 
         // Mobil Titreşim
         if (navigator.vibrate) {
-            navigator.vibrate([200, 100, 300]);
+            navigator.vibrate([200, 100, 250]);
         }
     } catch (e) {
-        console.log('Ses çalınamadı:', e);
-    }
-}
-
-function testNotificationSound(e) {
-    if (e) e.stopPropagation();
-    initAudioContextOnce();
-    playCashBellSound();
-    const btn = document.getElementById('soundTestBtn');
-    if (btn) {
-        btn.textContent = '🔊 Çalındı!';
-        setTimeout(() => { btn.textContent = '🔔 Zil Aktif'; }, 1500);
+        console.log('Ses yürütülemedi:', e);
     }
 }
 
@@ -465,7 +485,7 @@ function startLiveBalanceWatcher(jewelerId) {
 
                     if (currentReq.status === 'APPOINTMENT_SET' && isWinner && lastKnownStatus !== 'APPOINTMENT_SET') {
                         lastKnownStatus = 'APPOINTMENT_SET';
-                        playCashBellSound(); // 🔔 Müşteri kabul edince zil çal!
+                        playCashBellSound(); // 🔔 Müşteri kabul edince otomatik çal
                         checkAppointmentState(currentReq);
                     }
                 }
@@ -509,7 +529,7 @@ async function initPortal() {
             renderAuction(data.data);
             checkExistingOffer(data.data);
             checkAppointmentState(data.data);
-            // Sayfa ilk yüklendiğinde yeni ihale açılmışsa kuyumcuyu sesle karşıla
+            // Sayfa yüklendiğinde yeni ihaleyi bildirmek için çal
             setTimeout(() => { playCashBellSound(); }, 800);
         } else {
             document.getElementById('auctionDetails').innerHTML = '⚠️ Bu ihale sona ermiş veya silinmiş.';
@@ -587,7 +607,7 @@ async function submitFinalDealConfirmation() {
 
         const data = await res.json();
         if (data.success) {
-            playCashBellSound(); // Kapanış sesi
+            playCashBellSound(true); // Kapanış sesi
             alert("✅ " + data.message);
             if (loggedJeweler && data.remainingCredits !== null) {
                 loggedJeweler.credits = data.remainingCredits;
