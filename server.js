@@ -705,18 +705,22 @@ app.post('/api/request/quote', (req, res) => {
     });
 });
 
-// ================= 1. ADIM: MÜŞTERİ SEÇTİĞİNDE YALNIZCA RANDEVU KESİLİR (JETON HENÜZ DÜŞMEZ) =================
+// ================= 1. ADIM: MÜŞTERİ SEÇTİĞİNDE 4 HANELİ PIN ÜRETİLİR & RANDEVU OLUŞTURULUR =================
 app.post('/api/request/notify-winner', async (req, res) => {
     try {
         const { requestId, jewelerCode, agreedPrice, customerName, customerPhone } = req.body;
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
         const finalPrice = Number(agreedPrice) || 0;
         
+        // 4 Haneli Rastgele Güvenlik PIN Kodu Üret (Örn: 4821)
+        const securityPin = String(Math.floor(1000 + Math.random() * 9000));
+
         if (target) {
             target.status = 'APPOINTMENT_SET'; // Randevu oluşturuldu, dükkanda teyit bekleniyor
             target.winnerCode = jewelerCode;
             target.agreedPrice = finalPrice;
-            console.log(`[Randevu Kesildi]: #${requestId} kazanan: ${jewelerCode} | Ön Tutar: ${finalPrice.toLocaleString('tr-TR')} TL (Jeton düşüşü mağaza teyidine bırakıldı)`);
+            target.securityPin = securityPin; // PIN talebe kaydedildi
+            console.log(`[Randevu Kesildi]: #${requestId} kazanan: ${jewelerCode} | PIN: ${securityPin} | Ön Tutar: ${finalPrice.toLocaleString('tr-TR')} TL`);
         }
 
         const searchKey = String(jewelerCode).trim().toLowerCase();
@@ -733,6 +737,7 @@ app.post('/api/request/notify-winner', async (req, res) => {
 
         const finishUrl = `https://altin-eksper.onrender.com/kuyumcu.html?req=${requestId}&jeweler=${targetJeweler ? targetJeweler.id : jewelerCode}`;
 
+        // Kuyumcuya giden mesaj: Müşteriden 4 haneli PIN isteneceği bildirilir
         const winnerMessage = 
 `🎉 *YENİ İŞLEM RANDEVUSU OLUŞTURULDU!*
 
@@ -743,34 +748,38 @@ Sayın *${jewelerName}*, verdiğiniz teklif müşteri tarafından seçildi!
 💰 *Ön Teklif Tutarı:* ${finalPrice.toLocaleString('tr-TR')} ₺
 📌 *Müşteri İletişim:* ${customerPhone || 'Girilmedi'}
 
-💡 *Esnaf Güvencesi:* Müşteri dükkanınıza gelip tartım yapılana kadar jetonunuz *düşmez*.
-Müşteri geldiğinde aşağıdaki linkten fiilen gerçekleşen nihai tutarı girip işlemi kapatabilirsiniz:
-👉 ${finishUrl}`;
+🔒 *Güvenlik Şifresi:* Müşteri dükkanınıza geldiğinde telefonundaki 4 haneli *Güvenlik Kodunu* isteyiniz. İşlemi kapatırken bu kodu girmeniz gerekecektir.
+Müşteri gelip tartım yapılana kadar jetonunuz *düşmez*.
+
+👉 *İşlem Paneli:* ${finishUrl}`;
 
         await sendWhatsAppMessage(jewelerPhone, winnerMessage);
 
+        // Müşteriye giden randevu fişinde 4 haneli PIN açıkça yer alır
         if (customerPhone) {
             const customerAppointmentMsg = 
 `✨ *ALTIN EKSPER — İŞLEM RANDEVUNUZ HAZIR*
 
-Sayın *${customerName || 'Müşterimiz'}*, altın satış işleminiz için anlaşmalı sarrafımız bilgilendirildi.
+Sayın *${customerName || 'Müşterimiz'}*, altın satış işleminiz için randevunuz oluşturuldu.
 
 🏪 *Yetkili Sarraf:* ${jewelerName}
-💰 *Ön Teklif Tutarı:* ${finalPrice.toLocaleString('tr-TR')} ₺
+💰 *Taahhüt Edilen Tutar:* ${finalPrice.toLocaleString('tr-TR')} ₺
 📍 *Mağaza Adresi:* ${jewelerAddress}
-🎟️ *Güvenlik / Randevu Kodu:* #${requestId}
+🎟️ *Randevu / Talep No:* #${requestId}
+🔐 *Güvenlik Doğrulama Kodunuz:* *${securityPin}*
 
 🗺️ *Google Haritalar Yol Tarifi:*
 ${mapUrl}
 
-📌 Mağazada fiziki tartım ve ayar teyidinden sonra ödemeniz anında nakit veya IBAN ile eksiksiz ödenecektir.`;
+⚠️ *Önemli:* Mağazada kimliğinizi ve teklifinizi doğrulamak için lütfen yukarıdaki *4 haneli Güvenlik Kodunu (${securityPin})* sarrafa iletiniz.`;
 
             await sendWhatsAppMessage(customerPhone, customerAppointmentMsg);
         }
 
         res.json({ 
             success: true, 
-            message: `Randevu başarıyla açıldı. Başarı jetonu müşteri mağazaya gelip alım yapıldığında fiili tutarla düşülecektir.`,
+            message: `Randevu başarıyla açıldı. Güvenlik PIN kodu müşteriye iletildi.`,
+            securityPin: securityPin,
             deal: {
                 requestId,
                 customerName: customerName || 'Müşteri',
@@ -786,15 +795,26 @@ ${mapUrl}
     }
 });
 
-// ================= 2. ADIM: MÜŞTERİ MAĞAZAYA GELDİĞİNDE GERÇEK TUTARLA JETON DÜŞÜMÜ =================
+// ================= 2. ADIM: MÜŞTERİ MAĞAZAYA GELDİĞİNDE PIN & GERÇEK TUTARLA JETON DÜŞÜMÜ =================
 app.post('/api/request/complete-deal', async (req, res) => {
     try {
-        const { requestId, jewelerId, actualDealPrice } = req.body;
+        const { requestId, jewelerId, actualDealPrice, customerPin } = req.body;
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
         const realPrice = Number(actualDealPrice) || 0;
 
         if (realPrice <= 0) {
             return res.status(400).json({ success: false, message: 'Lütfen dükkanda gerçekleşen geçerli bir alım tutarı giriniz.' });
+        }
+
+        // 4 Haneli PIN Kontrolü (Dolandırıcılık Önleme)
+        if (target && target.securityPin) {
+            const enteredPin = String(customerPin || '').trim();
+            if (enteredPin !== String(target.securityPin).trim()) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Girilen 4 haneli Güvenlik PIN kodu hatalı! Lütfen müşterinin telefonundaki kodu kontrol ediniz.' 
+                });
+            }
         }
 
         const searchKey = String(jewelerId || target?.winnerCode).trim().toLowerCase();
@@ -853,9 +873,9 @@ app.post('/api/request/complete-deal', async (req, res) => {
             : `👑 *Üyelik Durumu:* VIP Sınırsız Paket`;
 
         const finishMsg = 
-`✅ *İŞLEM DÜKKANDA BAŞARIYLA TAMAMLANDI!*
+`✅ *İŞLEM DOĞRULANDI VE KAPATILDI!*
 
-Sayın *${targetJeweler.name}*, #${requestId} nolu müşteri alım işleminiz kapatıldı.
+Sayın *${targetJeweler.name}*, #${requestId} nolu alım işlemi güvenlik PIN doğrulamasıyla başarıyla tamamlandı.
 
 💰 *Fiilen Gerçekleşen Tutar:* ${realPrice.toLocaleString('tr-TR')} ₺
 📊 *Uygulanan Tarife:* ${feeCalculation.appliedRateText}
@@ -867,7 +887,7 @@ Hayırlı ve bereketli kazançlar dileriz!`;
 
         res.json({
             success: true,
-            message: `İşlem ${realPrice.toLocaleString('tr-TR')} TL üzerinden kapatıldı ve ${deductedTokens} jeton başarı bedeli düşüldü.`,
+            message: `Güvenlik PIN kodu doğrulandı. İşlem ${realPrice.toLocaleString('tr-TR')} TL üzerinden kapatıldı ve ${deductedTokens} jeton başarı bedeli düşüldü.`,
             deal: dealRecord,
             remainingCredits: remainingCredits,
             deductedTokens: deductedTokens,
