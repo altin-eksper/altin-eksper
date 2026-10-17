@@ -7,7 +7,9 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 app.use(cors());
-app.use(express.json());
+// Fotoğraflı taleplerin sunucuyu tıkamaması için 25 MB limit
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(express.static(__dirname));
 
 // ================= GÜVENLİK & YÖNETİCİ ŞİFRESİ =================
@@ -31,7 +33,6 @@ app.post('/api/admin/verify-auth', (req, res) => {
 });
 
 // ================= AYARLAR & ADİL GELİR MOTORU =================
-// 1 Jetonun ortalama TL karşılığı (25 Jeton = 750 TL referansı)
 const TOKEN_UNIT_VALUE_TL = 30; 
 
 // MESAYİ SAATLERİ KONTROLÜ (Haftanın 7 Günü: 09:00 - 18:00 Arası Aktif)
@@ -180,7 +181,8 @@ function loadDatabase() {
             const initialData = {
                 jewelers: INITIAL_JEWELERS,
                 completedDeals: [],
-                pendingPayments: []
+                pendingPayments: [],
+                activeRequests: []
             };
             fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
             return initialData;
@@ -190,10 +192,11 @@ function loadDatabase() {
         parsed.jewelers = sanitizeJewelers(parsed.jewelers);
         parsed.completedDeals = parsed.completedDeals || [];
         parsed.pendingPayments = parsed.pendingPayments || [];
+        parsed.activeRequests = parsed.activeRequests || [];
         return parsed;
     } catch (e) {
         console.error('[DB Yükleme Hatası]:', e);
-        return { jewelers: INITIAL_JEWELERS, completedDeals: [], pendingPayments: [] };
+        return { jewelers: INITIAL_JEWELERS, completedDeals: [], pendingPayments: [], activeRequests: [] };
     }
 }
 
@@ -202,7 +205,8 @@ function saveDatabase() {
         const payload = {
             jewelers: JEWELERS_DIRECTORY,
             completedDeals: completedDeals,
-            pendingPayments: pendingPayments
+            pendingPayments: pendingPayments,
+            activeRequests: requestsPool
         };
         fs.writeFileSync(DB_FILE, JSON.stringify(payload, null, 2), 'utf-8');
     } catch (e) {
@@ -214,11 +218,9 @@ const persistedData = loadDatabase();
 let JEWELERS_DIRECTORY = persistedData.jewelers || INITIAL_JEWELERS;
 let completedDeals = persistedData.completedDeals || [];
 let pendingPayments = persistedData.pendingPayments || [];
+let requestsPool = persistedData.activeRequests || [];
 
 saveDatabase();
-
-// Canlı Talep Deposu (15 dk sürelidir)
-let requestsPool = [];
 
 // ================= META WHATSAPP CLOUD API AYARLARI =================
 const WHATSAPP_CONFIG = {
@@ -254,7 +256,7 @@ async function sendWhatsAppMessage(toPhone, messageText) {
         });
 
         const data = await response.json();
-        console.log(`[WhatsApp API Sonucu -> ${cleanPhone}]:`, data);
+        console.log(`[WhatsApp API Sonucu -> ${cleanPhone}]:`, JSON.stringify(data));
         return data;
     } catch (err) {
         console.error('[WhatsApp Gönderim Hatası]:', err);
@@ -268,6 +270,7 @@ setInterval(async () => {
     for (const r of requestsPool) {
         if (r.status === 'PENDING' && r.expiresAt && new Date(r.expiresAt).getTime() <= now) {
             r.status = 'EXPIRED';
+            saveDatabase();
             if ((!r.quotes || r.quotes.length === 0) && r.customerPhone && !r.hasExpiredNotified) {
                 r.hasExpiredNotified = true;
                 const expiredMsg = 
@@ -283,6 +286,7 @@ Talebiniz kayıtlı sarraflarımıza açık tutulmaya devam etmektedir. İlk tek
     }
 
     requestsPool = requestsPool.filter(r => r.status === 'APPOINTMENT_SET' || !r.expiresAt || new Date(r.expiresAt).getTime() > now);
+    saveDatabase();
 }, 30000);
 
 // Ana Sayfa & Yönetim Rotası
@@ -596,9 +600,12 @@ app.post('/api/request/create', async (req, res) => {
         reqData.isOffHours = !openNow;
         reqData.status = 'PENDING';
         reqData.quotes = [];
-        requestsPool.unshift(reqData);
 
-        // Mesai saati dışındaysa sarraflara mesaj gitmez
+        // Talebi hemen havuza al ve kalıcı database.json dosyasına yaz
+        requestsPool.unshift(reqData);
+        saveDatabase();
+
+        // Mesai saati dışındaysa sarraflara gece mesaj atılmaz
         if (!openNow) {
             if (reqData.customerPhone) {
                 const offHourMsg = `🌙 *Altın Eksper:* #${reqData.requestId} nolu talebiniz alındı. Sarraflarımız şu an mesai saatleri dışındadır (Çalışma: Haftanın 7 Günü 09:00 - 18:00). Talebiniz sabah 09:00'da canlı ihaleye açılacak ve teklifler toplanacaktır.`;
@@ -613,25 +620,21 @@ app.post('/api/request/create', async (req, res) => {
         }
 
         const targetDistrictRaw = (reqData.district || '').trim().toLowerCase();
-        const now = new Date();
 
-        const matchedJewelers = JEWELERS_DIRECTORY.filter(j => {
+        // İlçeye veya aktifliğe göre kuyumcuları eşle
+        let matchedJewelers = JEWELERS_DIRECTORY.filter(j => {
             if (j.status !== 'ACTIVE') return false;
-
-            const hasDistrictMatch = !targetDistrictRaw || (j.districts && j.districts.some(d => {
+            if (!targetDistrictRaw) return true;
+            return j.districts && j.districts.some(d => {
                 const cleanD = d.toLowerCase();
                 return targetDistrictRaw.includes(cleanD) || cleanD.includes(targetDistrictRaw);
-            }));
-
-            if (!hasDistrictMatch) return false;
-
-            if (j.membershipType === 'token') {
-                return (j.credits || 0) > 0;
-            } else if (j.membershipType === 'subscription') {
-                return j.subscriptionExpiresAt && new Date(j.subscriptionExpiresAt) > now;
-            }
-            return false;
+            });
         });
+
+        // İlçe tam eşleşmezse tüm aktif sarraflara gönder
+        if (matchedJewelers.length === 0) {
+            matchedJewelers = JEWELERS_DIRECTORY.filter(j => j.status === 'ACTIVE');
+        }
 
         const itemsList = (reqData.items || []).map(it => 
             `• ${it.productName} (${it.karat}k) - ${it.grams ? it.grams + 'g' : ''} ${it.qty ? it.qty + ' adet' : ''}`
@@ -667,7 +670,7 @@ ${itemsList}
         }
 
         if (reqData.customerPhone) {
-            const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz ${reqData.district} bölgesindeki kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
+            const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
             await sendWhatsAppMessage(reqData.customerPhone, customerMsg);
         }
 
@@ -689,8 +692,11 @@ app.get('/api/requests', (req, res) => {
 });
 
 app.get('/api/request/:id', (req, res) => {
-    const found = requestsPool.find(r => String(r.requestId) === String(req.params.id));
-    if (!found) return res.status(404).json({ success: false, message: 'Talep bulunamadı' });
+    const searchId = String(req.params.id).trim();
+    const found = requestsPool.find(r => String(r.requestId).trim() === searchId);
+    if (!found) {
+        return res.status(404).json({ success: false, message: 'Talep bulunamadı' });
+    }
     res.json({ success: true, data: found });
 });
 
@@ -735,7 +741,6 @@ app.post('/api/request/quote', (req, res) => {
                 return res.status(403).json({ success: false, message: 'Yetersiz bakiye! Teklif vermek için paket yenileyin.' });
             }
             jeweler.credits -= 1;
-            saveDatabase();
             console.log(`[Bakiye Düştü]: ${jeweler.name} teklif için 1 jeton harcadı. Kalan jeton: ${jeweler.credits}`);
         }
 
@@ -746,6 +751,8 @@ app.post('/api/request/quote', (req, res) => {
             createdAt: new Date().toISOString() 
         });
     }
+
+    saveDatabase();
 
     res.json({ 
         success: true, 
@@ -761,7 +768,6 @@ app.post('/api/request/notify-winner', async (req, res) => {
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
         const finalPrice = Number(agreedPrice) || 0;
         
-        // 4 Haneli Rastgele Güvenlik PIN Kodu Üret (Örn: 4821)
         const securityPin = String(Math.floor(1000 + Math.random() * 9000));
 
         if (target) {
@@ -769,6 +775,7 @@ app.post('/api/request/notify-winner', async (req, res) => {
             target.winnerCode = jewelerCode;
             target.agreedPrice = finalPrice;
             target.securityPin = securityPin;
+            saveDatabase();
             console.log(`[Randevu Kesildi]: #${requestId} kazanan: ${jewelerCode} | PIN: ${securityPin} | Ön Tutar: ${finalPrice.toLocaleString('tr-TR')} TL`);
         }
 
@@ -786,7 +793,6 @@ app.post('/api/request/notify-winner', async (req, res) => {
 
         const finishUrl = `https://altin-eksper.onrender.com/kuyumcu.html?req=${requestId}&jeweler=${targetJeweler ? targetJeweler.id : jewelerCode}`;
 
-        // Kuyumcuya giden mesaj: Müşteriden 4 haneli PIN isteneceği bildirilir
         const winnerMessage = 
 `🎉 *YENİ İŞLEM RANDEVUSU OLUŞTURULDU!*
 
@@ -804,7 +810,6 @@ Müşteri gelip tartım yapılana kadar başarı komisyonu jetonunuz *düşmez*.
 
         await sendWhatsAppMessage(jewelerPhone, winnerMessage);
 
-        // Müşteriye giden randevu fişi: PIN Kodu Güvence Vurgusu Eklenmiştir
         if (customerPhone) {
             const customerAppointmentMsg = 
 `✨ *ALTIN EKSPER — İŞLEM RANDEVUNUZ HAZIR*
@@ -852,7 +857,6 @@ app.post('/api/request/complete-deal', async (req, res) => {
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
         const realPrice = Number(actualDealPrice) || 0;
 
-        // 🔒 KİLİT 1: Talep havuzda zaten COMPLETED olarak işaretlenmiş mi?
         if (target && target.status === 'COMPLETED') {
             return res.status(400).json({ 
                 success: false, 
@@ -860,7 +864,6 @@ app.post('/api/request/complete-deal', async (req, res) => {
             });
         }
 
-        // 🔒 KİLİT 2: Veritabanındaki tamamlanmış işlemler listesinde bu Talep No var mı?
         const alreadyInCompletedList = completedDeals.some(d => String(d.requestId).trim() === String(requestId).trim());
         if (alreadyInCompletedList) {
             return res.status(400).json({ 
@@ -873,7 +876,6 @@ app.post('/api/request/complete-deal', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Lütfen dükkanda gerçekleşen geçerli bir alım tutarı giriniz.' });
         }
 
-        // 4 Haneli PIN Kontrolü (Dolandırıcılık Önleme)
         if (target && target.securityPin) {
             const enteredPin = String(customerPin || '').trim();
             if (enteredPin !== String(target.securityPin).trim()) {
@@ -895,7 +897,6 @@ app.post('/api/request/complete-deal', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Kuyumcu hesabı bulunamadı.' });
         }
 
-        // Dinamik komisyon hesabı: Fiilen gerçekleşen tutar üzerinden (Bilezik/22k Hurda/24k Gram ‰1, Diğerleri ‰2)
         const feeCalculation = calculateDealCommissionAndTokens(target?.items, realPrice);
         const calculatedCommissionTL = feeCalculation.commissionTL;
         let deductedTokens = 0;
@@ -905,7 +906,6 @@ app.post('/api/request/complete-deal', async (req, res) => {
             deductedTokens = feeCalculation.tokens;
             targetJeweler.credits = Math.max(0, (Number(targetJeweler.credits) || 0) - deductedTokens);
             remainingCredits = targetJeweler.credits;
-            saveDatabase();
             console.log(`[Dükkanda Tamamlandı]: ${targetJeweler.name} | Gerçekleşen: ${realPrice.toLocaleString('tr-TR')} TL | Oran: ${feeCalculation.appliedRateText} | Düşen: ${deductedTokens} Jeton | Kalan: ${remainingCredits}`);
         }
 
@@ -924,7 +924,7 @@ app.post('/api/request/complete-deal', async (req, res) => {
             jewelerPhone: targetJeweler.phone,
             jewelerAddress: targetJeweler.address || '',
             originalQuotedPrice: target?.agreedPrice || realPrice,
-            agreedPrice: realPrice, // Fiilen gerçekleşen tutar
+            agreedPrice: realPrice,
             deductedTokens: deductedTokens,
             remainingCredits: remainingCredits,
             commissionTL: calculatedCommissionTL,
@@ -975,6 +975,7 @@ app.post('/api/request/cancel-deal', async (req, res) => {
         if (target) {
             target.status = 'CANCELLED';
             target.cancelReason = reason || 'Müşteri dükkana gelmedi.';
+            saveDatabase();
         }
 
         const searchKey = String(jewelerId || target?.winnerCode).trim().toLowerCase();
@@ -988,7 +989,6 @@ app.post('/api/request/cancel-deal', async (req, res) => {
 
         console.log(`[İhale İptal Bildirimi]: #${requestId} | Sarraf: ${jewelerName} | Sebep: ${reason || 'Müşteri gelmedi'}`);
 
-        // Kaçak İşlem Teyidi: Müşterinin WhatsApp'ına otomatik doğrulama mesajı gönder
         if (target && target.customerPhone) {
             const yesLink = `https://altin-eksper.onrender.com/api/request/customer-feedback?req=${requestId}&answer=yes`;
             const noLink = `https://altin-eksper.onrender.com/api/request/customer-feedback?req=${requestId}&answer=no`;
@@ -1029,10 +1029,10 @@ app.get('/api/request/customer-feedback', async (req, res) => {
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
 
         if (answer === 'yes') {
-            // ALARM: Müşteri "Ben gittim, sattım" dedi ama kuyumcu "gelmedi" demişti!
             if (target) {
                 target.customerClaimedCompleted = true;
-                target.status = 'SUSPECTED_DEAL'; // Şüpheli Kaçak İşlem Statüsü
+                target.status = 'SUSPECTED_DEAL';
+                saveDatabase();
             }
 
             const alertMsg = 
@@ -1061,7 +1061,6 @@ app.get('/api/request/customer-feedback', async (req, res) => {
                 </html>
             `);
         } else {
-            // Normal İptal Onayı
             res.send(`
                 <!DOCTYPE html>
                 <html lang="tr">
