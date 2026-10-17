@@ -34,6 +34,21 @@ app.post('/api/admin/verify-auth', (req, res) => {
 // 1 Jetonun ortalama TL karşılığı (25 Jeton = 750 TL referansı)
 const TOKEN_UNIT_VALUE_TL = 30; 
 
+// MESAYİ SAATLERİ KONTROLÜ (Haftanın 7 Günü: 09:00 - 18:00 Arası Aktif)
+function isBusinessHours() {
+    const now = new Date();
+    // Türkiye saati UTC+3
+    const utcHours = now.getUTCHours();
+    const turkeyHours = (utcHours + 3) % 24;
+    const turkeyMinutes = now.getUTCMinutes();
+
+    const totalMinutes = turkeyHours * 60 + turkeyMinutes;
+    const startMinutes = 9 * 60;  // 09:00
+    const endMinutes = 18 * 60;   // 18:00
+
+    return (totalMinutes >= startMinutes && totalMinutes < endMinutes);
+}
+
 // Ürün bazlı dinamik başarı komisyonu hesaplama fonksiyonu
 // KURAL: Bilezik, 22k Hurda ve 24k Gram için Binde 1 (0.001); diğer ürünler için Binde 2 (0.002)
 function calculateDealCommissionAndTokens(items, agreedPrice) {
@@ -247,10 +262,26 @@ async function sendWhatsAppMessage(toPhone, messageText) {
     }
 }
 
-// Süresi dolan (15 dk) talepleri otomatik temizleme
-setInterval(() => {
+// Süresi dolan (15 dk) talepleri otomatik takip ve teklif alamayan müşteriyi bilgilendirme
+setInterval(async () => {
     const now = Date.now();
-    // Randevusu kesilmiş olanlar havuzda kalmaya devam etsin, dükkanda onaylanabilsin
+    for (const r of requestsPool) {
+        if (r.status === 'PENDING' && r.expiresAt && new Date(r.expiresAt).getTime() <= now) {
+            r.status = 'EXPIRED';
+            if ((!r.quotes || r.quotes.length === 0) && r.customerPhone && !r.hasExpiredNotified) {
+                r.hasExpiredNotified = true;
+                const expiredMsg = 
+`ℹ️ *Altın Eksper Bilgilendirmesi:*
+
+Sayın *${r.customerName || 'Müşterimiz'}*, #${r.requestId} nolu altın satış talebiniz için bölgenizdeki sarraflar şu an dükkan içi yoğunluk nedeniyle ilk 15 dakikada teklif iletemedi.
+
+Talebiniz kayıtlı sarraflarımıza açık tutulmaya devam etmektedir. İlk teklif verildiğinde WhatsApp hattınızdan anında bilgilendirileceksiniz.`;
+
+                await sendWhatsAppMessage(r.customerPhone, expiredMsg);
+            }
+        }
+    }
+
     requestsPool = requestsPool.filter(r => r.status === 'APPOINTMENT_SET' || !r.expiresAt || new Date(r.expiresAt).getTime() > now);
 }, 30000);
 
@@ -560,8 +591,26 @@ app.post('/api/request/create', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Geçersiz talep verisi' });
         }
 
+        // MESAYİ KONTROLÜ (09:00 - 18:00)
+        const openNow = isBusinessHours();
+        reqData.isOffHours = !openNow;
+        reqData.status = 'PENDING';
         reqData.quotes = [];
         requestsPool.unshift(reqData);
+
+        // Mesai saati dışındaysa sarraflara mesaj gitmez
+        if (!openNow) {
+            if (reqData.customerPhone) {
+                const offHourMsg = `🌙 *Altın Eksper:* #${reqData.requestId} nolu talebiniz alındı. Sarraflarımız şu an mesai saatleri dışındadır (Çalışma: Haftanın 7 Günü 09:00 - 18:00). Talebiniz sabah 09:00'da canlı ihaleye açılacak ve teklifler toplanacaktır.`;
+                await sendWhatsAppMessage(reqData.customerPhone, offHourMsg);
+            }
+            return res.json({ 
+                success: true, 
+                offHours: true,
+                message: 'Talebiniz kaydedildi. Sarraf çalışma saatleri dışında olduğundan sabah 09:00\'da ihaleye açılacaktır.', 
+                requestId: reqData.requestId 
+            });
+        }
 
         const targetDistrictRaw = (reqData.district || '').trim().toLowerCase();
         const now = new Date();
@@ -716,10 +765,10 @@ app.post('/api/request/notify-winner', async (req, res) => {
         const securityPin = String(Math.floor(1000 + Math.random() * 9000));
 
         if (target) {
-            target.status = 'APPOINTMENT_SET'; // Randevu oluşturuldu, dükkanda teyit bekleniyor
+            target.status = 'APPOINTMENT_SET'; 
             target.winnerCode = jewelerCode;
             target.agreedPrice = finalPrice;
-            target.securityPin = securityPin; // PIN talebe kaydedildi
+            target.securityPin = securityPin;
             console.log(`[Randevu Kesildi]: #${requestId} kazanan: ${jewelerCode} | PIN: ${securityPin} | Ön Tutar: ${finalPrice.toLocaleString('tr-TR')} TL`);
         }
 
@@ -749,7 +798,7 @@ Sayın *${jewelerName}*, verdiğiniz teklif müşteri tarafından seçildi!
 📌 *Müşteri İletişim:* ${customerPhone || 'Girilmedi'}
 
 🔒 *Güvenlik Şifresi:* Müşteri dükkanınıza geldiğinde telefonundaki 4 haneli *Güvenlik Kodunu* isteyiniz. İşlemi kapatırken bu kodu girmeniz gerekecektir.
-Müşteri gelip tartım yapılana kadar jetonunuz *düşmez*.
+Müşteri gelip tartım yapılana kadar başarı komisyonu jetonunuz *düşmez*.
 
 👉 *İşlem Paneli:* ${finishUrl}`;
 
@@ -916,7 +965,7 @@ Hayırlı ve bereketli kazançlar dileriz!`;
     }
 });
 
-// ================= 3. ADIM: MÜŞTERİ GELMEDİ / İPTAL ROTASI =================
+// ================= 3. ADIM: MÜŞTERİ GELMEDİ / İPTAL ROTASI (TEKLİF JETONU İADESİ YOK) =================
 app.post('/api/request/cancel-deal', async (req, res) => {
     try {
         const { requestId, jewelerId, reason } = req.body;
@@ -927,11 +976,11 @@ app.post('/api/request/cancel-deal', async (req, res) => {
             target.cancelReason = reason || 'Müşteri dükkana gelmedi.';
         }
 
-        console.log(`[İhale İptal Edildi]: #${requestId} | Sebep: ${reason || 'Müşteri gelmedi'} (Sarraftan hiçbir jeton düşülmedi)`);
+        console.log(`[İhale İptal Edildi]: #${requestId} | Sebep: ${reason || 'Müşteri gelmedi'} (Başarı komisyonu kesilmedi, teklif jetonları iade edilmez)`);
 
         res.json({
             success: true,
-            message: 'İhale başarıyla iptal edildi. Hesabınızdan hiçbir jeton kesilmemiştir.'
+            message: 'İhale başarıyla iptal edildi. Dükkanda işlem gerçekleşmediği için başarı komisyonu kesilmemiştir.'
         });
     } catch (err) {
         res.status(500).json({ success: false, message: 'İptal işlemi başarısız.' });
@@ -967,3 +1016,4 @@ app.get('/api/admin/commission-report', adminAuthMiddleware, (req, res) => {
 app.listen(PORT, () => {
     console.log(`Altın Eksper API Sunucusu ${PORT} portunda çalışıyor.`);
 });
+```[cite: 2]

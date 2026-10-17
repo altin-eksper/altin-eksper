@@ -822,6 +822,20 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 
 </div>
 
+<!-- MESAİ DIŞI BİLGİLENDİRME MODALI -->
+<div id="offHoursModal" class="report-modal" style="display:none; z-index:999999;">
+    <div class="report-modal-content" style="max-width:480px; border-radius:14px; text-align:center;">
+        <div style="font-size:38px; margin-bottom:10px;">🌙</div>
+        <h3 style="margin:0 0 8px; font-size:18px; color:#1e293b;">Talebiniz Başarıyla Alındı!</h3>
+        <p style="font-size:13px; color:#475569; line-height:1.5; margin-bottom:16px;" id="offHoursModalText">
+            Sarraflarımız şu an mesai saatleri dışındadır (Çalışma Saatleri: Haftanın 7 Günü 09:00 - 18:00). Talebiniz sabah <b>09:00</b>'da bölgenizdeki anlaşmalı sarraflara canlı ihaleye açılacak ve teklifler WhatsApp hattınıza iletilecektir.
+        </p>
+        <button type="button" class="primary" style="padding:10px 24px; font-size:13px;" onclick="document.getElementById('offHoursModal').style.display='none'">
+            Anladım, Teşekkürler
+        </button>
+    </div>
+</div>
+
 <!-- SABİT CANLI İHALE TAKİP ÇUBUĞU -->
 <div id="activeAuctionStickyBar" style="display:none; position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:9999; background:#1e293b; color:#fff; padding:10px 18px; border-radius:30px; box-shadow:0 10px 25px rgba(0,0,0,0.3); border:2px solid #10b981; cursor:pointer; align-items:center; gap:12px; font-size:13px;" onclick="reopenLiveAuctionModal()">
     <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
@@ -1812,19 +1826,52 @@ function addRow(product) {
     configureRow(tr);
 }
 
+// ==================== OTOMATİK CANVAS GÖRSEL SIKIŞTIRMA ====================
+function compressImageFile(file, maxWidth, maxHeight, quality, callback) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width = Math.round((width * maxHeight) / height);
+                    height = maxHeight;
+                }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+            callback(compressedDataUrl);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
 function handlePhotoUpload(event, inputElement) {
     const file = event.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
+
+    compressImageFile(file, 1000, 1000, 0.72, function(compressedBase64) {
         const tr = inputElement.closest('tr');
-        tr.dataset.photo = e.target.result;
+        tr.dataset.photo = compressedBase64;
         const previewWrap = tr.querySelector('.photo-preview-wrap');
-        previewWrap.querySelector('img').src = e.target.result;
+        previewWrap.querySelector('img').src = compressedBase64;
         previewWrap.style.display = 'inline-block';
         inputElement.parentElement.style.display = 'none';
-    };
-    reader.readAsDataURL(file);
+    });
 }
 
 function removePhoto(btnElement) {
@@ -3486,10 +3533,11 @@ async function triggerWhatsAppOffer(e) {
         const g = tr.querySelector('.grams')?.value || '';
         const q = tr.querySelector('.qty')?.value || '';
         const amt = tr.querySelector('.amount')?.textContent || '';
+        const photoData = tr.dataset.photo || '';
 
         payloadItems.push({
             index: i + 1, productCode: pCode, productName: pName,
-            karat: k, grams: g, qty: q, amount: amt
+            karat: k, grams: g, qty: q, amount: amt, photo: photoData
         });
     });
 
@@ -3505,11 +3553,23 @@ async function triggerWhatsAppOffer(e) {
     if (btn) { btn.textContent = '⏳ Sarraflara İletiliyor...'; btn.disabled = true; }
 
     try {
-        await fetch(BACKEND_API_URL + '/request/create', {
+        const res = await fetch(BACKEND_API_URL + '/request/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestPayload)
         });
+        const resData = await res.json();
+
+        // Mesai saati dışı kontrolü
+        if (resData && resData.offHours) {
+            const offModal = document.getElementById('offHoursModal');
+            if (offModal) {
+                offModal.style.display = 'flex';
+            } else {
+                alert(resData.message || 'Talebiniz kaydedildi. Sarraf çalışma saatleri dışında olduğundan sabah 09:00\'da ihaleye açılacaktır.');
+            }
+            return;
+        }
     } catch (err) {
         console.error('İstek hatası:', err);
     } finally {
@@ -3591,6 +3651,9 @@ function startListeningCustomerOffers(requestId, expiresAtIso, customerName, cus
                 timerBadge.textContent = '⏱ Süre Doldu';
                 timerBadge.style.background = '#e2e8f0';
                 timerBadge.style.color = '#64748b';
+            }
+            if (subtitle) {
+                subtitle.textContent = '15 dakikalık ihale süresi doldu. İlk teklif düştüğünde WhatsApp hattınıza iletilecektir.';
             }
             return;
         }
