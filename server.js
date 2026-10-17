@@ -804,7 +804,7 @@ Müşteri gelip tartım yapılana kadar başarı komisyonu jetonunuz *düşmez*.
 
         await sendWhatsAppMessage(jewelerPhone, winnerMessage);
 
-        // Müşteriye giden randevu fişinde 4 haneli PIN açıkça yer alır
+        // Müşteriye giden randevu fişi: PIN Kodu Güvence Vurgusu Eklenmiştir
         if (customerPhone) {
             const customerAppointmentMsg = 
 `✨ *ALTIN EKSPER — İŞLEM RANDEVUNUZ HAZIR*
@@ -820,7 +820,8 @@ Sayın *${customerName || 'Müşterimiz'}*, altın satış işleminiz için rand
 🗺️ *Google Haritalar Yol Tarifi:*
 ${mapUrl}
 
-⚠️ *Önemli:* Mağazada kimliğinizi ve teklifinizi doğrulamak için lütfen yukarıdaki *4 haneli Güvenlik Kodunu (${securityPin})* sarrafa iletiniz.`;
+⚠️ *ÖNEMLİ GÜVENCE UYARISI:* 
+Mağazada ödemenizi alırken yukarıdaki *4 Haneli Güvenlik Kodunu (${securityPin})* mutlaka sarrafa işletiniz. Kodu işletilmeyen işlemler sistemimiz tarafından güvence altına alınamaz.`;
 
             await sendWhatsAppMessage(customerPhone, customerAppointmentMsg);
         }
@@ -965,7 +966,7 @@ Hayırlı ve bereketli kazançlar dileriz!`;
     }
 });
 
-// ================= 3. ADIM: MÜŞTERİ GELMEDİ / İPTAL ROTASI (TEKLİF JETONU İADESİ YOK) =================
+// ================= 3. ADIM: MÜŞTERİ GELMEDİ / İPTAL ROTASI & KAÇAK İŞLEM ÖNLEME MOTORU =================
 app.post('/api/request/cancel-deal', async (req, res) => {
     try {
         const { requestId, jewelerId, reason } = req.body;
@@ -976,14 +977,107 @@ app.post('/api/request/cancel-deal', async (req, res) => {
             target.cancelReason = reason || 'Müşteri dükkana gelmedi.';
         }
 
-        console.log(`[İhale İptal Edildi]: #${requestId} | Sebep: ${reason || 'Müşteri gelmedi'} (Başarı komisyonu kesilmedi, teklif jetonları iade edilmez)`);
+        const searchKey = String(jewelerId || target?.winnerCode).trim().toLowerCase();
+        const jeweler = JEWELERS_DIRECTORY.find(j => 
+            (j.id && String(j.id).trim().toLowerCase() === searchKey) || 
+            (j.code && String(j.code).trim().toLowerCase() === searchKey) || 
+            (j.name && String(j.name).trim().toLowerCase() === searchKey)
+        );
+
+        const jewelerName = jeweler ? jeweler.name : (jewelerId || 'Anlaşmalı Kuyumcu');
+
+        console.log(`[İhale İptal Bildirimi]: #${requestId} | Sarraf: ${jewelerName} | Sebep: ${reason || 'Müşteri gelmedi'}`);
+
+        // Kaçak İşlem Teyidi: Müşterinin WhatsApp'ına otomatik doğrulama mesajı gönder
+        if (target && target.customerPhone) {
+            const yesLink = `https://altin-eksper.onrender.com/api/request/customer-feedback?req=${requestId}&answer=yes`;
+            const noLink = `https://altin-eksper.onrender.com/api/request/customer-feedback?req=${requestId}&answer=no`;
+
+            const auditMessage = 
+`❓ *ALTIN EKSPER — İŞLEM DOĞRULAMA TEYİDİ*
+
+Sayın *${target.customerName || 'Müşterimiz'}*, 
+*${jewelerName}* ile oluşturulan #${requestId} nolu satış randevunuz için sarraf tarafından *"Müşteri dükkana gelmedi / işlem iptal edildi"* bildirimi yapılmıştır.
+
+Hizmet kalitemizi ve sistem güvencenizi korumak adına lütfen aşağıdaki uygun seçeneğe dokununuz:
+
+👉 *Mağazaya gidip satışı tamamladıysanız tıklayın:*
+${yesLink}
+
+👉 *Gerçekten gitmediyseniz / vazgeçtiyseniz tıklayın:*
+${noLink}
+
+Geri bildiriminiz için teşekkür ederiz.`;
+
+            await sendWhatsAppMessage(target.customerPhone, auditMessage);
+        }
 
         res.json({
             success: true,
-            message: 'İhale başarıyla iptal edildi. Dükkanda işlem gerçekleşmediği için başarı komisyonu kesilmemiştir.'
+            message: 'İhale iptal kaydı alındı. Müşteriye doğrulama teyidi iletildi.'
         });
     } catch (err) {
+        console.error('İptal işlemi hatası:', err);
         res.status(500).json({ success: false, message: 'İptal işlemi başarısız.' });
+    }
+});
+
+// ================= 4. ADIM: MÜŞTERİ TEYİT LİNKİNE TIKLADIĞINDA ÇALIŞAN GERİ BİLDİRİM ROTASI =================
+app.get('/api/request/customer-feedback', async (req, res) => {
+    try {
+        const { req: requestId, answer } = req.query;
+        const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
+
+        if (answer === 'yes') {
+            // ALARM: Müşteri "Ben gittim, sattım" dedi ama kuyumcu "gelmedi" demişti!
+            if (target) {
+                target.customerClaimedCompleted = true;
+                target.status = 'SUSPECTED_DEAL'; // Şüpheli Kaçak İşlem Statüsü
+            }
+
+            const alertMsg = 
+`🚨 *DİKKAT: ŞÜPHELİ KAÇAK İŞLEM TESPİT EDİLDİ!*
+
+🏷 *Talep No:* #${requestId}
+👤 *Müşteri:* ${target ? target.customerName : 'Müşteri'} (${target ? target.customerPhone : ''})
+🏪 *Sarraf:* ${target ? target.winnerCode : 'Kuyumcu'}
+💰 *Ön Fiyat:* ${target ? Number(target.agreedPrice).toLocaleString('tr-TR') : 0} ₺
+
+⚠️ *Durum:* Sarraf panelden "Müşteri Gelmedi" diyerek işlemi iptal etti; ancak müşteri az önce linke tıklayarak mağazada satışı tamamladığını BEYAN ETTİ!`;
+
+            await sendWhatsAppMessage(WHATSAPP_CONFIG.adminPhone, alertMsg);
+
+            res.send(`
+                <!DOCTYPE html>
+                <html lang="tr">
+                <head><meta charset="UTF-8"><title>Geri Bildirim Alındı</title>
+                <style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head>
+                <body>
+                    <h2 style="color:#10b981;">✓ Bildiriminiz Alındı</h2>
+                    <p style="color:#cbd5e1; max-width:480px; margin:0 auto; line-height:1.6;">
+                        İşleminizi mağazada gerçekleştirdiğinizi belirttiniz. Bilgi sistemimize kaydedilmiştir. İlginiz için teşekkür ederiz.
+                    </p>
+                </body>
+                </html>
+            `);
+        } else {
+            // Normal İptal Onayı
+            res.send(`
+                <!DOCTYPE html>
+                <html lang="tr">
+                <head><meta charset="UTF-8"><title>Geri Bildirim Alındı</title>
+                <style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head>
+                <body>
+                    <h2 style="color:#38bdf8;">✓ Teşekkür Ederiz</h2>
+                    <p style="color:#cbd5e1; max-width:480px; margin:0 auto; line-height:1.6;">
+                        Randevuya gidemediğinizi belirttiniz. İşlem kaydınız güvenle kapatılmıştır.
+                    </p>
+                </body>
+                </html>
+            `);
+        }
+    } catch (e) {
+        res.status(500).send('İşlem kaydedilemedi.');
     }
 });
 
