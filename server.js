@@ -1016,4 +1016,3 @@ app.get('/api/admin/commission-report', adminAuthMiddleware, (req, res) => {
 app.listen(PORT, () => {
     console.log(`Altın Eksper API Sunucusu ${PORT} portunda çalışıyor.`);
 });
-```[cite: 2]
