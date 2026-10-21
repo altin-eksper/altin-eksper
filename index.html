@@ -3853,6 +3853,144 @@ async function sendJewelerApplication(event) {
 
 <!-- 81 İL & İLÇE MOTORU BAĞLANTISI -->
 <script src="cities.js" onload="startApp()" onerror="startApp()"></script>
+<!-- GİRİŞ & KAYIT PENCERESİ -->
+<div id="authModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#fff; border-radius:12px; max-width:420px; width:100%; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.3); font-family:sans-serif;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div style="display:flex; gap:14px; border-bottom:2px solid #e2e8f0; width:100%;">
+                <span id="tabLogin" onclick="switchAuthTab('login')" style="padding-bottom:6px; font-weight:700; font-size:15px; color:#f59e0b; border-bottom:2px solid #f59e0b; cursor:pointer;">
+                    Giriş Yap
+                </span>
+                <span id="tabRegister" onclick="switchAuthTab('register')" style="padding-bottom:6px; font-weight:600; font-size:15px; color:#64748b; cursor:pointer;">
+                    Kuyumcu Kayıt Ol
+                </span>
+            </div>
+            <button type="button" style="background:#475569; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-top:-10px;" onclick="closeAuthModal()">✕</button>
+        </div>
 
+        <!-- GİRİŞ FORMU -->
+        <form id="loginForm" onsubmit="handleAuthLogin(event)">
+            <div style="margin-bottom:12px;">
+                <label style="font-weight:600; font-size:12px; display:block; margin-bottom:4px; color:#475569;">Telefon No veya Sarraf Kodu</label>
+                <input type="text" id="loginId" placeholder="Örn: 0532XXXXXXX veya SARRAF_01" required style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:14px;">
+                <label style="font-weight:600; font-size:12px; display:block; margin-bottom:4px; color:#475569;">Giriş Şifresi</label>
+                <input type="password" id="loginPassword" placeholder="Şifrenizi giriniz" required style="width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+            </div>
+            <button type="submit" style="width:100%; padding:10px; font-size:14px; font-weight:700; background:#0f172a; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+                Giriş Yap
+            </button>
+            <div style="text-align:center; margin-top:10px; font-size:12px;">
+                <a href="/admin" style="color:#f59e0b; text-decoration:none; font-weight:600;">Yönetici Paneli Girişi →</a>
+            </div>
+        </form>
+
+        <!-- KAYIT FORMU -->
+        <form id="registerForm" style="display:none;" onsubmit="handleAuthRegister(event)">
+            <div style="margin-bottom:10px;">
+                <label style="font-weight:600; font-size:12px; display:block; margin-bottom:4px; color:#475569;">Kuyumcu / Mağaza Ünvanı *</label>
+                <input type="text" id="regFirmName" placeholder="Örn: Güneş Sarrafiye" required style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:10px;">
+                <label style="font-weight:600; font-size:12px; display:block; margin-bottom:4px; color:#475569;">WhatsApp Telefon No *</label>
+                <input type="tel" id="regPhone" placeholder="05XX XXX XX XX" required style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:10px;">
+                <label style="font-weight:600; font-size:12px; display:block; margin-bottom:4px; color:#475569;">Hizmet Bölgesi / İlçe *</label>
+                <input type="text" id="regDistrict" placeholder="Örn: Muratpaşa / Antalya" required style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:14px;">
+                <label style="font-weight:600; font-size:12px; display:block; margin-bottom:4px; color:#475569;">Kendi Belirleyeceğiniz Şifre *</label>
+                <input type="password" id="regPassword" placeholder="Şifreniz" required minlength="4" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+            </div>
+            <button type="submit" style="width:100%; padding:10px; font-size:14px; font-weight:700; background:#f59e0b; color:#0f172a; border:none; border-radius:6px; cursor:pointer;">
+                Hesap Oluştur & Başvur
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openAuthModal(tab) {
+    document.getElementById('authModal').style.display = 'flex';
+    switchAuthTab(tab || 'login');
+}
+
+function closeAuthModal() {
+    document.getElementById('authModal').style.display = 'none';
+}
+
+function switchAuthTab(tab) {
+    const isLogin = (tab === 'login');
+    document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = isLogin ? 'none' : 'block';
+
+    const tabL = document.getElementById('tabLogin');
+    const tabR = document.getElementById('tabRegister');
+    if (isLogin) {
+        tabL.style.color = '#f59e0b';
+        tabL.style.borderBottom = '2px solid #f59e0b';
+        tabR.style.color = '#64748b';
+        tabR.style.borderBottom = 'none';
+    } else {
+        tabR.style.color = '#f59e0b';
+        tabR.style.borderBottom = '2px solid #f59e0b';
+        tabL.style.color = '#64748b';
+        tabL.style.borderBottom = 'none';
+    }
+}
+
+async function handleAuthLogin(e) {
+    e.preventDefault();
+    const idOrPhone = document.getElementById('loginId').value.trim();
+    if (!idOrPhone) return;
+    
+    try {
+        const res = await fetch('/api/jeweler/status/' + encodeURIComponent(idOrPhone));
+        const data = await res.json();
+        if (data.success && data.data) {
+            localStorage.setItem('loggedJewelerId', data.data.id);
+            alert('Giriş başarılı! Portala aktarılıyorsunuz.');
+            window.location.href = '/kuyumcu.html?jeweler=' + data.data.id;
+        } else {
+            alert('Kayıtlı kuyumcu bulunamadı. Lütfen "Kuyumcu Kayıt Ol" sekmesinden kayıt açınız.');
+        }
+    } catch(err) {
+        localStorage.setItem('loggedJewelerId', idOrPhone);
+        window.location.href = '/kuyumcu.html?jeweler=' + idOrPhone;
+    }
+}
+
+async function handleAuthRegister(e) {
+    e.preventDefault();
+    const firmName = document.getElementById('regFirmName').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const district = document.getElementById('regDistrict').value.trim();
+    const pass = document.getElementById('regPassword').value.trim();
+
+    try {
+        const res = await fetch('/api/jeweler/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ firmName, phone, city: 'Antalya', district, password: pass, planType: 'token_25' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('✅ Kaydınız alındı! Hediyeniz yüklendi.');
+            if (data.jewelerId) {
+                localStorage.setItem('loggedJewelerId', data.jewelerId);
+                window.location.href = '/kuyumcu.html?jeweler=' + data.jewelerId;
+            } else {
+                closeAuthModal();
+            }
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    } catch(err) {
+        alert('Bağlantı hatası oluştu.');
+    }
+}
+</script>
 </body>
 </html>
