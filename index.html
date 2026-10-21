@@ -493,46 +493,20 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
 
 <body>
 
+
 <header>
     <div class="logo-wrap">
-        <div class="logo">Altın Eksper</div>
+        <div class="logo" onclick="window.location.reload()">Altın Eksper</div>
         <div class="tag" id="headerTag">Altınını Değerinde Sat — Güvenilir Sarraf Teklifleri</div>
     </div>
-    <div class="header-actions">
-        <!-- KOMİSYON & İHALE RAPORU BUTONU -->
-        <button type="button" class="secondary" style="background:#0f766e; font-size:12px; padding:6px 12px; font-weight:700;" onclick="openCommissionModal()">
-            💰 Komisyon & İhale Raporu
-        </button>
-
-        <!-- ESNAF / KUYUMCU KATILIM BUTONU -->
-        <button type="button" onclick="openJewelerApplyModal()" 
-                style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #facc15; border: 1px solid #eab308; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
-            <span>🏪</span> Sarraf / Esnaf Katıl
-        </button>
-
-        <button type="button" class="mode-toggle-btn" id="modeSwitchBtn" onclick="toggleAppMode()">
-            🔐 Kuyumcu Girişi
-        </button>
-        <div id="adminHeaderActions" style="display:none; gap:6px;">
-            <div class="user-badge" onclick="openProfileModal()">
-                👤 <span id="headerStoreName">Dükkan Profilim</span>
-            </div>
-            <button type="button" class="secondary" style="font-size:12px; padding:6px 10px; background:#0284c7;" onclick="openDirectoryModal()">
-                📖 Sarraf Rehberi
-            </button>
-            <button type="button" class="primary" style="font-size:12px; padding:6px 10px;" onclick="openDailyReportModal()">
-                📊 Günlük Rapor
-            </button>
-            <button type="button" class="secondary" style="font-size:12px; padding:6px 10px; background:#475569;" onclick="openMonthlyReportModal()">
-                📈 Aylık Rapor
-            </button>
-            <button type="button" class="wa-btn" style="font-size:12px; padding:6px 10px;" onclick="copyDirectWhatsAppLink()">
-                🔗 Müşteri Linki
-            </button>
-        </div>
+    
+    <!-- SADE & KURUMSAL GİRİŞ / HESAP AÇ MENÜSÜ -->
+    <div style="display:flex; align-items:center; gap:12px; font-size:13px; font-weight:600;">
+        <span onclick="openAuthModal('login')" style="color:#e2e8f0; cursor:pointer; padding:6px 10px; border-radius:6px;">Giriş Yap</span>
+        <span style="color:#475569; user-select:none;">|</span>
+        <span onclick="openAuthModal('register')" style="background:#f59e0b; color:#0f172a; font-weight:700; border-radius:6px; padding:6px 14px; cursor:pointer;">Hesap Aç</span>
     </div>
 </header>
-
 <div class="container">
 
 <div class="consumer-hero" id="consumerHeroCard">
