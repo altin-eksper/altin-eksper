@@ -199,12 +199,12 @@ input:focus{
 }
 .legal-footer a{ color: #64748b; text-decoration: underline; margin: 0 4px; cursor: pointer; }
 
-/* MODAL */
+/* RESMİ MODAL */
 .modal-backdrop{
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.65);
+    background: rgba(15, 23, 42, 0.7);
     z-index: 99999;
     align-items: center;
     justify-content: center;
@@ -212,47 +212,50 @@ input:focus{
 }
 .modal-box{
     background: #fff;
-    max-width: 620px;
+    max-width: 680px;
     width: 100%;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 35px rgba(0,0,0,0.25);
     display: flex;
     flex-direction: column;
     max-height: 85vh;
 }
 .modal-head{
-    padding: 16px 20px;
+    padding: 18px 24px;
     border-bottom: 1px solid #e2e8f0;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-.modal-head h3{ margin: 0; font-size: 16px; color: #0f172a; }
+.modal-head h3{ margin: 0; font-size: 17px; color: #0f172a; font-weight: 700; }
 .modal-close{
-    background: none; border: none; font-size: 20px; color: #64748b; cursor: pointer;
+    background: none; border: none; font-size: 22px; color: #64748b; cursor: pointer; line-height: 1;
 }
 .modal-body{
-    padding: 20px;
+    padding: 22px 24px;
     overflow-y: auto;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.65;
     color: #334155;
 }
 .modal-foot{
-    padding: 12px 20px;
+    padding: 14px 24px;
     border-top: 1px solid #e2e8f0;
     text-align: right;
+    background: #f8fafc;
+    border-radius: 0 0 12px 12px;
 }
 .modal-btn{
     background: #0284c7;
     color: #fff;
     border: none;
-    padding: 8px 18px;
+    padding: 9px 20px;
     border-radius: 6px;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
 }
+.modal-btn:hover{ background: #0369a1; }
 
 @media(max-width: 768px){
     .login-grid{ grid-template-columns: 1fr; gap: 24px; }
@@ -334,7 +337,7 @@ input:focus{
         </div>
         <div class="modal-body" id="loginModalContent"></div>
         <div class="modal-foot">
-            <button type="button" class="modal-btn" onclick="closeLoginLegal()">Anladım, Kapat</button>
+            <button type="button" class="modal-btn" onclick="closeLoginLegal()">Okudum, Anladım</button>
         </div>
     </div>
 </div>
@@ -355,17 +358,53 @@ function openLoginLegal(type) {
     const content = document.getElementById('loginModalContent');
 
     if (type === 'sozlesme') {
-        title.textContent = 'Kurumsal Hesap Sözleşmesi';
+        title.textContent = 'Altın Eksper — Kurumsal Sarraf İş Ortaklığı Sözleşmesi';
         content.innerHTML = `
-            <p><b>1. Kapsam:</b> Bu sözleşme Altın Eksper platformunda hesap oluşturan ve giriş yapan sarrafların yetki, hak ve yükümlülüklerini kapsar.</p>
-            <p><b>2. Hesap Güvenliği:</b> Sarraf, hesaba erişim sağladığı şifre ve doğrulama kodlarının güvenliğinden kendisi sorumludur. Oturum açık bırakılan terminallerde yapılan işlemler işletmeye aittir.</p>
-            <p><b>3. İhale İşleyişi:</b> Giriş yapan sarraflar bölgelerindeki canlı altın ihalelerine teklif verebilir ve müşteri dükkana ulaştığında 4 haneli PIN doğrulamasıyla işlemi kapatabilir.</p>
+            <h4 style="margin:0 0 6px; color:#0f172a; font-size:13.5px;">1. TARAFLAR VE SÖZLEŞMENİN AMACI</h4>
+            <p>İşbu Kurumsal Sarraf İş Ortaklığı Sözleşmesi ("Sözleşme"), Altın Eksper Dijital Bilgi ve Aracılık Platformu ("Platform") ile işbu platform üzerinden kurumsal üyelik tesis eden yetkili sarrafiye, kuyumculuk ve kıymetli maden ticareti işletmesi ("Üye Sarraf") arasında akdedilmiştir. Sözleşmenin amacı; platform vasıtasıyla nihai tüketicilerin satışa sunduğu ziynet, hurda ve has altın emtiası için güvenli, şeffaf, rekabetçi bir ihale ortamı tesis edilmesi ve tarafların hak/yükümlülüklerinin belirlenmesidir.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">2. TEKLİF AHLAKI, TAAHHÜT VE BAĞLAYICILIK</h4>
+            <p>Üye Sarraf, platform sistemi üzerinden tüketiciye ilettiği nakit alım teklifinin piyasa etiğine uygun ve bağlayıcı bir irade beyanı olduğunu kabul eder. Müşterinin bildirdiği ürün ayarı ve gramaj beyanının mağaza içinde yapılan hassas terazi tartımı ve mihenk taşı/ayar testi ile doğrulanması kaydıyla, sarraf teklif ettiği toplam bedeli eksiksiz olarak (nakit veya anlık FAST/havale transferi ile) müşteriye ödemekle yükümlüdür. Ürün niteliklerinde eksiklik, düşük ayar veya imitasyon tespiti hali müstesna olmak üzere, keyfi fiyat kırma ve tekliften dönme platform kurallarının ihlali sayılır.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">3. GÜVENLİK KODU (PIN) VE İŞLEM DOĞRULAMA</h4>
+            <p>Platform dışı kayıt dışı işlemlerin ("kaçak işlem") önüne geçilmesi, tüketici ve esnaf mağduriyetlerinin engellenmesi amacıyla her randevu için müşteriye özel 4 haneli Güvenlik PIN Kodu üretilir. Üye Sarraf, fiziki mağazasında alım işlemini sonlandırırken müşteriden bu kodu talep ederek sisteme işlemek zorundadır. Kodu girilmeyen veya teyit edilmeyen işlemler platform güvencesi kapsamı dışında kalır.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">4. BAŞARI JETONU VE KOMİSYON TARİFESİ</h4>
+            <p>Sistemde başarı kesintisi yalnızca müşteri mağazaya fiilen gelip satış kesinleştiğinde uygulanır. Başarı komisyonu; Bilezik, 22 Ayar Hurda ve 24 Ayar Gram Has altınlarda binde bir (‰1), diğer ziynet ve fantezi ürünlerde binde iki (‰2) olarak hesaplanır ve sarrafın jeton bakiyesinden mahsup edilir. Müşterinin mağazaya gelmediği ("No-Show") veya vazgeçtiği teyit edilen durumlarda Üye Sarraftan hiçbir jeton veya bedel tahsil edilmez.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">5. VERİ GİZLİLİĞİ VE İLETİŞİM GÜVENLİĞİ</h4>
+            <p>Üye Sarraf, ihale ve randevu süreci kapsamında tarafına iletilen tüketiciye ait isim, telefon ve konum verilerini münhasıran ilgili işlem için kullanacağını; hiçbir surette üçüncü kişilere devretmeyeceğini, ticari reklam/pazarlama amacıyla veri tabanına kaydetmeyeceğini taahhüt eder. Aksi davranışlar KVKK ve TCK kapsamında doğrudan Üye Sarrafın cezai sorumluluğundadır.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">6. FESİH VE YETKİLİ MAHKEME</h4>
+            <p>Platform kurallarını, dürüstlük ilkelerini ve mesleki ahlakı ihlal eden sarrafların hesapları tek taraflı olarak askıya alınabilir veya feshedilebilir. İşbu sözleşmeden doğabilecek uyuşmazlıklarda Antalya Mahkemeleri ve İcra Daireleri yetkilidir.</p>
         `;
     } else {
-        title.textContent = 'KVKK Aydınlatma Metni';
+        title.textContent = 'Altın Eksper — KVKK Aydınlatma ve Açık Rıza Metni';
         content.innerHTML = `
-            <p><b>1. Veri Sorumlusu:</b> Altın Eksper, 6698 sayılı KVKK kapsamında sarraf hesap giriş hareketlerini, IP loglarını ve işlem geçmişini sistem güvenliği amacıyla kayıt altında tutmaktadır.</p>
-            <p><b>2. Veri Güvenliği:</b> Şifreleriniz ve kurumsal bilgileriniz şifrelenmiş veri tabanında tutulmakta olup üçüncü şahıslara aktarılmamaktadır.</p>
+            <h4 style="margin:0 0 6px; color:#0f172a; font-size:13.5px;">1. VERİ SORUMLUSUNUN KİMLİĞİ</h4>
+            <p>6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, Altın Eksper platformu ("Veri Sorumlusu") sıfatıyla, kurumsal üyelerimizin, temsilcilerinin ve tüketicilerin kişisel verilerini aşağıda izah edilen kapsam ve şartlarda işlemekteyiz.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">2. İŞLENEN KİŞİSEL VERİ KATEGORİLERİ</h4>
+            <p>Kurumsal hesap oluşturma ve sistem kullanımı esnasında tarafınızca paylaşılan; 
+            <b>Kimlik Verileri:</b> Ad, soyad, T.C. kimlik numarası veya Vergi Kimlik Numarası (VKN); 
+            <b>İletişim Verileri:</b> E-posta adresi, sabit telefon, GSM/WhatsApp ihale bildirim numarası, mağaza açık adresi ve lokasyon; 
+            <b>Mesleki/Kurumsal Veriler:</b> Vergi dairesi ili ve adı, şirket unvanı, faaliyet alanı ve fatura bilgileri; 
+            <b>İşlem Güvenliği Verileri:</b> Giriş şifresi, oturum logları, IP adresi ve işlem zaman damgalarıdır.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">3. KİŞİSEL VERİ İŞLEME AMAÇLARI VE HUKUKİ SEBEPLERİ</h4>
+            <p>Kişisel verileriniz KVKK'nın 5. ve 6. maddelerine uygun olarak şu amaçlarla işlenir:</p>
+            <ul>
+                <li>Kurumsal esnaf kaydının teyidi ve sahte/yetkisiz üyeliklerin önlenmesi,</li>
+                <li>Bölgenizdeki tüketici altın bozdurma taleplerinin WhatsApp Cloud API ve portal altyapısı üzerinden anlık iletilmesi,</li>
+                <li>Satış randevularının oluşturulması, 4 haneli güvenlik PIN onaylarının yürütülmesi ve muhasebe takibi,</li>
+                <li>5549 sayılı Suç Gelirlerinin Aklanmasının Önlenmesi ve Türk Ticaret Kanunu kapsamındaki yasal yükümlülüklerin yerine getirilmesi.</li>
+            </ul>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">4. VERİLERİN AKTARIMI VE SAKLAMA SÜRESİ</h4>
+            <p>Kişisel verileriniz, kanunen yetkili kamu kurum ve kuruluşları (Vergi Daireleri, MASAK, Adli Makamlar) haricinde hiçbir üçüncü taraf reklam, pazarlama veya veri brokerı şirkete aktarılmaz veya satılmaz. Verileriniz, üyelik süresince ve yasal zamanaşımı süreleri (TTK ve VUK uyarınca 10 yıl) boyunca şifrelenmiş sunucu ortamlarında muhafaza edilir.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">5. KVKK'NIN 11. MADDESİ KAPSAMINDAKİ HAKLARINIZ</h4>
+            <p>Veri sahibi olarak dilediğiniz zaman; verilerinizin işlenip işlenmediğini öğrenme, işlenmişse buna ilişkin bilgi talep etme, amacına uygun kullanılıp kullanılmadığını öğrenme, eksik/yanlış işlenmişse düzeltilmesini isteme ve kanuni şartlar çerçevesinde silinmesini talep etme hakkına sahipsiniz. Başvurularınızı platform iletişim kanallarımız üzerinden iletebilirsiniz.</p>
         `;
     }
     modal.style.display = 'flex';
