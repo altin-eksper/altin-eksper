@@ -88,9 +88,7 @@ input:focus, select:focus{
     color: #334155;
     cursor: pointer;
 }
-.password-wrap{
-    position: relative;
-}
+.password-wrap{ position: relative; }
 .toggle-pass{
     position: absolute;
     right: 10px;
@@ -128,11 +126,7 @@ input:focus, select:focus{
     font-size: 13px;
     color: #64748b;
 }
-.login-link a{
-    color: #0284c7;
-    font-weight: 700;
-    text-decoration: none;
-}
+.login-link a{ color: #0284c7; font-weight: 700; text-decoration: none; }
 @media(max-width: 768px){
     .form-grid{ grid-template-columns: 1fr; gap: 0; }
     .content{ padding: 20px; }
@@ -153,7 +147,7 @@ input:focus, select:focus{
     <div class="content">
         <div class="title-row">
             <h2>Kurumsal hesap aç</h2>
-            <a href="javascript:void(0)" onclick="openLoginModal()">Zaten hesabın var mı? Giriş yap &gt;</a>
+            <a href="/giris.html">Zaten hesabın var mı? Giriş yap &gt;</a>
         </div>
 
         <form id="kurumsalForm" onsubmit="submitKurumsalForm(event)">
@@ -244,19 +238,19 @@ input:focus, select:focus{
                         </div>
                     </div>
 
+                    <!-- 81 İL VE DİNAMİK VERGİ DAİRESİ SELECT -->
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                         <div class="form-group">
                             <label>Vergi Dairesi İli *</label>
-                            <select id="kTaxCity" required>
-                                <option value="Antalya" selected>Antalya</option>
-                                <option value="İstanbul">İstanbul</option>
-                                <option value="Ankara">Ankara</option>
-                                <option value="İzmir">İzmir</option>
+                            <select id="kTaxCity" required onchange="handleTaxCityChange()">
+                                <option value="">İl Seçiniz</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Vergi Dairesi *</label>
-                            <input type="text" id="kTaxOffice" placeholder="Örn: Muratpaşa V.D." required>
+                            <select id="kTaxOffice" required>
+                                <option value="">Önce İl Seçiniz</option>
+                            </select>
                         </div>
                     </div>
 
@@ -282,7 +276,7 @@ input:focus, select:focus{
             <button type="submit" id="btnSubmit" class="btn-submit">Kurumsal Hesap Aç</button>
 
             <div class="login-link">
-                Zaten hesabın var mı? <a href="javascript:void(0)" onclick="openLoginModal()">Giriş yap &gt;</a>
+                Zaten hesabın var mı? <a href="/giris.html">Giriş yap &gt;</a>
             </div>
         </form>
     </div>
@@ -290,15 +284,59 @@ input:focus, select:focus{
 
 <script src="cities.js"></script>
 <script>
+// ================= 81 İL VERGİ DAİRELERİ REHBERİ =================
+const TAX_OFFICES_DATA = {
+    "Antalya": ["Muratpaşa V.D.", "Antalya Kurumlar V.D.", "Üçkapılar V.D.", "Düden V.D.", "Alanya V.D.", "Manavgat V.D.", "Kumluca V.D.", "Serik V.D.", "Kemer V.D.", "Kaş V.D.", "Finike V.D.", "Korkuteli V.D.", "Elmalı V.D."],
+    "İstanbul": ["Boğaziçi Kurumlar V.D.", "Marmara Kurumlar V.D.", "Beyoğlu V.D.", "Kadıköy V.D.", "Beşiktaş V.D.", "Fatih V.D.", "Şişli V.D.", "Bakırköy V.D.", "Üsküdar V.D.", "Sarıyer V.D.", "Kartal V.D.", "Pendik V.D.", "Ümraniye V.D.", "Maltepe V.D.", "Zeytinburnu V.D.", "Esenler V.D.", "Bağcılar V.D.", "Güngören V.D.", "Gaziosmanpaşa V.D.", "Beylikdüzü V.D.", "Avcılar V.D.", "Büyükçekmece V.D.", "Küçükçekmece V.D.", "Tuzla V.D.", "Sultanbeyli V.D.", "Silivri V.D.", "Çatalca V.D.", "Şile V.D."],
+    "Ankara": ["Başkent V.D.", "Ankara Kurumlar V.D.", "Çankaya V.D.", "Kavaklıdere V.D.", "Yenimahalle V.D.", "Keçiören V.D.", "Mamak V.D.", "Altındağ V.D.", "Ulus V.D.", "Sincan V.D.", "Etimesgut V.D.", "Gölbaşı V.D.", "Polatlı V.D.", "Beypazarı V.D.", "Kızılcahamam V.D.", "Çubuk V.D."],
+    "İzmir": ["Hasan Tahsin V.D.", "İzmir Kurumlar V.D.", "Konak V.D.", "Karşıyaka V.D.", "Bornova V.D.", "Çiğli V.D.", "Buca V.D.", "Gaziemir V.D.", "Bayraklı V.D.", "Balçova V.D.", "Torbalı V.D.", "Menemen V.D.", "Ödemiş V.D.", "Bergama V.D.", "Tire V.D.", "Aliağa V.D.", "Urla V.D.", "Çeşme V.D."],
+    "Bursa": ["Setbaşı V.D.", "Bursa Kurumlar V.D.", "Osmangazi V.D.", "Yıldırım V.D.", "Nilüfer V.D.", "İnegöl V.D.", "Gemlik V.D.", "Mustafakemalpaşa V.D.", "Mudanya V.D.", "Karacabey V.D.", "Orhangazi V.D."],
+    "Adana": ["Seyhan V.D.", "Yüreğir V.D.", "Ziyapaşa V.D.", "Beşocak V.D.", "Ceyhan V.D.", "Kozan V.D."],
+    "Konya": ["Mevlana V.D.", "Selçuk V.D.", "Meram V.D.", "Alaaddin V.D.", "Ereğli V.D.", "Akşehir V.D.", "Beyşehir V.D."],
+    "Gaziantep": ["Şahinbey V.D.", "Şehitkamil V.D.", "Gazikent V.D.", "Suburcu V.D.", "Nizip V.D., İslahiye V.D."],
+    "Kayseri": ["Erciyes V.D.", "Gevher Nesibe V.D.", "Mimarsinan V.D.", "Kayseri Kurumlar V.D.", "Develi V.D."],
+    "Mersin": ["Uray V.D.", "İstiklal V.D.", "Liman V.D.", "Tarsus V.D.", "Erdemli V.D.", "Silifke V.D.", "Anamur V.D."],
+    "Diyarbakır": ["Gökalp V.D.", "Süleyman Nazif V.D.", "Cahit Sıtkı Tarancı V.D.", "Ergani V.D., Bismil V.D."],
+    "Eskişehir": ["Battalgazi V.D.", "Taşbaşı V.D.", "2 Eylül V.D.", "Yunus Emre V.D."],
+    "Samsun": ["19 Mayıs V.D.", "Gaziler V.D.", "Zafer V.D.", "Bafra V.D.", "Çarşamba V.D."],
+    "Denizli": ["Pamukkale V.D.", "Saraylar V.D.", "Gökpınar V.D.", "Çivril V.D."],
+    "Şanlıurfa": ["Topçu Meydanı V.D.", "Şanlıurfa V.D.", "Siverek V.D.", "Viranşehir V.D., Birecik V.D."],
+    "Kocaeli": ["Alemdar V.D.", "Tepecik V.D.", "Uluçınar V.D.", "Gebze V.D.", "İlyasbey V.D.", "Körfez V.D., Gölcük V.D."],
+    "Trabzon": ["Karadeniz V.D.", "Hızırbey V.D.", "Akçaabat V.D., Of V.D."],
+    "Balıkesir": ["Karesi V.D.", "Kurtdereli V.D.", "Bandırma V.D.", "Edremit V.D., Ayvalık V.D., Burhaniye V.D."],
+    "Aydın": ["Güzelhisar V.D.", "Efeler V.D.", "Nazilli V.D.", "Söke V.D., Kuşadası V.D., Didim V.D."],
+    "Tekirdağ": ["Süleymanpaşa V.D.", "Namık Kemal V.D.", "Çorlu V.D.", "Çerkezköy V.D."]
+};
+
+const TURKEY_ALL_PROVINCES = [
+    "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Amasya", "Ankara", "Antalya", "Artvin", "Aydın", "Balıkesir",
+    "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli",
+    "Diyarbakır", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkari",
+    "Hatay", "Isparta", "Mersin", "İstanbul", "İzmir", "Kars", "Kastamonu", "Kayseri", "Kırklareli", "Kırşehir",
+    "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Kahramanmaraş", "Mardin", "Muğla", "Muş", "Nevşehir",
+    "Niğde", "Ordu", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas", "Tekirdağ", "Tokat",
+    "Trabzon", "Tunceli", "Şanlıurfa", "Uşak", "Van", "Yozgat", "Zonguldak", "Aksaray", "Bayburt", "Karaman",
+    "Kırıkkale", "Batman", "Şırnak", "Bartın", "Ardahan", "Iğdır", "Yalova", "Karabük", "Kilis", "Osmaniye", "Düzce"
+];
+
 function initRegistrationCities() {
     const citySel = document.getElementById('kCity');
-    if (!citySel) return;
-    if (typeof TURKEY_CITIES_DATA !== 'undefined') {
-        Object.keys(TURKEY_CITIES_DATA).forEach(c => {
-            citySel.innerHTML += `<option value="${c}" ${c === 'Antalya' ? 'selected' : ''}>${c}</option>`;
-        });
-        handleCityChange();
-    }
+    const taxCitySel = document.getElementById('kTaxCity');
+
+    const sourceList = (typeof TURKEY_CITIES_DATA !== 'undefined' && Object.keys(TURKEY_CITIES_DATA).length > 0)
+        ? Object.keys(TURKEY_CITIES_DATA)
+        : TURKEY_ALL_PROVINCES;
+
+    citySel.innerHTML = '<option value="">İl Seçiniz</option>';
+    taxCitySel.innerHTML = '<option value="">İl Seçiniz</option>';
+
+    sourceList.forEach(c => {
+        citySel.innerHTML += `<option value="${c}" ${c === 'Antalya' ? 'selected' : ''}>${c}</option>`;
+        taxCitySel.innerHTML += `<option value="${c}" ${c === 'Antalya' ? 'selected' : ''}>${c}</option>`;
+    });
+
+    handleCityChange();
+    handleTaxCityChange();
 }
 
 function handleCityChange() {
@@ -311,6 +349,26 @@ function handleCityChange() {
         TURKEY_CITIES_DATA[selectedCity].forEach(d => {
             distSel.innerHTML += `<option value="${d}">${d}</option>`;
         });
+    } else {
+        distSel.innerHTML = '<option value="Merkez">Merkez</option>';
+    }
+}
+
+function handleTaxCityChange() {
+    const taxCitySel = document.getElementById('kTaxCity');
+    const taxOfficeSel = document.getElementById('kTaxOffice');
+    if (!taxCitySel || !taxOfficeSel) return;
+
+    const city = taxCitySel.value;
+    taxOfficeSel.innerHTML = '<option value="">Vergi Dairesi Seçiniz</option>';
+
+    if (TAX_OFFICES_DATA[city]) {
+        TAX_OFFICES_DATA[city].forEach(vd => {
+            taxOfficeSel.innerHTML += `<option value="${vd}">${vd}</option>`;
+        });
+    } else if (city) {
+        taxOfficeSel.innerHTML += `<option value="${city} Vergi Dairesi Müdürlüğü" selected>${city} Vergi Dairesi Müdürlüğü</option>`;
+        taxOfficeSel.innerHTML += `<option value="${city} Gelir Müdürlüğü">${city} Gelir Müdürlüğü</option>`;
     }
 }
 
@@ -332,14 +390,6 @@ function togglePasswordVisibility() {
     input.type = (input.type === 'password') ? 'text' : 'password';
 }
 
-function openLoginModal() {
-    const id = prompt("Sarraf / Kuyumcu Telefon Numaranızı veya Kodunuzu Giriniz:");
-    if (id) {
-        localStorage.setItem('loggedJewelerId', id.trim());
-        window.location.href = `/kuyumcu.html?jeweler=${id.trim()}`;
-    }
-}
-
 async function submitKurumsalForm(e) {
     e.preventDefault();
     const btn = document.getElementById('btnSubmit');
@@ -357,7 +407,8 @@ async function submitKurumsalForm(e) {
         district: document.getElementById('kDistrict').value,
         neighborhood: document.getElementById('kNeighborhood').value.trim(),
         companyType: document.querySelector('input[name="companyType"]:checked').value,
-        taxOffice: document.getElementById('kTaxOffice').value.trim(),
+        taxCity: document.getElementById('kTaxCity').value,
+        taxOffice: document.getElementById('kTaxOffice').value,
         taxNo: document.getElementById('kTckn').value.trim() || document.getElementById('kVkn').value.trim(),
         planType: 'token_25'
     };

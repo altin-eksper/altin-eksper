@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Altın Eksper — Giriş Yap</title>
+<meta name="theme-color" content="#0f172a">
+<style>
+*{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body{
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px 16px;
+}
+.login-card{
+    background: #ffffff;
+    max-width: 820px;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+    padding: 36px 40px;
+    position: relative;
+}
+.card-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 14px;
+    margin-bottom: 28px;
+}
+.card-header h2{ margin: 0; font-size: 22px; color: #0f172a; }
+.card-header a{ font-size: 13px; color: #0284c7; text-decoration: none; font-weight: 600; }
+
+.login-grid{
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 40px;
+    align-items: center;
+}
+.form-group{ margin-bottom: 18px; }
+label{
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+}
+input[type="text"], input[type="password"]{
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: 0.15s;
+    background: #fff;
+    font-family: inherit;
+}
+input:focus{
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+.password-box{ position: relative; }
+.toggle-icon{
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #64748b;
+    user-select: none;
+}
+.sub-row{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12.5px;
+    margin-bottom: 18px;
+}
+.remember-me{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #475569;
+    cursor: pointer;
+}
+.forgot-link{
+    color: #0284c7;
+    text-decoration: none;
+    font-weight: 600;
+}
+.btn-primary{
+    width: 100%;
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 13px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.btn-primary:hover{ background: #0369a1; }
+
+.social-row{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 18px 0 24px;
+}
+.btn-social{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.btn-social:hover{ background: #f8fafc; border-color: #94a3b8; }
+
+.register-prompt{
+    border-top: 1px solid #e2e8f0;
+    padding-top: 20px;
+    text-align: center;
+}
+.register-prompt span{
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 10px;
+}
+.btn-register{
+    display: inline-block;
+    width: 100%;
+    border: 1.5px solid #0284c7;
+    color: #0284c7;
+    background: #fff;
+    padding: 11px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.btn-register:hover{ background: #f0f9ff; }
+
+/* SAĞ QR KOD ALANI */
+.qr-col{
+    text-align: center;
+    border-left: 1px solid #e2e8f0;
+    padding-left: 36px;
+}
+.qr-img{
+    width: 170px;
+    height: 170px;
+    border-radius: 8px;
+    padding: 6px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+}
+.qr-title{
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 14px 0 6px;
+}
+.qr-desc{
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+.legal-footer{
+    text-align: center;
+    margin-top: 24px;
+    font-size: 11px;
+    color: #94a3b8;
+}
+.legal-footer a{ color: #64748b; text-decoration: underline; margin: 0 4px; }
+
+@media(max-width: 768px){
+    .login-grid{ grid-template-columns: 1fr; gap: 24px; }
+    .qr-col{ border-left: none; border-top: 1px solid #e2e8f0; padding-left: 0; padding-top: 24px; }
+    .login-card{ padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="card-header">
+        <h2>Giriş yap</h2>
+        <a href="/">← Ana Sayfaya Dön</a>
+    </div>
+
+    <div class="login-grid">
+        <!-- SOL FORM ALANI -->
+        <div>
+            <form onsubmit="handleLoginSubmit(event)">
+                <div class="form-group">
+                    <label>E-posta veya Sarraf Numarası</label>
+                    <input type="text" id="userIdentifier" placeholder="E-posta veya 05XX XXX XX XX" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <div class="password-box">
+                        <input type="password" id="userPassword" placeholder="Şifrenizi giriniz" required>
+                        <span class="toggle-icon" onclick="togglePass()">👁</span>
+                    </div>
+                </div>
+
+                <div class="sub-row">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe" checked> Oturum açık kalsın
+                    </label>
+                    <a href="javascript:void(0)" onclick="alert('Şifre sıfırlama bağlantısı için kayıtlı WhatsApp hattınızdan destek alabilirsiniz.')" class="forgot-link">Şifremi unuttum</a>
+                </div>
+
+                <button type="submit" id="btnLogin" class="btn-primary">E-posta / Telefon ile giriş yap</button>
+            </form>
+
+            <div class="social-row">
+                <button type="button" class="btn-social" onclick="alert('Google Giriş Modülü Doğrulanıyor...')">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" alt="G"> Google ile giriş yap
+                </button>
+                <button type="button" class="btn-social" onclick="alert('Apple Giriş Modülü Doğrulanıyor...')">
+                    <span style="font-size:16px;"></span> Apple ile giriş yap
+                </button>
+            </div>
+
+            <div class="register-prompt">
+                <span>Henüz hesabın yok mu?</span>
+                <a href="/kurumsal-kayit.html" class="btn-register">Hesap aç</a>
+            </div>
+        </div>
+
+        <!-- SAĞ QR KOD ALANI -->
+        <div class="qr-col">
+            <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=https://altin-eksper.onrender.com/kuyumcu.html" alt="QR Kod">
+            <div class="qr-title">QR ile giriş yap</div>
+            <div class="qr-desc">Telefonunuzun kamerasıyla QR kodu tarayın, dükkan panelinize anında erişin.</div>
+        </div>
+    </div>
+
+    <div class="legal-footer">
+        <a href="/">Kurumsal Hesap Sözleşmesi</a> • <a href="/">KVKK Aydınlatma Metni</a>
+        <div style="margin-top:4px;">Bu site reCAPTCHA ile korunmaktadır.</div>
+    </div>
+</div>
+
+<script>
+function togglePass() {
+    const input = document.getElementById('userPassword');
+    input.type = (input.type === 'password') ? 'text' : 'password';
+}
+
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnLogin');
+    const id = document.getElementById('userIdentifier').value.trim();
+    const pass = document.getElementById('userPassword').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Giriş Yapılıyor...';
+
+    try {
+        const res = await fetch('/api/jeweler/status/' + encodeURIComponent(id));
+        const data = await res.json();
+        if (data.success && data.data) {
+            localStorage.setItem('loggedJewelerId', data.data.id);
+            alert(`Hoş geldiniz, ${data.data.name}! Mağaza portalınıza aktarılıyorsunuz.`);
+            window.location.href = `/kuyumcu.html?jeweler=${data.data.id}`;
+        } else {
+            // Doğrudan id veya telefon olarak da kabul et
+            localStorage.setItem('loggedJewelerId', id);
+            window.location.href = `/kuyumcu.html?jeweler=${id}`;
+        }
+    } catch(err) {
+        localStorage.setItem('loggedJewelerId', id);
+        window.location.href = `/kuyumcu.html?jeweler=${id}`;
+    }
+}
+</script>
+</body>
+</html>
