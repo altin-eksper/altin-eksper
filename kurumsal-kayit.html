@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Altın Eksper — Kurumsal Sarraf & Kuyumcu Başvurusu</title>
+<meta name="theme-color" content="#0f172a">
+<style>
+*{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body{
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    padding: 24px 16px;
+}
+.wrapper{
+    max-width: 860px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+.header{
+    background: #0f172a;
+    color: #fff;
+    padding: 24px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.header h1{ margin: 0; font-size: 20px; color: #f59e0b; }
+.header p{ margin: 4px 0 0; font-size: 13px; color: #94a3b8; }
+.content{ padding: 32px; }
+.title-row{
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.title-row h2{ margin: 0; font-size: 20px; color: #0f172a; }
+.title-row a{ font-size: 13px; color: #0284c7; text-decoration: none; font-weight: 600; }
+
+.form-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+.form-group{ margin-bottom: 16px; }
+label{
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+}
+input[type="text"], input[type="email"], input[type="tel"], input[type="password"], select{
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: 0.15s;
+    background: #fff;
+    font-family: inherit;
+}
+input:focus, select:focus{
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+.radio-group{
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 8px 0;
+}
+.radio-item{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+}
+.password-wrap{
+    position: relative;
+}
+.toggle-pass{
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 16px;
+    user-select: none;
+    color: #64748b;
+}
+.consent-box{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 20px 0;
+    font-size: 12.5px;
+    color: #475569;
+}
+.btn-submit{
+    width: 100%;
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-submit:hover{ background: #0369a1; }
+.login-link{
+    text-align: center;
+    margin-top: 18px;
+    font-size: 13px;
+    color: #64748b;
+}
+.login-link a{
+    color: #0284c7;
+    font-weight: 700;
+    text-decoration: none;
+}
+@media(max-width: 768px){
+    .form-grid{ grid-template-columns: 1fr; gap: 0; }
+    .content{ padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+    <div class="header">
+        <div>
+            <h1>ALTIN EKSPER</h1>
+            <p>Resmi ve Lisanslı Sarrafiye Pazar Yeri Katılım Formu</p>
+        </div>
+        <a href="/" style="color:#94a3b8; text-decoration:none; font-size:13px; font-weight:600;">← Ana Sayfa</a>
+    </div>
+
+    <div class="content">
+        <div class="title-row">
+            <h2>Kurumsal hesap aç</h2>
+            <a href="javascript:void(0)" onclick="openLoginModal()">Zaten hesabın var mı? Giriş yap &gt;</a>
+        </div>
+
+        <form id="kurumsalForm" onsubmit="submitKurumsalForm(event)">
+            <div class="form-grid">
+                <!-- SOL SÜTUN -->
+                <div>
+                    <div class="form-group">
+                        <label>Yetkili Adı *</label>
+                        <input type="text" id="kName" placeholder="Adınız" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Yetkili Soyadı *</label>
+                        <input type="text" id="kSurname" placeholder="Soyadınız" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kurumsal E-posta *</label>
+                        <input type="email" id="kEmail" placeholder="ornek@kuyumcu.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Giriş Şifresi *</label>
+                        <div class="password-wrap">
+                            <input type="password" id="kPassword" placeholder="En az 6 karakter" required minlength="6">
+                            <span class="toggle-pass" onclick="togglePasswordVisibility()">👁</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sabit / Mağaza Telefonu</label>
+                        <input type="tel" id="kLandline" placeholder="0242 XXX XX XX">
+                    </div>
+
+                    <div class="form-group">
+                        <label>WhatsApp İhale Bildirim Hattı *</label>
+                        <input type="tel" id="kPhone" placeholder="05XX XXX XX XX" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Faaliyet Alanınız *</label>
+                        <select id="kActivity" required>
+                            <option value="">Seçiniz</option>
+                            <option value="kuyumcu" selected>Perakende Kuyumculuk & Sarrafiye</option>
+                            <option value="imalat">Altın İmalat / Atölye</option>
+                            <option value="toptan">Toptan Has & Sarrafiye Ticareti</option>
+                            <option value="mucevher">Mücevherat & Pırlanta Mağazası</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- SAĞ SÜTUN -->
+                <div>
+                    <div class="form-group">
+                        <label>Mağaza / Firma Ticari Ünvanı *</label>
+                        <input type="text" id="kFirmName" placeholder="Örn: Güneş Sarrafiye Ltd. Şti." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>İl *</label>
+                        <select id="kCity" required onchange="handleCityChange()">
+                            <option value="">Seçiniz</option>
+                        </select>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="form-group">
+                            <label>İlçe *</label>
+                            <select id="kDistrict" required>
+                                <option value="">Önce İl Seçiniz</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Mahalle / Semt</label>
+                            <input type="text" id="kNeighborhood" placeholder="Örn: Şirinyalı Mah.">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>İşletme Türü *</label>
+                        <div class="radio-group">
+                            <label class="radio-item">
+                                <input type="radio" name="companyType" value="sahis" checked onchange="toggleCompanyFields()"> Şahıs şirketi
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="companyType" value="tuzel" onchange="toggleCompanyFields()"> Limited veya Anonim Şirketi
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="form-group">
+                            <label>Vergi Dairesi İli *</label>
+                            <select id="kTaxCity" required>
+                                <option value="Antalya" selected>Antalya</option>
+                                <option value="İstanbul">İstanbul</option>
+                                <option value="Ankara">Ankara</option>
+                                <option value="İzmir">İzmir</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Vergi Dairesi *</label>
+                            <input type="text" id="kTaxOffice" placeholder="Örn: Muratpaşa V.D." required>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="tcknGroup">
+                        <label>T.C. Kimlik No *</label>
+                        <input type="text" id="kTckn" maxlength="11" placeholder="11 Haneli TCKN">
+                    </div>
+
+                    <div class="form-group" id="vknGroup" style="display:none;">
+                        <label>Vergi Kimlik No (VKN) *</label>
+                        <input type="text" id="kVkn" maxlength="10" placeholder="10 Haneli VKN">
+                    </div>
+                </div>
+            </div>
+
+            <div class="consent-box">
+                <input type="checkbox" id="kConsent" required style="margin-top:3px; cursor:pointer;">
+                <label for="kConsent" style="margin:0; font-size:12px; cursor:pointer;">
+                    Altın Eksper <b>Kurumsal Üyelik Sözleşmesi</b> ve <b>KVKK Açık Rıza Metni</b>'ni okudum, onaylıyorum. Bu sayfadaki bilgilerin doğruluğunu taahhüt ederim.
+                </label>
+            </div>
+
+            <button type="submit" id="btnSubmit" class="btn-submit">Kurumsal Hesap Aç</button>
+
+            <div class="login-link">
+                Zaten hesabın var mı? <a href="javascript:void(0)" onclick="openLoginModal()">Giriş yap &gt;</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="cities.js"></script>
+<script>
+function initRegistrationCities() {
+    const citySel = document.getElementById('kCity');
+    if (!citySel) return;
+    if (typeof TURKEY_CITIES_DATA !== 'undefined') {
+        Object.keys(TURKEY_CITIES_DATA).forEach(c => {
+            citySel.innerHTML += `<option value="${c}" ${c === 'Antalya' ? 'selected' : ''}>${c}</option>`;
+        });
+        handleCityChange();
+    }
+}
+
+function handleCityChange() {
+    const citySel = document.getElementById('kCity');
+    const distSel = document.getElementById('kDistrict');
+    if (!citySel || !distSel) return;
+    const selectedCity = citySel.value;
+    distSel.innerHTML = '<option value="">İlçe Seçiniz</option>';
+    if (typeof TURKEY_CITIES_DATA !== 'undefined' && TURKEY_CITIES_DATA[selectedCity]) {
+        TURKEY_CITIES_DATA[selectedCity].forEach(d => {
+            distSel.innerHTML += `<option value="${d}">${d}</option>`;
+        });
+    }
+}
+
+function toggleCompanyFields() {
+    const type = document.querySelector('input[name="companyType"]:checked').value;
+    const tckn = document.getElementById('tcknGroup');
+    const vkn = document.getElementById('vknGroup');
+    if (type === 'sahis') {
+        tckn.style.display = 'block';
+        vkn.style.display = 'none';
+    } else {
+        tckn.style.display = 'none';
+        vkn.style.display = 'block';
+    }
+}
+
+function togglePasswordVisibility() {
+    const input = document.getElementById('kPassword');
+    input.type = (input.type === 'password') ? 'text' : 'password';
+}
+
+function openLoginModal() {
+    const id = prompt("Sarraf / Kuyumcu Telefon Numaranızı veya Kodunuzu Giriniz:");
+    if (id) {
+        localStorage.setItem('loggedJewelerId', id.trim());
+        window.location.href = `/kuyumcu.html?jeweler=${id.trim()}`;
+    }
+}
+
+async function submitKurumsalForm(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Hesap Oluşturuluyor...';
+
+    const payload = {
+        firmName: document.getElementById('kFirmName').value.trim(),
+        ownerName: document.getElementById('kName').value.trim() + ' ' + document.getElementById('kSurname').value.trim(),
+        email: document.getElementById('kEmail').value.trim(),
+        password: document.getElementById('kPassword').value.trim(),
+        phone: document.getElementById('kPhone').value.trim(),
+        landline: document.getElementById('kLandline').value.trim(),
+        city: document.getElementById('kCity').value,
+        district: document.getElementById('kDistrict').value,
+        neighborhood: document.getElementById('kNeighborhood').value.trim(),
+        companyType: document.querySelector('input[name="companyType"]:checked').value,
+        taxOffice: document.getElementById('kTaxOffice').value.trim(),
+        taxNo: document.getElementById('kTckn').value.trim() || document.getElementById('kVkn').value.trim(),
+        planType: 'token_25'
+    };
+
+    try {
+        const res = await fetch('/api/jeweler/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('🎉 Tebrikler! Kurumsal kaydınız başarıyla oluşturuldu. 10 deneme jetonunuz tanımlandı.');
+            localStorage.setItem('loggedJewelerId', data.jewelerId || payload.phone);
+            window.location.href = `/kuyumcu.html?jeweler=${data.jewelerId || payload.phone}`;
+        } else {
+            alert('Hata: ' + data.message);
+            btn.disabled = false;
+            btn.textContent = 'Kurumsal Hesap Aç';
+        }
+    } catch(err) {
+        alert('Bağlantı hatası oluştu.');
+        btn.disabled = false;
+        btn.textContent = 'Kurumsal Hesap Aç';
+    }
+}
+
+window.onload = initRegistrationCities;
+</script>
+</body>
+</html>
