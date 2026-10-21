@@ -107,6 +107,11 @@ input:focus, select:focus{
     font-size: 12.5px;
     color: #475569;
 }
+.consent-box a{
+    color: #0284c7;
+    text-decoration: underline;
+    cursor: pointer;
+}
 .btn-submit{
     width: 100%;
     background: #0284c7;
@@ -127,6 +132,62 @@ input:focus, select:focus{
     color: #64748b;
 }
 .login-link a{ color: #0284c7; font-weight: 700; text-decoration: none; }
+
+/* MODAL STİLLERİ */
+.modal-backdrop{
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal-box{
+    background: #fff;
+    max-width: 650px;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+}
+.modal-head{
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-head h3{ margin: 0; font-size: 16px; color: #0f172a; }
+.modal-close{
+    background: none; border: none; font-size: 20px; color: #64748b; cursor: pointer;
+}
+.modal-body{
+    padding: 20px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #334155;
+}
+.modal-foot{
+    padding: 12px 20px;
+    border-top: 1px solid #e2e8f0;
+    text-align: right;
+}
+.modal-btn{
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
 @media(max-width: 768px){
     .form-grid{ grid-template-columns: 1fr; gap: 0; }
     .content{ padding: 20px; }
@@ -179,7 +240,7 @@ input:focus, select:focus{
 
                     <div class="form-group">
                         <label>Sabit / Mağaza Telefonu</label>
-                        <input type="tel" id="kLandline" placeholder="0242 XXX XX XX">
+                        <input type="tel" id="kLandline" placeholder="0XXX XXX XX XX">
                     </div>
 
                     <div class="form-group">
@@ -209,7 +270,7 @@ input:focus, select:focus{
                     <div class="form-group">
                         <label>İl *</label>
                         <select id="kCity" required onchange="handleCityChange()">
-                            <option value="">Seçiniz</option>
+                            <option value="">İl Seçiniz</option>
                         </select>
                     </div>
 
@@ -238,7 +299,6 @@ input:focus, select:focus{
                         </div>
                     </div>
 
-                    <!-- 81 İL VE DİNAMİK VERGİ DAİRESİ SELECT -->
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                         <div class="form-group">
                             <label>Vergi Dairesi İli *</label>
@@ -269,7 +329,7 @@ input:focus, select:focus{
             <div class="consent-box">
                 <input type="checkbox" id="kConsent" required style="margin-top:3px; cursor:pointer;">
                 <label for="kConsent" style="margin:0; font-size:12px; cursor:pointer;">
-                    Altın Eksper <b>Kurumsal Üyelik Sözleşmesi</b> ve <b>KVKK Açık Rıza Metni</b>'ni okudum, onaylıyorum. Bu sayfadaki bilgilerin doğruluğunu taahhüt ederim.
+                    Altın Eksper <a onclick="openLegalModal('sozlesme')">Kurumsal Üyelik Sözleşmesi</a> ve <a onclick="openLegalModal('kvkk')">KVKK Açık Rıza Metni</a>'ni okudum, onaylıyorum. Bu sayfadaki bilgilerin doğruluğunu taahhüt ederim.
                 </label>
             </div>
 
@@ -282,30 +342,34 @@ input:focus, select:focus{
     </div>
 </div>
 
+<!-- SÖZLEŞME VE KVKK PENCERESİ -->
+<div id="legalModal" class="modal-backdrop">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3 id="modalTitle">Bilgilendirme</h3>
+            <button type="button" class="modal-close" onclick="closeLegalModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modalContent"></div>
+        <div class="modal-foot">
+            <button type="button" class="modal-btn" onclick="closeLegalModal()">Anladım, Kapat</button>
+        </div>
+    </div>
+</div>
+
 <script src="cities.js"></script>
 <script>
-// ================= 81 İL VERGİ DAİRELERİ REHBERİ =================
 const TAX_OFFICES_DATA = {
     "Antalya": ["Muratpaşa V.D.", "Antalya Kurumlar V.D.", "Üçkapılar V.D.", "Düden V.D.", "Alanya V.D.", "Manavgat V.D.", "Kumluca V.D.", "Serik V.D.", "Kemer V.D.", "Kaş V.D.", "Finike V.D.", "Korkuteli V.D.", "Elmalı V.D."],
-    "İstanbul": ["Boğaziçi Kurumlar V.D.", "Marmara Kurumlar V.D.", "Beyoğlu V.D.", "Kadıköy V.D.", "Beşiktaş V.D.", "Fatih V.D.", "Şişli V.D.", "Bakırköy V.D.", "Üsküdar V.D.", "Sarıyer V.D.", "Kartal V.D.", "Pendik V.D.", "Ümraniye V.D.", "Maltepe V.D.", "Zeytinburnu V.D.", "Esenler V.D.", "Bağcılar V.D.", "Güngören V.D.", "Gaziosmanpaşa V.D.", "Beylikdüzü V.D.", "Avcılar V.D.", "Büyükçekmece V.D.", "Küçükçekmece V.D.", "Tuzla V.D.", "Sultanbeyli V.D.", "Silivri V.D.", "Çatalca V.D.", "Şile V.D."],
-    "Ankara": ["Başkent V.D.", "Ankara Kurumlar V.D.", "Çankaya V.D.", "Kavaklıdere V.D.", "Yenimahalle V.D.", "Keçiören V.D.", "Mamak V.D.", "Altındağ V.D.", "Ulus V.D.", "Sincan V.D.", "Etimesgut V.D.", "Gölbaşı V.D.", "Polatlı V.D.", "Beypazarı V.D.", "Kızılcahamam V.D.", "Çubuk V.D."],
-    "İzmir": ["Hasan Tahsin V.D.", "İzmir Kurumlar V.D.", "Konak V.D.", "Karşıyaka V.D.", "Bornova V.D.", "Çiğli V.D.", "Buca V.D.", "Gaziemir V.D.", "Bayraklı V.D.", "Balçova V.D.", "Torbalı V.D.", "Menemen V.D.", "Ödemiş V.D.", "Bergama V.D.", "Tire V.D.", "Aliağa V.D.", "Urla V.D.", "Çeşme V.D."],
-    "Bursa": ["Setbaşı V.D.", "Bursa Kurumlar V.D.", "Osmangazi V.D.", "Yıldırım V.D.", "Nilüfer V.D.", "İnegöl V.D.", "Gemlik V.D.", "Mustafakemalpaşa V.D.", "Mudanya V.D.", "Karacabey V.D.", "Orhangazi V.D."],
-    "Adana": ["Seyhan V.D.", "Yüreğir V.D.", "Ziyapaşa V.D.", "Beşocak V.D.", "Ceyhan V.D.", "Kozan V.D."],
-    "Konya": ["Mevlana V.D.", "Selçuk V.D.", "Meram V.D.", "Alaaddin V.D.", "Ereğli V.D.", "Akşehir V.D.", "Beyşehir V.D."],
-    "Gaziantep": ["Şahinbey V.D.", "Şehitkamil V.D.", "Gazikent V.D.", "Suburcu V.D.", "Nizip V.D., İslahiye V.D."],
-    "Kayseri": ["Erciyes V.D.", "Gevher Nesibe V.D.", "Mimarsinan V.D.", "Kayseri Kurumlar V.D.", "Develi V.D."],
-    "Mersin": ["Uray V.D.", "İstiklal V.D.", "Liman V.D.", "Tarsus V.D.", "Erdemli V.D.", "Silifke V.D.", "Anamur V.D."],
-    "Diyarbakır": ["Gökalp V.D.", "Süleyman Nazif V.D.", "Cahit Sıtkı Tarancı V.D.", "Ergani V.D., Bismil V.D."],
-    "Eskişehir": ["Battalgazi V.D.", "Taşbaşı V.D.", "2 Eylül V.D.", "Yunus Emre V.D."],
-    "Samsun": ["19 Mayıs V.D.", "Gaziler V.D.", "Zafer V.D.", "Bafra V.D.", "Çarşamba V.D."],
-    "Denizli": ["Pamukkale V.D.", "Saraylar V.D.", "Gökpınar V.D.", "Çivril V.D."],
-    "Şanlıurfa": ["Topçu Meydanı V.D.", "Şanlıurfa V.D.", "Siverek V.D.", "Viranşehir V.D., Birecik V.D."],
-    "Kocaeli": ["Alemdar V.D.", "Tepecik V.D.", "Uluçınar V.D.", "Gebze V.D.", "İlyasbey V.D.", "Körfez V.D., Gölcük V.D."],
-    "Trabzon": ["Karadeniz V.D.", "Hızırbey V.D.", "Akçaabat V.D., Of V.D."],
-    "Balıkesir": ["Karesi V.D.", "Kurtdereli V.D.", "Bandırma V.D.", "Edremit V.D., Ayvalık V.D., Burhaniye V.D."],
-    "Aydın": ["Güzelhisar V.D.", "Efeler V.D.", "Nazilli V.D.", "Söke V.D., Kuşadası V.D., Didim V.D."],
-    "Tekirdağ": ["Süleymanpaşa V.D.", "Namık Kemal V.D.", "Çorlu V.D.", "Çerkezköy V.D."]
+    "İstanbul": ["Boğaziçi Kurumlar V.D.", "Marmara Kurumlar V.D.", "Beyoğlu V.D.", "Kadıköy V.D.", "Beşiktaş V.D.", "Fatih V.D.", "Şişli V.D.", "Bakırköy V.D.", "Üsküdar V.D.", "Sarıyer V.D.", "Kartal V.D.", "Pendik V.D.", "Ümraniye V.D.", "Maltepe V.D.", "Zeytinburnu V.D.", "Esenler V.D.", "Bağcılar V.D.", "Güngören V.D.", "Gaziosmanpaşa V.D.", "Beylikdüzü V.D.", "Avcılar V.D.", "Büyükçekmece V.D.", "Küçükçekmece V.D.", "Tuzla V.D.", "Sultanbeyli V.D."],
+    "Ankara": ["Başkent V.D.", "Ankara Kurumlar V.D.", "Çankaya V.D.", "Kavaklıdere V.D.", "Yenimahalle V.D.", "Keçiören V.D.", "Mamak V.D.", "Altındağ V.D.", "Ulus V.D.", "Sincan V.D.", "Etimesgut V.D.", "Gölbaşı V.D.", "Polatlı V.D."],
+    "İzmir": ["Hasan Tahsin V.D.", "İzmir Kurumlar V.D.", "Konak V.D.", "Karşıyaka V.D.", "Bornova V.D.", "Çiğli V.D.", "Buca V.D.", "Gaziemir V.D.", "Bayraklı V.D.", "Balçova V.D.", "Torbalı V.D.", "Menemen V.D.", "Ödemiş V.D.", "Bergama V.D.", "Aliağa V.D.", "Çeşme V.D."],
+    "Bursa": ["Setbaşı V.D.", "Bursa Kurumlar V.D.", "Osmangazi V.D.", "Yıldırım V.D.", "Nilüfer V.D.", "İnegöl V.D.", "Gemlik V.D.", "Mudanya V.D."],
+    "Adana": ["Seyhan V.D.", "Yüreğir V.D.", "Ziyapaşa V.D.", "Beşocak V.D.", "Ceyhan V.D."],
+    "Konya": ["Mevlana V.D.", "Selçuk V.D.", "Meram V.D.", "Alaaddin V.D.", "Ereğli V.D."],
+    "Gaziantep": ["Şahinbey V.D.", "Şehitkamil V.D.", "Gazikent V.D.", "Suburcu V.D.", "Nizip V.D."],
+    "Kayseri": ["Erciyes V.D.", "Gevher Nesibe V.D.", "Mimarsinan V.D.", "Kayseri Kurumlar V.D."],
+    "Mersin": ["Uray V.D.", "İstiklal V.D.", "Liman V.D.", "Tarsus V.D.", "Silifke V.D."],
+    "Kocaeli": ["Alemdar V.D.", "Tepecik V.D.", "Uluçınar V.D.", "Gebze V.D.", "Körfez V.D."]
 };
 
 const TURKEY_ALL_PROVINCES = [
@@ -331,44 +395,52 @@ function initRegistrationCities() {
     taxCitySel.innerHTML = '<option value="">İl Seçiniz</option>';
 
     sourceList.forEach(c => {
-        citySel.innerHTML += `<option value="${c}" ${c === 'Antalya' ? 'selected' : ''}>${c}</option>`;
-        taxCitySel.innerHTML += `<option value="${c}" ${c === 'Antalya' ? 'selected' : ''}>${c}</option>`;
+        citySel.innerHTML += `<option value="${c}">${c}</option>`;
+        taxCitySel.innerHTML += `<option value="${c}">${c}</option>`;
     });
 
-    handleCityChange();
-    handleTaxCityChange();
+    document.getElementById('kDistrict').innerHTML = '<option value="">Önce İl Seçiniz</option>';
+    document.getElementById('kTaxOffice').innerHTML = '<option value="">Önce İl Seçiniz</option>';
 }
 
 function handleCityChange() {
     const citySel = document.getElementById('kCity');
     const distSel = document.getElementById('kDistrict');
-    if (!citySel || !distSel) return;
     const selectedCity = citySel.value;
+
+    if (!selectedCity) {
+        distSel.innerHTML = '<option value="">Önce İl Seçiniz</option>';
+        return;
+    }
+
     distSel.innerHTML = '<option value="">İlçe Seçiniz</option>';
     if (typeof TURKEY_CITIES_DATA !== 'undefined' && TURKEY_CITIES_DATA[selectedCity]) {
         TURKEY_CITIES_DATA[selectedCity].forEach(d => {
             distSel.innerHTML += `<option value="${d}">${d}</option>`;
         });
     } else {
-        distSel.innerHTML = '<option value="Merkez">Merkez</option>';
+        distSel.innerHTML += '<option value="Merkez">Merkez</option>';
     }
 }
 
 function handleTaxCityChange() {
     const taxCitySel = document.getElementById('kTaxCity');
     const taxOfficeSel = document.getElementById('kTaxOffice');
-    if (!taxCitySel || !taxOfficeSel) return;
-
     const city = taxCitySel.value;
-    taxOfficeSel.innerHTML = '<option value="">Vergi Dairesi Seçiniz</option>';
 
+    if (!city) {
+        taxOfficeSel.innerHTML = '<option value="">Önce İl Seçiniz</option>';
+        return;
+    }
+
+    taxOfficeSel.innerHTML = '<option value="">Vergi Dairesi Seçiniz</option>';
     if (TAX_OFFICES_DATA[city]) {
         TAX_OFFICES_DATA[city].forEach(vd => {
             taxOfficeSel.innerHTML += `<option value="${vd}">${vd}</option>`;
         });
-    } else if (city) {
-        taxOfficeSel.innerHTML += `<option value="${city} Vergi Dairesi Müdürlüğü" selected>${city} Vergi Dairesi Müdürlüğü</option>`;
-        taxOfficeSel.innerHTML += `<option value="${city} Gelir Müdürlüğü">${city} Gelir Müdürlüğü</option>`;
+    } else {
+        taxOfficeSel.innerHTML += `<option value="${city} Vergi Dairesi Müdürlüğü">${city} Vergi Dairesi Müdürlüğü</option>`;
+        taxOfficeSel.innerHTML += `<option value="${city} Malmüdürlüğü">${city} Malmüdürlüğü</option>`;
     }
 }
 
@@ -388,6 +460,35 @@ function toggleCompanyFields() {
 function togglePasswordVisibility() {
     const input = document.getElementById('kPassword');
     input.type = (input.type === 'password') ? 'text' : 'password';
+}
+
+function openLegalModal(type) {
+    const modal = document.getElementById('legalModal');
+    const title = document.getElementById('modalTitle');
+    const content = document.getElementById('modalContent');
+
+    if (type === 'sozlesme') {
+        title.textContent = 'Altın Eksper — Kurumsal Sarraf İş Ortaklığı Sözleşmesi';
+        content.innerHTML = `
+            <p><b>1. Taraflar ve Amaç:</b> İşbu sözleşme, Altın Eksper platformu ile kurumsal üyelik başvurusunda bulunan yetkili kuyumcu/sarraf işletmesi arasında akdedilmiştir. Amaç, platform üzerinden tüketici altın bozdurma taleplerine şeffaf ve güvenli teklif verilmesini sağlamaktır.</p>
+            <p><b>2. Teklif Ahlakı ve Bağlayıcılık:</b> Sarraf, platform üzerinden müşteriye sunduğu alış fiyat teklifini; müşterinin beyan ettiği ayar, gramaj ve niteliklerin mağazada fiziki ekspertiz ve tartımla uyuşması şartıyla eksiksiz ödemeyi peşinen taahhüt eder.</p>
+            <p><b>3. Başarı Komisyonu ve Jeton Modeli:</b> Platformda işlem ancak müşteri mağazaya gelip fiziki satış kapandığında tamamlanır. İşlem tamamlandığında taahhüt edilen tarife (Bilezik/Has: ‰1, Diğer ziynet: ‰2) üzerinden sistem başarı jetonu düşümü yapılır. Müşterinin gelmediği durumlarda sarraftan hiçbir başarı bedeli veya jeton kesilmez.</p>
+            <p><b>4. Müşteri İletişim Güvenliği:</b> Sarraf, kendisine yönlendirilen müşteri iletişim bilgilerini yalnızca ilgili ihale ve randevu süreci için kullanabilir; üçüncü şahıslarla paylaşamaz veya harici pazarlama amacıyla kaydedemez.</p>
+        `;
+    } else {
+        title.textContent = 'Altın Eksper — KVKK Aydınlatma ve Açık Rıza Metni';
+        content.innerHTML = `
+            <p><b>1. Veri Sorumlusu:</b> 6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) uyarınca Altın Eksper, veri sorumlusu sıfatıyla kurumsal üyelik işlemleriniz kapsamındaki verilerinizi işlemektedir.</p>
+            <p><b>2. İşlenen Veriler:</b> Firma ticari ünvanı, yetkili ad-soyadı, vergi dairesi ve numarası, kurumsal e-posta, sabit ve GSM hatları, mağaza adres bilgileri.</p>
+            <p><b>3. İşleme Amaçları:</b> Kurumsal sarraf kimlik teyidinin sağlanması, bölgenizdeki altın satış ihalelerinin WhatsApp Cloud API üzerinden iletilmesi, güvenlik PIN doğrulamalarının yapılması ve yasal faturalandırma süreçlerinin yürütülmesi.</p>
+            <p><b>4. Veri Aktarımı:</b> Kurumsal verileriniz yasal zorunluluklar haricinde hiçbir üçüncü taraf reklam veya veri şirketine devredilemez ve satılamaz.</p>
+        `;
+    }
+    modal.style.display = 'flex';
+}
+
+function closeLegalModal() {
+    document.getElementById('legalModal').style.display = 'none';
 }
 
 async function submitKurumsalForm(e) {

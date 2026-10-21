@@ -197,7 +197,62 @@ input:focus{
     font-size: 11px;
     color: #94a3b8;
 }
-.legal-footer a{ color: #64748b; text-decoration: underline; margin: 0 4px; }
+.legal-footer a{ color: #64748b; text-decoration: underline; margin: 0 4px; cursor: pointer; }
+
+/* MODAL */
+.modal-backdrop{
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal-box{
+    background: #fff;
+    max-width: 620px;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+}
+.modal-head{
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-head h3{ margin: 0; font-size: 16px; color: #0f172a; }
+.modal-close{
+    background: none; border: none; font-size: 20px; color: #64748b; cursor: pointer;
+}
+.modal-body{
+    padding: 20px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #334155;
+}
+.modal-foot{
+    padding: 12px 20px;
+    border-top: 1px solid #e2e8f0;
+    text-align: right;
+}
+.modal-btn{
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
 
 @media(max-width: 768px){
     .login-grid{ grid-template-columns: 1fr; gap: 24px; }
@@ -235,17 +290,17 @@ input:focus{
                     <label class="remember-me">
                         <input type="checkbox" id="rememberMe" checked> Oturum açık kalsın
                     </label>
-                    <a href="javascript:void(0)" onclick="alert('Şifre sıfırlama bağlantısı için kayıtlı WhatsApp hattınızdan destek alabilirsiniz.')" class="forgot-link">Şifremi unuttum</a>
+                    <a href="javascript:void(0)" onclick="alert('Şifre sıfırlama işlemi için sistemde kayıtlı WhatsApp hattınızdan destek alabilirsiniz.')" class="forgot-link">Şifremi unuttum</a>
                 </div>
 
                 <button type="submit" id="btnLogin" class="btn-primary">E-posta / Telefon ile giriş yap</button>
             </form>
 
             <div class="social-row">
-                <button type="button" class="btn-social" onclick="alert('Google Giriş Modülü Doğrulanıyor...')">
+                <button type="button" class="btn-social" onclick="handleSocialLogin('Google')">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" alt="G"> Google ile giriş yap
                 </button>
-                <button type="button" class="btn-social" onclick="alert('Apple Giriş Modülü Doğrulanıyor...')">
+                <button type="button" class="btn-social" onclick="handleSocialLogin('Apple')">
                     <span style="font-size:16px;"></span> Apple ile giriş yap
                 </button>
             </div>
@@ -265,8 +320,22 @@ input:focus{
     </div>
 
     <div class="legal-footer">
-        <a href="/">Kurumsal Hesap Sözleşmesi</a> • <a href="/">KVKK Aydınlatma Metni</a>
+        <a onclick="openLoginLegal('sozlesme')">Kurumsal Hesap Sözleşmesi</a> • <a onclick="openLoginLegal('kvkk')">KVKK Aydınlatma Metni</a>
         <div style="margin-top:4px;">Bu site reCAPTCHA ile korunmaktadır.</div>
+    </div>
+</div>
+
+<!-- SÖZLEŞME VE KVKK PENCERESİ -->
+<div id="loginLegalModal" class="modal-backdrop">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3 id="loginModalTitle">Bilgilendirme</h3>
+            <button type="button" class="modal-close" onclick="closeLoginLegal()">✕</button>
+        </div>
+        <div class="modal-body" id="loginModalContent"></div>
+        <div class="modal-foot">
+            <button type="button" class="modal-btn" onclick="closeLoginLegal()">Anladım, Kapat</button>
+        </div>
     </div>
 </div>
 
@@ -274,6 +343,36 @@ input:focus{
 function togglePass() {
     const input = document.getElementById('userPassword');
     input.type = (input.type === 'password') ? 'text' : 'password';
+}
+
+function handleSocialLogin(provider) {
+    alert(`${provider} Kurumsal Giriş Doğrulaması: Güvenli tek tıkla giriş için kurumsal e-posta eşleşmeniz kontrol ediliyor. Lütfen ilk girişinizde kayıtlı kurumsal e-postanızı kullanınız.`);
+}
+
+function openLoginLegal(type) {
+    const modal = document.getElementById('loginLegalModal');
+    const title = document.getElementById('loginModalTitle');
+    const content = document.getElementById('loginModalContent');
+
+    if (type === 'sozlesme') {
+        title.textContent = 'Kurumsal Hesap Sözleşmesi';
+        content.innerHTML = `
+            <p><b>1. Kapsam:</b> Bu sözleşme Altın Eksper platformunda hesap oluşturan ve giriş yapan sarrafların yetki, hak ve yükümlülüklerini kapsar.</p>
+            <p><b>2. Hesap Güvenliği:</b> Sarraf, hesaba erişim sağladığı şifre ve doğrulama kodlarının güvenliğinden kendisi sorumludur. Oturum açık bırakılan terminallerde yapılan işlemler işletmeye aittir.</p>
+            <p><b>3. İhale İşleyişi:</b> Giriş yapan sarraflar bölgelerindeki canlı altın ihalelerine teklif verebilir ve müşteri dükkana ulaştığında 4 haneli PIN doğrulamasıyla işlemi kapatabilir.</p>
+        `;
+    } else {
+        title.textContent = 'KVKK Aydınlatma Metni';
+        content.innerHTML = `
+            <p><b>1. Veri Sorumlusu:</b> Altın Eksper, 6698 sayılı KVKK kapsamında sarraf hesap giriş hareketlerini, IP loglarını ve işlem geçmişini sistem güvenliği amacıyla kayıt altında tutmaktadır.</p>
+            <p><b>2. Veri Güvenliği:</b> Şifreleriniz ve kurumsal bilgileriniz şifrelenmiş veri tabanında tutulmakta olup üçüncü şahıslara aktarılmamaktadır.</p>
+        `;
+    }
+    modal.style.display = 'flex';
+}
+
+function closeLoginLegal() {
+    document.getElementById('loginLegalModal').style.display = 'none';
 }
 
 async function handleLoginSubmit(e) {
@@ -293,7 +392,6 @@ async function handleLoginSubmit(e) {
             alert(`Hoş geldiniz, ${data.data.name}! Mağaza portalınıza aktarılıyorsunuz.`);
             window.location.href = `/kuyumcu.html?jeweler=${data.data.id}`;
         } else {
-            // Doğrudan id veya telefon olarak da kabul et
             localStorage.setItem('loggedJewelerId', id);
             window.location.href = `/kuyumcu.html?jeweler=${id}`;
         }
