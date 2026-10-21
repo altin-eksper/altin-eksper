@@ -1344,56 +1344,29 @@ function updateAllPrices(hasGramPrice) {
 
 async function loadLivePrices() {
     const status = document.getElementById('liveStatus');
-    if (status) { 
-        status.textContent = '● Kurlar güncelleniyor...'; 
-        status.className = 'live-status'; 
-    }
-    
+    if (status) { status.textContent = '● Kurlar güncelleniyor...'; status.className = 'live-status'; }
     let calculatedGram = 0;
-
-    // 1. Birincil Kaynak: Doğrudan Serbest Piyasa Altın Fiyatı
     try {
-        const res = await fetch('https://api.genelpara.com/embed/altin.json', { cache: 'no-store' });
-        if (res.ok) {
-            const data = await res.json();
-            if (data && data.GA && data.GA.alis) {
-                calculatedGram = parseFloat(String(data.GA.alis).replace('.', '').replace(',', '.'));
-            }
-        }
-    } catch (e) {
-        console.warn('Birincil kur servisi yanıt vermedi, uluslararası motora geçiliyor...');
-    }
-
-    // 2. Yedek Kaynak: Uluslararası Ons + USD/TRY Motoru
-    if (!calculatedGram || calculatedGram <= 1000) {
-        try {
-            const [resUsd, resGold] = await Promise.all([
-                fetch('https://open.er-api.com/v6/latest/USD', { cache: 'no-store' }),
-                fetch('https://api.gold-api.com/price/XAU', { cache: 'no-store' })
-            ]);
-
-            if (resUsd.ok && resGold.ok) {
-                const dataUsd = await resUsd.json();
+        const resUsd = await fetch('https://open.er-api.com/v6/latest/USD', { cache: 'no-store' });
+        if (resUsd.ok) {
+            const dataUsd = await resUsd.json();
+            const usdTry = dataUsd?.rates?.TRY;
+            const resGold = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT', { cache: 'no-store' });
+            if (resGold.ok) {
                 const dataGold = await resGold.json();
-
-                const usdTry = dataUsd?.rates?.TRY;
                 const ounceUsd = parseFloat(dataGold.price);
-
                 if (ounceUsd > 1000 && usdTry > 10) {
                     calculatedGram = (ounceUsd / 31.1034768) * usdTry * MILYEM_24K;
                 }
             }
-        } catch (err) {
-            console.error('Yedek kur servisi hatası:', err);
         }
-    }
+    } catch (e) {}
 
-    // Ekrandaki kutuları ve çarpanları güncelle
     if (calculatedGram > 1000) {
         updateAllPrices(calculatedGram);
         if (status) {
             const clock = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            status.textContent = '● Canlı Piyasa (' + clock + ')';
+            status.textContent = '● Canlı Alış (' + clock + ')';
             status.className = 'live-status live-ok';
         }
     } else {
@@ -1403,7 +1376,6 @@ async function loadLivePrices() {
             status.className = 'live-status live-ok';
         }
     }
-}
 }
 
 // ==================== İL & İLÇE DROPDOWN MANTIĞI ====================
