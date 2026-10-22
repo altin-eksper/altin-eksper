@@ -1344,57 +1344,37 @@ function updateAllPrices(hasGramPrice) {
 
 async function loadLivePrices() {
     const status = document.getElementById('liveStatus');
-    const submitBtn = document.getElementById('submitRequestBtn');
-    
-    if (status) { 
-        status.textContent = '● Kurlar güncelleniyor...'; 
-        status.className = 'live-status'; 
-    }
-
+    if (status) { status.textContent = '● Kurlar güncelleniyor...'; status.className = 'live-status'; }
+    let calculatedGram = 0;
     try {
-        const res = await fetch(BACKEND_API_URL + '/live-prices');
-        const data = await res.json();
-
-        // Yalnızca sunucudan gelen gerçek ve geçerli canlı kur kabul edilir
-        if (data.success && data.hasGram && Number(data.hasGram) > 1000) {
-            updateAllPrices(data.hasGram);
-            
-            if (status) {
-                const clock = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-                status.textContent = '● Canlı Piyasa (' + clock + ')';
-                status.className = 'live-status live-ok';
+        const resUsd = await fetch('https://open.er-api.com/v6/latest/USD', { cache: 'no-store' });
+        if (resUsd.ok) {
+            const dataUsd = await resUsd.json();
+            const usdTry = dataUsd?.rates?.TRY;
+            const resGold = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT', { cache: 'no-store' });
+            if (resGold.ok) {
+                const dataGold = await resGold.json();
+                const ounceUsd = parseFloat(dataGold.price);
+                if (ounceUsd > 1000 && usdTry > 10) {
+                    calculatedGram = (ounceUsd / 31.1034768) * usdTry * MILYEM_24K;
+                }
             }
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
-                submitBtn.style.cursor = 'pointer';
-            }
-            return;
         }
-    } catch (e) {
-        console.error('Canlı kur bağlantı hatası:', e);
-    }
+    } catch (e) {}
 
-    // GÜNCEL KUR ALINAMAZSA ASLA SABİT/ESKİ FİYAT BASILMAZ:
-    if (status) {
-        status.textContent = '⚠️ Canlı Piyasa Bağlantısı Kurulamadı';
-        status.className = 'live-status';
-        status.style.color = '#ef4444';
-    }
-
-    const mg = document.getElementById('marketGram');
-    const mq = document.getElementById('marketQuarter');
-    const mh = document.getElementById('marketHalf');
-    const mf = document.getElementById('marketFull');
-    if (mg) mg.textContent = 'Bağlanıyor...';
-    if (mq) mq.textContent = 'Bağlanıyor...';
-    if (mh) mh.textContent = 'Bağlanıyor...';
-    if (mf) mf.textContent = 'Bağlanıyor...';
-
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.style.opacity = '0.6';
-        submitBtn.style.cursor = 'not-allowed';
+    if (calculatedGram > 1000) {
+        updateAllPrices(calculatedGram);
+        if (status) {
+            const clock = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            status.textContent = '● Canlı Alış (' + clock + ')';
+            status.className = 'live-status live-ok';
+        }
+    } else {
+        updateAllPrices(PRICES.gram || 6725);
+        if (status) {
+            status.textContent = '● Gösterge Kuru Aktif';
+            status.className = 'live-status live-ok';
+        }
     }
 }
 
