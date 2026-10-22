@@ -1156,27 +1156,35 @@ app.get('/api/admin/commission-report', adminAuthMiddleware, (req, res) => {
 // ================= CANLI ALTIN KURU DAĞITIMI =================
 let cachedHasGram = 6725;
 
+// ================= CANLI ALTIN KURU MOTORU & ROTASI =================
+let cachedHasGram = 6483.93;
+
 async function updateLiveGold() {
     try {
         const [resUsd, resGold] = await Promise.all([
             fetch('https://open.er-api.com/v6/latest/USD'),
-            fetch('https://api.gold-api.com/price/XAU')
+            fetch('https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT')
         ]);
+
         if (resUsd.ok && resGold.ok) {
             const dataUsd = await resUsd.json();
             const dataGold = await resGold.json();
+
             const usdTry = dataUsd?.rates?.TRY;
             const ounceUsd = parseFloat(dataGold.price);
+
             if (ounceUsd > 1000 && usdTry > 10) {
                 cachedHasGram = Math.round(((ounceUsd / 31.1034768) * usdTry * 0.995) * 100) / 100;
                 console.log('[Canlı Kur]: Has Gram:', cachedHasGram, 'TL');
             }
         }
-    } catch (e) {}
+    } catch (e) {
+        console.error('[Canlı Kur Hatası]:', e.message);
+    }
 }
 
 updateLiveGold();
-setInterval(updateLiveGold, 60000);
+setInterval(updateLiveGold, 30000);
 
 app.get('/api/live-prices', (req, res) => {
     res.json({ success: true, hasGram: cachedHasGram });
