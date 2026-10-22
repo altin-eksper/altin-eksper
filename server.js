@@ -11,18 +11,15 @@ app.use(cors());
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(express.static(__dirname));
-// ================= CANLI PİYASA KUR MOTORU (CORS ENGELSİZ) =================
-let cachedGoldPrices = {
-    gramHas: 6725,
-    updatedAt: new Date().toISOString()
-};
 
-async function fetchLiveGoldPriceFromSource() {
+// ================= CANLI ALTIN KURU MOTORU (TEK VE RESMİ) =================
+let cachedHasGram = 6483.93;
+
+async function updateLiveGold() {
     try {
-        // Uluslararası Ons ve USD/TRY üzerinden toptan has hesaplama
         const [resUsd, resGold] = await Promise.all([
             fetch('https://open.er-api.com/v6/latest/USD'),
-            fetch('https://api.gold-api.com/price/XAU')
+            fetch('https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT')
         ]);
 
         if (resUsd.ok && resGold.ok) {
@@ -33,30 +30,25 @@ async function fetchLiveGoldPriceFromSource() {
             const ounceUsd = parseFloat(dataGold.price);
 
             if (ounceUsd > 1000 && usdTry > 10) {
-                // 1 Ons = 31.1034768 gram, 0.995 toptan has çarpanı
-                const calculatedGram = (ounceUsd / 31.1034768) * usdTry * 0.995;
-                if (calculatedGram > 1000) {
-                    cachedGoldPrices.gramHas = Math.round(calculatedGram * 100) / 100;
-                    cachedGoldPrices.updatedAt = new Date().toISOString();
-                    console.log(`[Piyasa Kuru Güncellendi]: Has Gram: ${cachedGoldPrices.gramHas} TL`);
-                }
+                cachedHasGram = Math.round(((ounceUsd / 31.1034768) * usdTry * 0.995) * 100) / 100;
+                console.log(`[Canlı Kur Güncellendi]: Has Gram: ${cachedHasGram} TL (${new Date().toLocaleTimeString('tr-TR')})`);
             }
         }
-    } catch (err) {
-        console.error('[Canlı Kur Çekme Hatası]:', err.message);
+    } catch (e) {
+        console.error('[Canlı Kur Hatası]:', e.message);
     }
 }
 
-// Sunucu başlar başlamaz çek ve her 60 saniyede bir otomatik yenile
-fetchLiveGoldPriceFromSource();
-setInterval(fetchLiveGoldPriceFromSource, 60000);
+// Sunucu açılır açılmaz anında çek ve 20 saniyede bir güncelle
+updateLiveGold();
+setInterval(updateLiveGold, 20000);
 
-// Ön yüzün sorunsuz çağıracağı yerel API rotası
+// Ön yüzün anlık kuru okuduğu tek rota
 app.get('/api/live-prices', (req, res) => {
     res.json({
         success: true,
-        hasGram: cachedGoldPrices.gramHas,
-        updatedAt: cachedGoldPrices.updatedAt
+        hasGram: cachedHasGram,
+        updatedAt: new Date().toISOString()
     });
 });
 
@@ -99,7 +91,6 @@ function isBusinessHours() {
 }
 
 // Ürün bazlı dinamik başarı komisyonu hesaplama fonksiyonu
-// KURAL: Bilezik, 22k Hurda ve 24k Gram için Binde 1 (0.001); diğer ürünler için Binde 2 (0.002)
 function calculateDealCommissionAndTokens(items, agreedPrice) {
     const finalPrice = Number(agreedPrice) || 0;
     if (finalPrice <= 0) return { commissionTL: 0, tokens: 2, appliedRateText: '‰2' };
@@ -312,7 +303,7 @@ async function sendWhatsAppMessage(toPhone, messageText) {
     }
 }
 
-// Süresi dolan (15 dk) talepleri otomatik takip ve teklif alamayan müşteriyi bilgilendirme
+// Süresi dolan (15 dk) talepleri otomatik takip
 setInterval(async () => {
     const now = Date.now();
     for (const r of requestsPool) {
@@ -649,11 +640,9 @@ app.post('/api/request/create', async (req, res) => {
         reqData.status = 'PENDING';
         reqData.quotes = [];
 
-        // Talebi hemen havuza al ve kalıcı database.json dosyasına yaz
         requestsPool.unshift(reqData);
         saveDatabase();
 
-        // Mesai saati dışındaysa sarraflara gece mesaj atılmaz
         if (!openNow) {
             if (reqData.customerPhone) {
                 const offHourMsg = `🌙 *Altın Eksper:* #${reqData.requestId} nolu talebiniz alındı. Sarraflarımız şu an mesai saatleri dışındadır (Çalışma: Haftanın 7 Günü 09:00 - 18:00). Talebiniz sabah 09:00'da canlı ihaleye açılacak ve teklifler toplanacaktır.`;
@@ -669,7 +658,6 @@ app.post('/api/request/create', async (req, res) => {
 
         const targetDistrictRaw = (reqData.district || '').trim().toLowerCase();
 
-        // İlçeye veya aktifliğe göre kuyumcuları eşle
         let matchedJewelers = JEWELERS_DIRECTORY.filter(j => {
             if (j.status !== 'ACTIVE') return false;
             if (!targetDistrictRaw) return true;
@@ -679,7 +667,6 @@ app.post('/api/request/create', async (req, res) => {
             });
         });
 
-        // İlçe tam eşleşmezse tüm aktif sarraflara gönder
         if (matchedJewelers.length === 0) {
             matchedJewelers = JEWELERS_DIRECTORY.filter(j => j.status === 'ACTIVE');
         }
@@ -809,7 +796,7 @@ app.post('/api/request/quote', (req, res) => {
     });
 });
 
-// ================= 1. ADIM: MÜŞTERİ SEÇTİĞİNDE 4 HANELİ PIN ÜRETİLİR & RANDEVU OLUŞTURULUR =================
+// ================= 1. ADIM: MÜŞTERİ SEÇTİĞİNDE 4 HANELİ PIN ÜRETİLİR =================
 app.post('/api/request/notify-winner', async (req, res) => {
     try {
         const { requestId, jewelerCode, agreedPrice, customerName, customerPhone } = req.body;
@@ -824,7 +811,6 @@ app.post('/api/request/notify-winner', async (req, res) => {
             target.agreedPrice = finalPrice;
             target.securityPin = securityPin;
             saveDatabase();
-            console.log(`[Randevu Kesildi]: #${requestId} kazanan: ${jewelerCode} | PIN: ${securityPin} | Ön Tutar: ${finalPrice.toLocaleString('tr-TR')} TL`);
         }
 
         const searchKey = String(jewelerCode).trim().toLowerCase();
@@ -838,7 +824,6 @@ app.post('/api/request/notify-winner', async (req, res) => {
         const jewelerName = targetJeweler ? targetJeweler.name : jewelerCode;
         const jewelerAddress = (targetJeweler && targetJeweler.address) ? targetJeweler.address : 'Muratpaşa / Antalya';
         const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(jewelerAddress);
-
         const finishUrl = `https://altin-eksper.onrender.com/kuyumcu.html?req=${requestId}&jeweler=${targetJeweler ? targetJeweler.id : jewelerCode}`;
 
         const winnerMessage = 
@@ -898,7 +883,7 @@ Mağazada ödemenizi alırken yukarıdaki *4 Haneli Güvenlik Kodunu (${security
     }
 });
 
-// ================= 2. ADIM: MÜŞTERİ MAĞAZAYA GELDİĞİNDE PIN & GERÇEK TUTARLA JETON DÜŞÜMÜ (MÜKERRER KAPATMA KORUMALI) =================
+// ================= 2. ADIM: İŞLEM KAPATMA & JETON DÜŞÜMÜ =================
 app.post('/api/request/complete-deal', async (req, res) => {
     try {
         const { requestId, jewelerId, actualDealPrice, customerPin } = req.body;
@@ -906,31 +891,13 @@ app.post('/api/request/complete-deal', async (req, res) => {
         const realPrice = Number(actualDealPrice) || 0;
 
         if (target && target.status === 'COMPLETED') {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Bu ihale işlemi başka bir cihazdan veya yetkili tarafından zaten kapatılmıştır! Mükerrer işlem yapılamaz.' 
-            });
-        }
-
-        const alreadyInCompletedList = completedDeals.some(d => String(d.requestId).trim() === String(requestId).trim());
-        if (alreadyInCompletedList) {
-            return res.status(400).json({ 
-                success: false, 
-                message: `Bu işlem (#${requestId}) sistemde zaten tamamlanmış görünüyor. Tekrar bakiye kesilmemesi için işlem durduruldu.` 
-            });
-        }
-
-        if (realPrice <= 0) {
-            return res.status(400).json({ success: false, message: 'Lütfen dükkanda gerçekleşen geçerli bir alım tutarı giriniz.' });
+            return res.status(400).json({ success: false, message: 'Bu işlem zaten tamamlanmıştır.' });
         }
 
         if (target && target.securityPin) {
             const enteredPin = String(customerPin || '').trim();
             if (enteredPin !== String(target.securityPin).trim()) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Girilen 4 haneli Güvenlik PIN kodu hatalı! Lütfen müşterinin telefonundaki kodu kontrol ediniz.' 
-                });
+                return res.status(400).json({ success: false, message: 'Girilen 4 haneli Güvenlik PIN kodu hatalı!' });
             }
         }
 
@@ -954,7 +921,6 @@ app.post('/api/request/complete-deal', async (req, res) => {
             deductedTokens = feeCalculation.tokens;
             targetJeweler.credits = Math.max(0, (Number(targetJeweler.credits) || 0) - deductedTokens);
             remainingCredits = targetJeweler.credits;
-            console.log(`[Dükkanda Tamamlandı]: ${targetJeweler.name} | Gerçekleşen: ${realPrice.toLocaleString('tr-TR')} TL | Oran: ${feeCalculation.appliedRateText} | Düşen: ${deductedTokens} Jeton | Kalan: ${remainingCredits}`);
         }
 
         if (target) {
@@ -1002,7 +968,7 @@ Hayırlı ve bereketli kazançlar dileriz!`;
 
         res.json({
             success: true,
-            message: `Güvenlik PIN kodu doğrulandı. İşlem ${realPrice.toLocaleString('tr-TR')} TL üzerinden kapatıldı ve ${deductedTokens} jeton başarı bedeli düşüldü.`,
+            message: `Güvenlik PIN kodu doğrulandı. İşlem kapatıldı.`,
             deal: dealRecord,
             remainingCredits: remainingCredits,
             deductedTokens: deductedTokens,
@@ -1014,7 +980,7 @@ Hayırlı ve bereketli kazançlar dileriz!`;
     }
 });
 
-// ================= 3. ADIM: MÜŞTERİ GELMEDİ / İPTAL ROTASI & KAÇAK İŞLEM ÖNLEME MOTORU =================
+// ================= 3. ADIM: MÜŞTERİ GELMEDİ / İPTAL ROTASI =================
 app.post('/api/request/cancel-deal', async (req, res) => {
     try {
         const { requestId, jewelerId, reason } = req.body;
@@ -1034,8 +1000,6 @@ app.post('/api/request/cancel-deal', async (req, res) => {
         );
 
         const jewelerName = jeweler ? jeweler.name : (jewelerId || 'Anlaşmalı Kuyumcu');
-
-        console.log(`[İhale İptal Bildirimi]: #${requestId} | Sarraf: ${jewelerName} | Sebep: ${reason || 'Müşteri gelmedi'}`);
 
         if (target && target.customerPhone) {
             const yesLink = `https://altin-eksper.onrender.com/api/request/customer-feedback?req=${requestId}&answer=yes`;
@@ -1070,7 +1034,7 @@ Geri bildiriminiz için teşekkür ederiz.`;
     }
 });
 
-// ================= 4. ADIM: MÜŞTERİ TEYİT LİNKİNE TIKLADIĞINDA ÇALIŞAN GERİ BİLDİRİM ROTASI =================
+// ================= 4. ADIM: MÜŞTERİ GERİ BİLDİRİMİ =================
 app.get('/api/request/customer-feedback', async (req, res) => {
     try {
         const { req: requestId, answer } = req.query;
@@ -1095,33 +1059,9 @@ app.get('/api/request/customer-feedback', async (req, res) => {
 
             await sendWhatsAppMessage(WHATSAPP_CONFIG.adminPhone, alertMsg);
 
-            res.send(`
-                <!DOCTYPE html>
-                <html lang="tr">
-                <head><meta charset="UTF-8"><title>Geri Bildirim Alındı</title>
-                <style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head>
-                <body>
-                    <h2 style="color:#10b981;">✓ Bildiriminiz Alındı</h2>
-                    <p style="color:#cbd5e1; max-width:480px; margin:0 auto; line-height:1.6;">
-                        İşleminizi mağazada gerçekleştirdiğinizi belirttiniz. Bilgi sistemimize kaydedilmiştir. İlginiz için teşekkür ederiz.
-                    </p>
-                </body>
-                </html>
-            `);
+            res.send(`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Bildirim Alındı</title><style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head><body><h2 style="color:#10b981;">✓ Bildiriminiz Alındı</h2><p style="color:#cbd5e1;">İşleminizi mağazada gerçekleştirdiğinizi belirttiniz. Bilgi sistemimize kaydedilmiştir.</p></body></html>`);
         } else {
-            res.send(`
-                <!DOCTYPE html>
-                <html lang="tr">
-                <head><meta charset="UTF-8"><title>Geri Bildirim Alındı</title>
-                <style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head>
-                <body>
-                    <h2 style="color:#38bdf8;">✓ Teşekkür Ederiz</h2>
-                    <p style="color:#cbd5e1; max-width:480px; margin:0 auto; line-height:1.6;">
-                        Randevuya gidemediğinizi belirttiniz. İşlem kaydınız güvenle kapatılmıştır.
-                    </p>
-                </body>
-                </html>
-            `);
+            res.send(`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Bildirim Alındı</title><style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head><body><h2 style="color:#38bdf8;">✓ Teşekkür Ederiz</h2><p style="color:#cbd5e1;">Randevuya gidemediğinizi belirttiniz. Kaydınız güvenle kapatılmıştır.</p></body></html>`);
         }
     } catch (e) {
         res.status(500).send('İşlem kaydedilemedi.');
@@ -1154,39 +1094,6 @@ app.get('/api/admin/commission-report', adminAuthMiddleware, (req, res) => {
     });
 });
 
-// ================= CANLI ALTIN KURU MOTORU & ROTASI =================
-let cachedHasGram = 6483.93;
-
-async function updateLiveGold() {
-    try {
-        const [resUsd, resGold] = await Promise.all([
-            fetch('https://open.er-api.com/v6/latest/USD'),
-            fetch('https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT')
-        ]);
-
-        if (resUsd.ok && resGold.ok) {
-            const dataUsd = await resUsd.json();
-            const dataGold = await resGold.json();
-
-            const usdTry = dataUsd?.rates?.TRY;
-            const ounceUsd = parseFloat(dataGold.price);
-
-            if (ounceUsd > 1000 && usdTry > 10) {
-                cachedHasGram = Math.round(((ounceUsd / 31.1034768) * usdTry * 0.995) * 100) / 100;
-                console.log('[Canlı Kur]: Has Gram:', cachedHasGram, 'TL');
-            }
-        }
-    } catch (e) {
-        console.error('[Canlı Kur Hatası]:', e.message);
-    }
-}
-
-updateLiveGold();
-setInterval(updateLiveGold, 30000);
-
-app.get('/api/live-prices', (req, res) => {
-    res.json({ success: true, hasGram: cachedHasGram });
-});
 app.listen(PORT, () => {
     console.log(`Altın Eksper API Sunucusu ${PORT} portunda çalışıyor.`);
 });

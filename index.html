@@ -588,31 +588,29 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
     <div class="market-head">
         <h2 style="margin:0; font-size:16px;">Canlı Gösterge Piyasası</h2>
         <div style="display:flex; align-items:center; gap:8px;">
-            <div id="liveStatus" class="live-status">● Piyasa Hazır</div>
-            <button type="button" class="secondary admin-only-btn" style="display:none; padding:3px 8px; font-size:11px; background:#1e293b;" onclick="setCustomPrice()">✏️ Kuru Elle Ayarla</button>
+            <div id="liveStatus" class="live-status">● Piyasa Yükleniyor...</div>
             <button type="button" class="secondary" style="padding:3px 8px; font-size:11px; background:#1e293b;" onclick="loadLivePrices()">🔄 Güncelle</button>
         </div>
     </div>
     <div class="market-grid">
         <div class="market-box">
             <span>Has Altın (0.995)</span>
-            <strong id="marketGram">₺6.725,00</strong>
+            <strong id="marketGram">— ₺</strong>
         </div>
         <div class="market-box">
             <span>Çeyrek Altın</span>
-            <strong id="marketQuarter">₺10.692,75</strong>
+            <strong id="marketQuarter">— ₺</strong>
         </div>
         <div class="market-box">
             <span>Yarım Altın</span>
-            <strong id="marketHalf">₺21.385,50</strong>
+            <strong id="marketHalf">— ₺</strong>
         </div>
         <div class="market-box">
             <span>Tam Altın</span>
-            <strong id="marketFull">₺42.771,00</strong>
+            <strong id="marketFull">— ₺</strong>
         </div>
     </div>
 </div>
-
 <div class="card">
     <table>
         <thead>
