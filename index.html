@@ -1344,43 +1344,33 @@ function updateAllPrices(hasGramPrice) {
 
 async function loadLivePrices() {
     const status = document.getElementById('liveStatus');
-    if (status) { status.textContent = '● Kurlar güncelleniyor...'; status.className = 'live-status'; }
-    let calculatedGram = 0;
+    if (status) { 
+        status.textContent = '● Kurlar güncelleniyor...'; 
+        status.className = 'live-status'; 
+    }
+
     try {
-        const resUsd = await fetch('https://open.er-api.com/v6/latest/USD', { cache: 'no-store' });
-        if (resUsd.ok) {
-            const dataUsd = await resUsd.json();
-            const usdTry = dataUsd?.rates?.TRY;
-            const resGold = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT', { cache: 'no-store' });
-            if (resGold.ok) {
-                const dataGold = await resGold.json();
-                const ounceUsd = parseFloat(dataGold.price);
-                if (ounceUsd > 1000 && usdTry > 10) {
-                    // Milyem katsayısı doğrudan 0.995 olarak çarpılır, dış değişkene ihtiyaç duymaz
-                    calculatedGram = (ounceUsd / 31.1034768) * usdTry * 0.995;
-                }
+        const res = await fetch('/api/live-prices');
+        const data = await res.json();
+
+        if (data.success && data.hasGram && Number(data.hasGram) > 1000) {
+            updateAllPrices(Number(data.hasGram));
+            if (status) {
+                const clock = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                status.textContent = '● Canlı Piyasa (' + clock + ')';
+                status.className = 'live-status live-ok';
             }
+            return;
         }
     } catch (e) {
-        console.error("Kur çekme hatası:", e);
+        console.error('Canlı kur sunucudan alınamadı:', e);
     }
 
-    if (calculatedGram > 1000) {
-        updateAllPrices(calculatedGram);
-        if (status) {
-            const clock = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            status.textContent = '● Canlı Alış (' + clock + ')';
-            status.className = 'live-status live-ok';
-        }
-    } else {
-        updateAllPrices(PRICES.gram || 6725);
-        if (status) {
-            status.textContent = '● Gösterge Kuru Aktif';
-            status.className = 'live-status live-ok';
-        }
+    if (status) {
+        status.textContent = '● Piyasa Hazır';
+        status.className = 'live-status live-ok';
     }
 }
-
 // ==================== İL & İLÇE DROPDOWN MANTIĞI ====================
 function initCityDropdowns() {
     const pSel = document.getElementById('provinceSelect');
