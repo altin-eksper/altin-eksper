@@ -11,6 +11,54 @@ app.use(cors());
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(express.static(__dirname));
+// ================= CANLI PİYASA KUR MOTORU (CORS ENGELSİZ) =================
+let cachedGoldPrices = {
+    gramHas: 6725,
+    updatedAt: new Date().toISOString()
+};
+
+async function fetchLiveGoldPriceFromSource() {
+    try {
+        // Uluslararası Ons ve USD/TRY üzerinden toptan has hesaplama
+        const [resUsd, resGold] = await Promise.all([
+            fetch('https://open.er-api.com/v6/latest/USD'),
+            fetch('https://api.gold-api.com/price/XAU')
+        ]);
+
+        if (resUsd.ok && resGold.ok) {
+            const dataUsd = await resUsd.json();
+            const dataGold = await resGold.json();
+
+            const usdTry = dataUsd?.rates?.TRY;
+            const ounceUsd = parseFloat(dataGold.price);
+
+            if (ounceUsd > 1000 && usdTry > 10) {
+                // 1 Ons = 31.1034768 gram, 0.995 toptan has çarpanı
+                const calculatedGram = (ounceUsd / 31.1034768) * usdTry * 0.995;
+                if (calculatedGram > 1000) {
+                    cachedGoldPrices.gramHas = Math.round(calculatedGram * 100) / 100;
+                    cachedGoldPrices.updatedAt = new Date().toISOString();
+                    console.log(`[Piyasa Kuru Güncellendi]: Has Gram: ${cachedGoldPrices.gramHas} TL`);
+                }
+            }
+        }
+    } catch (err) {
+        console.error('[Canlı Kur Çekme Hatası]:', err.message);
+    }
+}
+
+// Sunucu başlar başlamaz çek ve her 60 saniyede bir otomatik yenile
+fetchLiveGoldPriceFromSource();
+setInterval(fetchLiveGoldPriceFromSource, 60000);
+
+// Ön yüzün sorunsuz çağıracağı yerel API rotası
+app.get('/api/live-prices', (req, res) => {
+    res.json({
+        success: true,
+        hasGram: cachedGoldPrices.gramHas,
+        updatedAt: cachedGoldPrices.updatedAt
+    });
+});
 
 // ================= GÜVENLİK & YÖNETİCİ ŞİFRESİ =================
 const ADMIN_SECRET_KEY = process.env.ADMIN_KEY || 'Adali2026!';
@@ -1105,7 +1153,34 @@ app.get('/api/admin/commission-report', adminAuthMiddleware, (req, res) => {
         jewelers: JEWELERS_DIRECTORY
     });
 });
+// ================= CANLI ALTIN KURU DAĞITIMI =================
+let cachedHasGram = 6725;
 
+async function updateLiveGold() {
+    try {
+        const [resUsd, resGold] = await Promise.all([
+            fetch('https://open.er-api.com/v6/latest/USD'),
+            fetch('https://api.gold-api.com/price/XAU')
+        ]);
+        if (resUsd.ok && resGold.ok) {
+            const dataUsd = await resUsd.json();
+            const dataGold = await resGold.json();
+            const usdTry = dataUsd?.rates?.TRY;
+            const ounceUsd = parseFloat(dataGold.price);
+            if (ounceUsd > 1000 && usdTry > 10) {
+                cachedHasGram = Math.round(((ounceUsd / 31.1034768) * usdTry * 0.995) * 100) / 100;
+                console.log('[Canlı Kur]: Has Gram:', cachedHasGram, 'TL');
+            }
+        }
+    } catch (e) {}
+}
+
+updateLiveGold();
+setInterval(updateLiveGold, 60000);
+
+app.get('/api/live-prices', (req, res) => {
+    res.json({ success: true, hasGram: cachedHasGram });
+});
 app.listen(PORT, () => {
     console.log(`Altın Eksper API Sunucusu ${PORT} portunda çalışıyor.`);
 });
