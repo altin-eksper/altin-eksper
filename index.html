@@ -1356,11 +1356,14 @@ async function loadLivePrices() {
                 const dataGold = await resGold.json();
                 const ounceUsd = parseFloat(dataGold.price);
                 if (ounceUsd > 1000 && usdTry > 10) {
-                    calculatedGram = (ounceUsd / 31.1034768) * usdTry * MILYEM_24K;
+                    // Milyem katsayısı doğrudan 0.995 olarak çarpılır, dış değişkene ihtiyaç duymaz
+                    calculatedGram = (ounceUsd / 31.1034768) * usdTry * 0.995;
                 }
             }
         }
-    } catch (e) {}
+    } catch (e) {
+        console.error("Kur çekme hatası:", e);
+    }
 
     if (calculatedGram > 1000) {
         updateAllPrices(calculatedGram);
