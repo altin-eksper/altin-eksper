@@ -1153,8 +1153,6 @@ app.get('/api/admin/commission-report', adminAuthMiddleware, (req, res) => {
         jewelers: JEWELERS_DIRECTORY
     });
 });
-// ================= CANLI ALTIN KURU DAĞITIMI =================
-let cachedHasGram = 6725;
 
 // ================= CANLI ALTIN KURU MOTORU & ROTASI =================
 let cachedHasGram = 6483.93;
