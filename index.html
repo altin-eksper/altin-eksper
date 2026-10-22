@@ -1252,7 +1252,7 @@ const PRODUCTS = {
     gremse: 'Gremse', resatBesli: 'Reşat Beşli', ataBesli: 'Ata Beşli', resat25: "Reşat 2,5'luk", ata25: "Ata 2,5'luk"
 };
 
-const PRICES = { gram: 6725, quarter: 10692.75, half: 21385.50, full: 42771.00 };
+const PRICES = { gram: 0, quarter: 0, half: 0, full: 0 };
 
 let rowId = 0, quoteId = 0, currentEditingId = null, currentLoadedRequestId = null;
 let currentHistoryTab = 'active', currentReportSummary = null, currentMonthlySummary = null;
@@ -1344,31 +1344,20 @@ function updateAllPrices(hasGramPrice) {
 
 async function loadLivePrices() {
     const status = document.getElementById('liveStatus');
-    if (status) { 
-        status.textContent = '● Kurlar güncelleniyor...'; 
-        status.className = 'live-status'; 
-    }
-
     try {
         const res = await fetch('/api/live-prices');
         const data = await res.json();
 
-        if (data.success && data.hasGram && Number(data.hasGram) > 1000) {
+        if (data && data.success && data.hasGram && Number(data.hasGram) > 1000) {
             updateAllPrices(Number(data.hasGram));
             if (status) {
                 const clock = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-                status.textContent = '● Canlı Piyasa (' + clock + ')';
+                status.textContent = '● Canlı Alış (' + clock + ')';
                 status.className = 'live-status live-ok';
             }
-            return;
         }
     } catch (e) {
-        console.error('Canlı kur sunucudan alınamadı:', e);
-    }
-
-    if (status) {
-        status.textContent = '● Piyasa Hazır';
-        status.className = 'live-status live-ok';
+        console.error('Canlı kur çekilemedi:', e);
     }
 }
 // ==================== İL & İLÇE DROPDOWN MANTIĞI ====================
