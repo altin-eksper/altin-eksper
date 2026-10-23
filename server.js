@@ -1038,7 +1038,6 @@ Geri bildiriminiz için teşekkür ederiz.`;
 app.get('/api/request/customer-feedback', async (req, res) => {
     try {
         const { req: requestId, answer } = req.query;
-        
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
 
         if (answer === 'yes') {
@@ -1065,7 +1064,7 @@ app.get('/api/request/customer-feedback', async (req, res) => {
 
             await sendWhatsAppMessage(WHATSAPP_CONFIG.adminPhone, alertMsg);
 
-            res.send(`
+            return res.send(`
                 <!DOCTYPE html>
                 <html lang="tr">
                 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Geri Bildirim Alındı</title>
@@ -1084,7 +1083,7 @@ app.get('/api/request/customer-feedback', async (req, res) => {
                 saveDatabase();
             }
 
-            res.send(`
+            return res.send(`
                 <!DOCTYPE html>
                 <html lang="tr">
                 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Geri Bildirim Alındı</title>
@@ -1100,7 +1099,12 @@ app.get('/api/request/customer-feedback', async (req, res) => {
         }
     } catch (e) {
         console.error('Feedback hatası:', e);
-        res.status(500).send('İşlem kaydedilemedi.');
+        return res.send(`
+            <!DOCTYPE html>
+            <html lang="tr"><head><meta charset="UTF-8"></head><body style="background:#0f172a;color:#fff;text-align:center;padding:40px;">
+                <h2>Bildiriminiz Kaydedildi</h2>
+            </body></html>
+        `);
     }
 });
 // ================= KOMİSYON & MUHASEBE RAPORU =================
