@@ -1038,6 +1038,8 @@ Geri bildiriminiz için teşekkür ederiz.`;
 app.get('/api/request/customer-feedback', async (req, res) => {
     try {
         const { req: requestId, answer } = req.query;
+        
+        // Aktif havuzda ara; süresi bitmiş veya silinmiş olsa bile akışı bozma
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
 
         if (answer === 'yes') {
@@ -1047,27 +1049,61 @@ app.get('/api/request/customer-feedback', async (req, res) => {
                 saveDatabase();
             }
 
+            const cName = target ? target.customerName : 'Müşteri';
+            const cPhone = target ? target.customerPhone : 'Kayıtlı Numara';
+            const jCode = target ? target.winnerCode : 'İlgili Sarraf';
+            const price = target ? Number(target.agreedPrice).toLocaleString('tr-TR') + ' ₺' : 'Belirtilmedi';
+
             const alertMsg = 
 `🚨 *DİKKAT: ŞÜPHELİ KAÇAK İŞLEM TESPİT EDİLDİ!*
 
 🏷 *Talep No:* #${requestId}
-👤 *Müşteri:* ${target ? target.customerName : 'Müşteri'} (${target ? target.customerPhone : ''})
-🏪 *Sarraf:* ${target ? target.winnerCode : 'Kuyumcu'}
-💰 *Ön Fiyat:* ${target ? Number(target.agreedPrice).toLocaleString('tr-TR') : 0} ₺
+👤 *Müşteri:* ${cName} (${cPhone})
+🏪 *Sarraf:* ${jCode}
+💰 *Ön Fiyat:* ${price}
 
 ⚠️ *Durum:* Sarraf panelden "Müşteri Gelmedi" diyerek işlemi iptal etti; ancak müşteri az önce linke tıklayarak mağazada satışı tamamladığını BEYAN ETTİ!`;
 
             await sendWhatsAppMessage(WHATSAPP_CONFIG.adminPhone, alertMsg);
 
-            res.send(`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Bildirim Alındı</title><style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head><body><h2 style="color:#10b981;">✓ Bildiriminiz Alındı</h2><p style="color:#cbd5e1;">İşleminizi mağazada gerçekleştirdiğinizi belirttiniz. Bilgi sistemimize kaydedilmiştir.</p></body></html>`);
+            res.send(`
+                <!DOCTYPE html>
+                <html lang="tr">
+                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Geri Bildirim Alındı</title>
+                <style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head>
+                <body>
+                    <h2 style="color:#10b981;">✓ Bildiriminiz Alındı</h2>
+                    <p style="color:#cbd5e1; max-width:480px; margin:0 auto; line-height:1.6;">
+                        İşleminizi mağazada gerçekleştirdiğinizi belirttiniz. Bilgi sistemimize kaydedilmiştir. İlginiz için teşekkür ederiz.
+                    </p>
+                </body>
+                </html>
+            `);
         } else {
-            res.send(`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Bildirim Alındı</title><style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head><body><h2 style="color:#38bdf8;">✓ Teşekkür Ederiz</h2><p style="color:#cbd5e1;">Randevuya gidemediğinizi belirttiniz. Kaydınız güvenle kapatılmıştır.</p></body></html>`);
+            if (target) {
+                target.status = 'CANCELLED';
+                saveDatabase();
+            }
+
+            res.send(`
+                <!DOCTYPE html>
+                <html lang="tr">
+                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Geri Bildirim Alındı</title>
+                <style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head>
+                <body>
+                    <h2 style="color:#38bdf8;">✓ Teşekkür Ederiz</h2>
+                    <p style="color:#cbd5e1; max-width:480px; margin:0 auto; line-height:1.6;">
+                        Randevuya gidemediğinizi belirttiniz. İşlem kaydınız güvenle kapatılmıştır.
+                    </p>
+                </body>
+                </html>
+            `);
         }
     } catch (e) {
+        console.error('Feedback hatası:', e);
         res.status(500).send('İşlem kaydedilemedi.');
     }
 });
-
 // ================= KOMİSYON & MUHASEBE RAPORU =================
 app.get('/api/admin/commission-report', adminAuthMiddleware, (req, res) => {
     let totalTurnover = 0;
