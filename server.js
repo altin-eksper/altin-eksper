@@ -1039,7 +1039,6 @@ app.get('/api/request/customer-feedback', async (req, res) => {
     try {
         const { req: requestId, answer } = req.query;
         
-        // Aktif havuzda ara; süresi bitmiş veya silinmiş olsa bile akışı bozma
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
 
         if (answer === 'yes') {
