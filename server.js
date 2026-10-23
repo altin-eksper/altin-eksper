@@ -303,7 +303,7 @@ async function sendWhatsAppMessage(toPhone, messageText) {
     }
 }
 
-// Süresi dolan (15 dk) talepleri otomatik takip
+// Süresi dolan (15 dk) talepleri takip et (SİLMEDEN EXPIRED YAP)
 setInterval(async () => {
     const now = Date.now();
     for (const r of requestsPool) {
@@ -312,19 +312,29 @@ setInterval(async () => {
             saveDatabase();
             if ((!r.quotes || r.quotes.length === 0) && r.customerPhone && !r.hasExpiredNotified) {
                 r.hasExpiredNotified = true;
+                const restartLink = `https://altin-eksper.onrender.com/api/request/restart?req=${r.requestId}`;
                 const expiredMsg = 
-`ℹ️ *Altın Eksper Bilgilendirmesi:*
+`ℹ️ *ALTIN EKSPER — İHALE SÜRESİ DOLDU*
 
-Sayın *${r.customerName || 'Müşterimiz'}*, #${r.requestId} nolu altın satış talebiniz için bölgenizdeki sarraflar şu an dükkan içi yoğunluk nedeniyle ilk 15 dakikada teklif iletemedi.
+Sayın *${r.customerName || 'Müşterimiz'}*, #${r.requestId} nolu altın satış talebiniz için sarraflarımız o anki dükkan içi yoğunluk nedeniyle ilk 15 dakikada teklif iletemedi.
 
-Talebiniz kayıtlı sarraflarımıza açık tutulmaya devam etmektedir. İlk teklif verildiğinde WhatsApp hattınızdan anında bilgilendirileceksiniz.`;
+Altınlarınızı yeniden canlı ihaleye çıkarmak ve sarraflardan teklif toplamak için lütfen aşağıdaki linke dokununuz:
+
+👉 *İhaleyi Yeniden Başlat (15 Dakika):*
+${restartLink}`;
 
                 await sendWhatsAppMessage(r.customerPhone, expiredMsg);
             }
         }
     }
 
-    requestsPool = requestsPool.filter(r => r.status === 'APPOINTMENT_SET' || !r.expiresAt || new Date(r.expiresAt).getTime() > now);
+    // Sadece 24 saatten eski ve tamamlanmamış çöpleri temizle
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    requestsPool = requestsPool.filter(r => {
+        if (r.status === 'APPOINTMENT_SET' || r.status === 'COMPLETED') return true;
+        const created = new Date(r.createdAt || Date.now()).getTime();
+        return (now - created) < ONE_DAY;
+    });
     saveDatabase();
 }, 30000);
 
@@ -724,6 +734,80 @@ app.get('/api/requests', (req, res) => {
     const now = Date.now();
     const active = requestsPool.filter(r => r.status === 'APPOINTMENT_SET' || !r.expiresAt || new Date(r.expiresAt).getTime() > now);
     res.json({ success: true, requests: active });
+});
+// ================== MÜŞTERİ: İHALEYİ YENİDEN BAŞLAT (SEÇENEK B) ==================
+app.get('/api/request/restart', async (req, res) => {
+    try {
+        const { req: requestId } = req.query;
+        const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
+
+        if (!target) {
+            return res.send(`
+                <!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Hata</title>
+                <body style="font-family:sans-serif; text-align:center; padding:40px; background:#0f172a; color:#fff;">
+                    <h3 style="color:#ef4444;">Talep Kaydı Bulunamadı</h3>
+                    <p>Bu talep sistemden kaldırılmış olabilir. Lütfen ana sayfadan yeni bir talep oluşturunuz.</p>
+                    <a href="/" style="color:#f59e0b; font-weight:bold;">Ana Sayfaya Dön</a>
+                </body></html>
+            `);
+        }
+
+        target.expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+        target.status = 'PENDING';
+        target.hasExpiredNotified = false;
+        saveDatabase();
+
+        const targetDistrictRaw = (target.district || '').trim().toLowerCase();
+        let matchedJewelers = JEWELERS_DIRECTORY.filter(j => {
+            if (j.status !== 'ACTIVE') return false;
+            if (!targetDistrictRaw) return true;
+            return j.districts && j.districts.some(d => {
+                const cleanD = d.toLowerCase();
+                return targetDistrictRaw.includes(cleanD) || cleanD.includes(targetDistrictRaw);
+            });
+        });
+        if (matchedJewelers.length === 0) matchedJewelers = JEWELERS_DIRECTORY.filter(j => j.status === 'ACTIVE');
+
+        for (const jeweler of matchedJewelers) {
+            const offerLink = `https://altin-eksper.onrender.com/kuyumcu.html?req=${target.requestId}&jeweler=${jeweler.id}`;
+            const reAlert = 
+`🔄 *ALTIN EKSPER — İHALE YENİDEN BAŞLATILDI!*
+
+Sayın *${jeweler.name}*, #${target.requestId} nolu müşteri satış ihalesi müşteri tarafından YENİLENDİ.
+
+📍 *Bölge:* ${target.district}
+⚖️ *Ağırlık:* ${target.totalGrams || '0 g'}
+⏱ *Yeni Teklif Süresi:* 15 Dakika
+
+👉 *Teklifinizi Hemen İletin:* ${offerLink}`;
+
+            await sendWhatsAppMessage(jeweler.phone, reAlert);
+        }
+
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="tr">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>İhale Yeniden Başlatıldı</title>
+                <style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style>
+            </head>
+            <body>
+                <div style="max-width:440px; margin:0 auto; background:#1e293b; padding:25px; border-radius:12px; border:1px solid #10b981;">
+                    <h2 style="color:#10b981; margin-top:0;">✓ İhale Yenilendi</h2>
+                    <p style="color:#cbd5e1; font-size:14px; line-height:1.6;">
+                        #${target.requestId} nolu satış talebiniz için <b>15 dakikalık yeni süre</b> başlatıldı ve bölgenizdeki anlaşmalı sarraflara taze bildirim iletildi.
+                    </p>
+                    <p style="color:#94a3b8; font-size:13px;">Gelen teklifler WhatsApp hattınıza iletilecektir.</p>
+                </div>
+            </body>
+            </html>
+        `);
+    } catch (e) {
+        console.error('Restart error:', e);
+        res.status(500).send('Hata oluştu.');
+    }
 });
 // ================== MÜŞTERİ GERİ BİLDİRİMİ / DOĞRULAMA ==================
 app.get('/api/request/customer-feedback', async (req, res) => {
