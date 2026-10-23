@@ -728,9 +728,41 @@ app.get('/api/requests', (req, res) => {
 // ================== MÜŞTERİ GERİ BİLDİRİMİ / DOĞRULAMA ==================
 app.get('/api/request/customer-feedback', async (req, res) => {
     try {
-        const { req: requestId, answer } = req.query;
+        const { req: requestId, answer, confirm } = req.query;
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
 
+        // 1. AŞAMA: WhatsApp botu veya ilk tıklama geldiğinde sadece onay ekranı gösterilir
+        if (confirm !== 'true') {
+            const isYes = answer === 'yes';
+            const actionText = isYes ? "Mağazada satışı tamamladım" : "Randevuya gitmedim / vazgeçtim";
+            const btnColor = isYes ? "#10b981" : "#ef4444";
+
+            return res.send(`
+                <!DOCTYPE html>
+                <html lang="tr">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>İşlem Onayı</title>
+                    <style>
+                        body { font-family: sans-serif; text-align: center; padding: 30px 20px; background: #0f172a; color: #fff; }
+                        .card { max-width: 440px; margin: 0 auto; background: #1e293b; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+                        .btn { display: inline-block; width: 100%; box-sizing: border-box; padding: 14px; margin-top: 20px; background: ${btnColor}; color: #fff; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 16px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="card">
+                        <h3 style="margin-top:0;">İşlem Bildirimi</h3>
+                        <p style="color: #94a3b8; font-size: 14px;">Seçiminiz: <strong>"${actionText}"</strong></p>
+                        <p style="color: #cbd5e1; font-size: 14px; line-height: 1.5;">Bu bildirimi Altın Eksper sistemine kaydetmek için lütfen aşağıdaki butona basarak onaylayın.</p>
+                        <a class="btn" href="/api/request/customer-feedback?req=${requestId}&answer=${answer}&confirm=true">Bildirimi Onayla</a>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+
+        // 2. AŞAMA: Müşteri ekrandaki "Bildirimi Onayla" butonuna bizzat bastığında çalışır
         if (answer === 'yes') {
             if (target) {
                 target.customerClaimedCompleted = true;
@@ -758,12 +790,12 @@ app.get('/api/request/customer-feedback', async (req, res) => {
             return res.send(`
                 <!DOCTYPE html>
                 <html lang="tr">
-                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Geri Bildirim Alındı</title>
+                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Bildirim Alındı</title>
                 <style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head>
                 <body>
                     <h2 style="color:#10b981;">✓ Bildiriminiz Alındı</h2>
                     <p style="color:#cbd5e1; max-width:480px; margin:0 auto; line-height:1.6;">
-                        İşleminizi mağazada gerçekleştirdiğinizi belirttiniz. Bilgi sistemimize kaydedilmiştir. İlginiz için teşekkür ederiz.
+                        İşleminizi mağazada gerçekleştirdiğinizi belirttiniz. Bilgi sistemimize kaydedilmiştir. Teşekkür ederiz.
                     </p>
                 </body>
                 </html>
@@ -777,7 +809,7 @@ app.get('/api/request/customer-feedback', async (req, res) => {
             return res.send(`
                 <!DOCTYPE html>
                 <html lang="tr">
-                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Geri Bildirim Alındı</title>
+                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Bildirim Alındı</title>
                 <style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head>
                 <body>
                     <h2 style="color:#38bdf8;">✓ Teşekkür Ederiz</h2>
@@ -790,12 +822,7 @@ app.get('/api/request/customer-feedback', async (req, res) => {
         }
     } catch (e) {
         console.error('Feedback hatası:', e);
-        return res.send(`
-            <!DOCTYPE html>
-            <html lang="tr"><head><meta charset="UTF-8"></head><body style="background:#0f172a;color:#fff;text-align:center;padding:40px;">
-                <h2>Bildiriminiz Kaydedildi</h2>
-            </body></html>
-        `);
+        return res.send('İşlem kaydedilemedi.');
     }
 });
 app.get('/api/request/:id', (req, res) => {
