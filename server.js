@@ -725,7 +725,79 @@ app.get('/api/requests', (req, res) => {
     const active = requestsPool.filter(r => r.status === 'APPOINTMENT_SET' || !r.expiresAt || new Date(r.expiresAt).getTime() > now);
     res.json({ success: true, requests: active });
 });
+// ================== MÜŞTERİ GERİ BİLDİRİMİ / DOĞRULAMA ==================
+app.get('/api/request/customer-feedback', async (req, res) => {
+    try {
+        const { req: requestId, answer } = req.query;
+        const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
 
+        if (answer === 'yes') {
+            if (target) {
+                target.customerClaimedCompleted = true;
+                target.status = 'SUSPECTED_DEAL';
+                saveDatabase();
+            }
+
+            const cName = target ? target.customerName : 'Müşteri';
+            const cPhone = target ? target.customerPhone : 'Kayıtlı Numara';
+            const jCode = target ? target.winnerCode : 'İlgili Sarraf';
+            const price = target ? Number(target.agreedPrice).toLocaleString('tr-TR') + ' ₺' : 'Belirtilmedi';
+
+            const alertMsg = 
+`🚨 *DİKKAT: ŞÜPHELİ KAÇAK İŞLEM TESPİT EDİLDİ!*
+
+🏷 *Talep No:* #${requestId}
+👤 *Müşteri:* ${cName} (${cPhone})
+🏪 *Sarraf:* ${jCode}
+💰 *Ön Fiyat:* ${price}
+
+⚠️ *Durum:* Sarraf panelden "Müşteri Gelmedi" diyerek işlemi iptal etti; ancak müşteri az önce linke tıklayarak mağazada satışı tamamladığını BEYAN ETTİ!`;
+
+            await sendWhatsAppMessage(WHATSAPP_CONFIG.adminPhone, alertMsg);
+
+            return res.send(`
+                <!DOCTYPE html>
+                <html lang="tr">
+                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Geri Bildirim Alındı</title>
+                <style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head>
+                <body>
+                    <h2 style="color:#10b981;">✓ Bildiriminiz Alındı</h2>
+                    <p style="color:#cbd5e1; max-width:480px; margin:0 auto; line-height:1.6;">
+                        İşleminizi mağazada gerçekleştirdiğinizi belirttiniz. Bilgi sistemimize kaydedilmiştir. İlginiz için teşekkür ederiz.
+                    </p>
+                </body>
+                </html>
+            `);
+        } else {
+            if (target) {
+                target.status = 'CANCELLED';
+                saveDatabase();
+            }
+
+            return res.send(`
+                <!DOCTYPE html>
+                <html lang="tr">
+                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Geri Bildirim Alındı</title>
+                <style>body{font-family:sans-serif; text-align:center; padding:40px 20px; background:#0f172a; color:#fff;}</style></head>
+                <body>
+                    <h2 style="color:#38bdf8;">✓ Teşekkür Ederiz</h2>
+                    <p style="color:#cbd5e1; max-width:480px; margin:0 auto; line-height:1.6;">
+                        Randevuya gidemediğinizi belirttiniz. İşlem kaydınız güvenle kapatılmıştır.
+                    </p>
+                </body>
+                </html>
+            `);
+        }
+    } catch (e) {
+        console.error('Feedback hatası:', e);
+        return res.send(`
+            <!DOCTYPE html>
+            <html lang="tr"><head><meta charset="UTF-8"></head><body style="background:#0f172a;color:#fff;text-align:center;padding:40px;">
+                <h2>Bildiriminiz Kaydedildi</h2>
+            </body></html>
+        `);
+    }
+});
 app.get('/api/request/:id', (req, res) => {
     const searchId = String(req.params.id).trim();
     const found = requestsPool.find(r => String(r.requestId).trim() === searchId);
@@ -1038,6 +1110,8 @@ Geri bildiriminiz için teşekkür ederiz.`;
 app.get('/api/request/customer-feedback', async (req, res) => {
     try {
         const { req: requestId, answer } = req.query;
+        
+        // Aktif havuzda ara; süresi bitmiş veya silinmiş olsa bile akışı bozma
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
 
         if (answer === 'yes') {
@@ -1064,7 +1138,7 @@ app.get('/api/request/customer-feedback', async (req, res) => {
 
             await sendWhatsAppMessage(WHATSAPP_CONFIG.adminPhone, alertMsg);
 
-            return res.send(`
+            res.send(`
                 <!DOCTYPE html>
                 <html lang="tr">
                 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Geri Bildirim Alındı</title>
@@ -1083,7 +1157,7 @@ app.get('/api/request/customer-feedback', async (req, res) => {
                 saveDatabase();
             }
 
-            return res.send(`
+            res.send(`
                 <!DOCTYPE html>
                 <html lang="tr">
                 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Geri Bildirim Alındı</title>
@@ -1099,12 +1173,7 @@ app.get('/api/request/customer-feedback', async (req, res) => {
         }
     } catch (e) {
         console.error('Feedback hatası:', e);
-        return res.send(`
-            <!DOCTYPE html>
-            <html lang="tr"><head><meta charset="UTF-8"></head><body style="background:#0f172a;color:#fff;text-align:center;padding:40px;">
-                <h2>Bildiriminiz Kaydedildi</h2>
-            </body></html>
-        `);
+        res.status(500).send('İşlem kaydedilemedi.');
     }
 });
 // ================= KOMİSYON & MUHASEBE RAPORU =================
