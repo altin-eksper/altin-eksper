@@ -548,8 +548,29 @@ async function initPortal() {
             checkExistingOffer(data.data);
             checkAppointmentState(data.data);
             setTimeout(() => { playCashBellSound(); }, 800);
+
+            // Eğer 15 dk dolmuşsa formu gizle, sarrafa net bilgi kutusu göster
+            const isExpired = currentAuctionData.status === 'EXPIRED' || (currentAuctionData.expiresAt && new Date(currentAuctionData.expiresAt).getTime() <= Date.now());
+            if (isExpired && currentAuctionData.status !== 'APPOINTMENT_SET' && currentAuctionData.status !== 'COMPLETED') {
+                const offerForm = document.getElementById('offerForm');
+                if (offerForm) offerForm.style.display = 'none';
+                
+                const tBadge = document.getElementById('countdownTimer');
+                if (tBadge) {
+                    tBadge.textContent = '⏱ Süre Doldu';
+                    tBadge.style.background = '#e2e8f0';
+                    tBadge.style.color = '#64748b';
+                }
+
+                const resultBox = document.getElementById('offerResult');
+                if (resultBox) {
+                    resultBox.style.display = 'block';
+                    resultBox.style.color = '#f59e0b';
+                    resultBox.innerHTML = `⚠️ <b>15 dakikalık ihale süresi dolmuştur.</b><br>Müşteri ihaleyi yeniden başlatırsa WhatsApp üzerinden tekrar bildirim alacaksınız.`;
+                }
+            }
         } else {
-            document.getElementById('auctionDetails').innerHTML = '⚠️ Bu ihale sona ermiş veya silinmiş.';
+            document.getElementById('auctionDetails').innerHTML = '⚠️ Bu ihale kaydı bulunamadı veya silinmiş.';
         }
     } catch(e) {
         document.getElementById('auctionDetails').textContent = 'Sunucuya bağlanılamadı.';
