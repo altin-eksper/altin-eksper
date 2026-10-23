@@ -1358,6 +1358,9 @@ async function loadLivePrices() {
         console.error('Canlı kur çekilemedi:', e);
     }
 }
+loadLivePrices();
+document.addEventListener('DOMContentLoaded', loadLivePrices);
+
 // ==================== İL & İLÇE DROPDOWN MANTIĞI ====================
 function initCityDropdowns() {
     const pSel = document.getElementById('provinceSelect');
