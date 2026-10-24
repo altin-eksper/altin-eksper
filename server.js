@@ -1347,6 +1347,36 @@ app.get('/api/admin/commission-report', adminAuthMiddleware, (req, res) => {
     });
 });
 
+// ================== MÜŞTERİ: TELEFON NUMARASI İLE İŞLEM GEÇMİŞİ ==================
+app.get('/api/customer/history/:phone', (req, res) => {
+    try {
+        const rawPhone = String(req.params.phone || '').replace(/[^0-9]/g, '');
+        if (!rawPhone || rawPhone.length < 7) {
+            return res.status(400).json({ success: false, message: 'Geçerli bir telefon numarası giriniz.' });
+        }
+
+        // 1. Devam eden / aktif taleplerde ara
+        const activeMatches = requestsPool.filter(r => {
+            const cPhone = String(r.customerPhone || '').replace(/[^0-9]/g, '');
+            return cPhone.includes(rawPhone) || rawPhone.includes(cPhone);
+        });
+
+        // 2. Tamamlanmış işlemlerde ara
+        const completedMatches = completedDeals.filter(d => {
+            const cPhone = String(d.customerPhone || '').replace(/[^0-9]/g, '');
+            return cPhone.includes(rawPhone) || rawPhone.includes(cPhone);
+        });
+
+        res.json({
+            success: true,
+            activeRequests: activeMatches,
+            completedDeals: completedMatches
+        });
+    } catch (e) {
+        console.error('Customer history error:', e);
+        res.status(500).json({ success: false, message: 'Geçmiş yüklenemedi.' });
+    }
+});
 app.listen(PORT, () => {
     console.log(`Altın Eksper API Sunucusu ${PORT} portunda çalışıyor.`);
 });
