@@ -1,0 +1,81 @@
+{
+  "jewelers": [
+    {
+      "id": "SARRAF_01",
+      "name": "Güneş Sarrafiye",
+      "city": "Antalya",
+      "districts": [
+        "Muratpaşa"
+      ],
+      "phone": "905399321893",
+      "address": "Işıklar Cad. No:14 Muratpaşa / Antalya",
+      "membershipType": "token",
+      "credits": 50,
+      "subscriptionExpiresAt": null,
+      "status": "ACTIVE"
+    },
+    {
+      "code": "K001",
+      "name": "Yıldız Sarrafiye",
+      "district": "Muratpaşa",
+      "phone": "905320000001",
+      "address": "Işıklar Cad. No:14 Muratpaşa / Antalya",
+      "active": true,
+      "id": "K001",
+      "credits": 0,
+      "membershipType": "token",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "K002",
+      "name": "Akdeniz Kuyumculuk",
+      "district": "Kepez",
+      "phone": "905320000002",
+      "address": "Dokuma Çallı Meydanı No:5 Kepez / Antalya",
+      "active": true,
+      "id": "K002",
+      "credits": 0,
+      "membershipType": "token",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "K003",
+      "name": "Toros Altın",
+      "district": "Konyaaltı",
+      "phone": "905320000003",
+      "address": "Atatürk Bulvarı No:88 Konyaaltı / Antalya",
+      "active": true,
+      "id": "K003",
+      "credits": 0,
+      "membershipType": "token",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "K004",
+      "name": "Alanya Sarraf",
+      "district": "Alanya",
+      "phone": "905320000004",
+      "address": "Hükümet Cad. No:22 Alanya / Antalya",
+      "active": true,
+      "id": "K004",
+      "credits": 0,
+      "membershipType": "token",
+      "status": "ACTIVE"
+    },
+    {
+      "code": "K005",
+      "name": "Manavgat Mücevherat",
+      "district": "Manavgat",
+      "phone": "905320000005",
+      "address": "Antalya Cad. No:45 Manavgat / Antalya",
+      "active": true,
+      "id": "K005",
+      "credits": 0,
+      "membershipType": "token",
+      "status": "ACTIVE"
+    }
+  ],
+  "completedDeals": [],
+  "pendingPayments": [],
+  "activeRequests": []
+}

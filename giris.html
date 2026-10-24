@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Altın Eksper — Giriş Yap</title>
+<meta name="theme-color" content="#0f172a">
+<style>
+*{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body{
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px 16px;
+}
+.login-card{
+    background: #ffffff;
+    max-width: 820px;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+    padding: 36px 40px;
+    position: relative;
+}
+.card-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 14px;
+    margin-bottom: 28px;
+}
+.card-header h2{ margin: 0; font-size: 22px; color: #0f172a; }
+.card-header a{ font-size: 13px; color: #0284c7; text-decoration: none; font-weight: 600; }
+
+.login-grid{
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 40px;
+    align-items: center;
+}
+.form-group{ margin-bottom: 18px; }
+label{
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+}
+input[type="text"], input[type="password"]{
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: 0.15s;
+    background: #fff;
+    font-family: inherit;
+}
+input:focus{
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+.password-box{ position: relative; }
+.toggle-icon{
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #64748b;
+    user-select: none;
+}
+.sub-row{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12.5px;
+    margin-bottom: 18px;
+}
+.remember-me{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #475569;
+    cursor: pointer;
+}
+.forgot-link{
+    color: #0284c7;
+    text-decoration: none;
+    font-weight: 600;
+}
+.btn-primary{
+    width: 100%;
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 13px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.btn-primary:hover{ background: #0369a1; }
+
+.social-row{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 18px 0 24px;
+}
+.btn-social{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.btn-social:hover{ background: #f8fafc; border-color: #94a3b8; }
+
+.register-prompt{
+    border-top: 1px solid #e2e8f0;
+    padding-top: 20px;
+    text-align: center;
+}
+.register-prompt span{
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 10px;
+}
+.btn-register{
+    display: inline-block;
+    width: 100%;
+    border: 1.5px solid #0284c7;
+    color: #0284c7;
+    background: #fff;
+    padding: 11px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.btn-register:hover{ background: #f0f9ff; }
+
+/* SAĞ QR KOD ALANI */
+.qr-col{
+    text-align: center;
+    border-left: 1px solid #e2e8f0;
+    padding-left: 36px;
+}
+.qr-img{
+    width: 170px;
+    height: 170px;
+    border-radius: 8px;
+    padding: 6px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+}
+.qr-title{
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 14px 0 6px;
+}
+.qr-desc{
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+.legal-footer{
+    text-align: center;
+    margin-top: 24px;
+    font-size: 11px;
+    color: #94a3b8;
+}
+.legal-footer a{ color: #64748b; text-decoration: underline; margin: 0 4px; cursor: pointer; }
+
+/* RESMİ MODAL */
+.modal-backdrop{
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.7);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal-box{
+    background: #fff;
+    max-width: 680px;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+}
+.modal-head{
+    padding: 18px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-head h3{ margin: 0; font-size: 17px; color: #0f172a; font-weight: 700; }
+.modal-close{
+    background: none; border: none; font-size: 22px; color: #64748b; cursor: pointer; line-height: 1;
+}
+.modal-body{
+    padding: 22px 24px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #334155;
+}
+.modal-foot{
+    padding: 14px 24px;
+    border-top: 1px solid #e2e8f0;
+    text-align: right;
+    background: #f8fafc;
+    border-radius: 0 0 12px 12px;
+}
+.modal-btn{
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.modal-btn:hover{ background: #0369a1; }
+
+@media(max-width: 768px){
+    .login-grid{ grid-template-columns: 1fr; gap: 24px; }
+    .qr-col{ border-left: none; border-top: 1px solid #e2e8f0; padding-left: 0; padding-top: 24px; }
+    .login-card{ padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="card-header">
+        <h2>Giriş yap</h2>
+        <a href="/">← Ana Sayfaya Dön</a>
+    </div>
+
+    <div class="login-grid">
+        <!-- SOL FORM ALANI -->
+        <div>
+            <form onsubmit="handleLoginSubmit(event)">
+                <div class="form-group">
+                    <label>E-posta veya Sarraf Numarası</label>
+                    <input type="text" id="userIdentifier" placeholder="E-posta veya 05XX XXX XX XX" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <div class="password-box">
+                        <input type="password" id="userPassword" placeholder="Şifrenizi giriniz" required>
+                        <span class="toggle-icon" onclick="togglePass()">👁</span>
+                    </div>
+                </div>
+
+                <div class="sub-row">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe" checked> Oturum açık kalsın
+                    </label>
+                    <a href="javascript:void(0)" onclick="alert('Şifre sıfırlama işlemi için sistemde kayıtlı WhatsApp hattınızdan destek alabilirsiniz.')" class="forgot-link">Şifremi unuttum</a>
+                </div>
+
+                <button type="submit" id="btnLogin" class="btn-primary">E-posta / Telefon ile giriş yap</button>
+            </form>
+
+            <div class="social-row">
+                <button type="button" class="btn-social" onclick="handleSocialLogin('Google')">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" alt="G"> Google ile giriş yap
+                </button>
+                <button type="button" class="btn-social" onclick="handleSocialLogin('Apple')">
+                    <span style="font-size:16px;"></span> Apple ile giriş yap
+                </button>
+            </div>
+
+            <div class="register-prompt">
+                <span>Henüz hesabın yok mu?</span>
+                <a href="/kurumsal-kayit.html" class="btn-register">Hesap aç</a>
+            </div>
+        </div>
+
+        <!-- SAĞ QR KOD ALANI -->
+        <div class="qr-col">
+            <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=https://altin-eksper.onrender.com/kuyumcu.html" alt="QR Kod">
+            <div class="qr-title">QR ile giriş yap</div>
+            <div class="qr-desc">Telefonunuzun kamerasıyla QR kodu tarayın, dükkan panelinize anında erişin.</div>
+        </div>
+    </div>
+
+    <div class="legal-footer">
+        <a onclick="openLoginLegal('sozlesme')">Kurumsal Hesap Sözleşmesi</a> • <a onclick="openLoginLegal('kvkk')">KVKK Aydınlatma Metni</a>
+        <div style="margin-top:4px;">Bu site reCAPTCHA ile korunmaktadır.</div>
+    </div>
+</div>
+
+<!-- SÖZLEŞME VE KVKK PENCERESİ -->
+<div id="loginLegalModal" class="modal-backdrop">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3 id="loginModalTitle">Bilgilendirme</h3>
+            <button type="button" class="modal-close" onclick="closeLoginLegal()">✕</button>
+        </div>
+        <div class="modal-body" id="loginModalContent"></div>
+        <div class="modal-foot">
+            <button type="button" class="modal-btn" onclick="closeLoginLegal()">Okudum, Anladım</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePass() {
+    const input = document.getElementById('userPassword');
+    input.type = (input.type === 'password') ? 'text' : 'password';
+}
+
+function handleSocialLogin(provider) {
+    alert(`${provider} Kurumsal Giriş Doğrulaması: Güvenli tek tıkla giriş için kurumsal e-posta eşleşmeniz kontrol ediliyor. Lütfen ilk girişinizde kayıtlı kurumsal e-postanızı kullanınız.`);
+}
+
+function openLoginLegal(type) {
+    const modal = document.getElementById('loginLegalModal');
+    const title = document.getElementById('loginModalTitle');
+    const content = document.getElementById('loginModalContent');
+
+    if (type === 'sozlesme') {
+        title.textContent = 'Altın Eksper — Kurumsal Sarraf İş Ortaklığı Sözleşmesi';
+        content.innerHTML = `
+            <h4 style="margin:0 0 6px; color:#0f172a; font-size:13.5px;">1. TARAFLAR VE SÖZLEŞMENİN AMACI</h4>
+            <p>İşbu Kurumsal Sarraf İş Ortaklığı Sözleşmesi ("Sözleşme"), Altın Eksper Dijital Bilgi ve Aracılık Platformu ("Platform") ile işbu platform üzerinden kurumsal üyelik tesis eden yetkili sarrafiye, kuyumculuk ve kıymetli maden ticareti işletmesi ("Üye Sarraf") arasında akdedilmiştir. Sözleşmenin amacı; platform vasıtasıyla nihai tüketicilerin satışa sunduğu ziynet, hurda ve has altın emtiası için güvenli, şeffaf, rekabetçi bir ihale ortamı tesis edilmesi ve tarafların hak/yükümlülüklerinin belirlenmesidir.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">2. TEKLİF AHLAKI, TAAHHÜT VE BAĞLAYICILIK</h4>
+            <p>Üye Sarraf, platform sistemi üzerinden tüketiciye ilettiği nakit alım teklifinin piyasa etiğine uygun ve bağlayıcı bir irade beyanı olduğunu kabul eder. Müşterinin bildirdiği ürün ayarı ve gramaj beyanının mağaza içinde yapılan hassas terazi tartımı ve mihenk taşı/ayar testi ile doğrulanması kaydıyla, sarraf teklif ettiği toplam bedeli eksiksiz olarak (nakit veya anlık FAST/havale transferi ile) müşteriye ödemekle yükümlüdür. Ürün niteliklerinde eksiklik, düşük ayar veya imitasyon tespiti hali müstesna olmak üzere, keyfi fiyat kırma ve tekliften dönme platform kurallarının ihlali sayılır.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">3. GÜVENLİK KODU (PIN) VE İŞLEM DOĞRULAMA</h4>
+            <p>Platform dışı kayıt dışı işlemlerin ("kaçak işlem") önüne geçilmesi, tüketici ve esnaf mağduriyetlerinin engellenmesi amacıyla her randevu için müşteriye özel 4 haneli Güvenlik PIN Kodu üretilir. Üye Sarraf, fiziki mağazasında alım işlemini sonlandırırken müşteriden bu kodu talep ederek sisteme işlemek zorundadır. Kodu girilmeyen veya teyit edilmeyen işlemler platform güvencesi kapsamı dışında kalır.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">4. BAŞARI JETONU VE KOMİSYON TARİFESİ</h4>
+            <p>Sistemde başarı kesintisi yalnızca müşteri mağazaya fiilen gelip satış kesinleştiğinde uygulanır. Başarı komisyonu; Bilezik, 22 Ayar Hurda ve 24 Ayar Gram Has altınlarda binde bir (‰1), diğer ziynet ve fantezi ürünlerde binde iki (‰2) olarak hesaplanır ve sarrafın jeton bakiyesinden mahsup edilir. Müşterinin mağazaya gelmediği ("No-Show") veya vazgeçtiği teyit edilen durumlarda Üye Sarraftan hiçbir jeton veya bedel tahsil edilmez.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">5. VERİ GİZLİLİĞİ VE İLETİŞİM GÜVENLİĞİ</h4>
+            <p>Üye Sarraf, ihale ve randevu süreci kapsamında tarafına iletilen tüketiciye ait isim, telefon ve konum verilerini münhasıran ilgili işlem için kullanacağını; hiçbir surette üçüncü kişilere devretmeyeceğini, ticari reklam/pazarlama amacıyla veri tabanına kaydetmeyeceğini taahhüt eder. Aksi davranışlar KVKK ve TCK kapsamında doğrudan Üye Sarrafın cezai sorumluluğundadır.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">6. FESİH VE YETKİLİ MAHKEME</h4>
+            <p>Platform kurallarını, dürüstlük ilkelerini ve mesleki ahlakı ihlal eden sarrafların hesapları tek taraflı olarak askıya alınabilir veya feshedilebilir. İşbu sözleşmeden doğabilecek uyuşmazlıklarda Antalya Mahkemeleri ve İcra Daireleri yetkilidir.</p>
+        `;
+    } else {
+        title.textContent = 'Altın Eksper — KVKK Aydınlatma ve Açık Rıza Metni';
+        content.innerHTML = `
+            <h4 style="margin:0 0 6px; color:#0f172a; font-size:13.5px;">1. VERİ SORUMLUSUNUN KİMLİĞİ</h4>
+            <p>6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, Altın Eksper platformu ("Veri Sorumlusu") sıfatıyla, kurumsal üyelerimizin, temsilcilerinin ve tüketicilerin kişisel verilerini aşağıda izah edilen kapsam ve şartlarda işlemekteyiz.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">2. İŞLENEN KİŞİSEL VERİ KATEGORİLERİ</h4>
+            <p>Kurumsal hesap oluşturma ve sistem kullanımı esnasında tarafınızca paylaşılan; 
+            <b>Kimlik Verileri:</b> Ad, soyad, T.C. kimlik numarası veya Vergi Kimlik Numarası (VKN); 
+            <b>İletişim Verileri:</b> E-posta adresi, sabit telefon, GSM/WhatsApp ihale bildirim numarası, mağaza açık adresi ve lokasyon; 
+            <b>Mesleki/Kurumsal Veriler:</b> Vergi dairesi ili ve adı, şirket unvanı, faaliyet alanı ve fatura bilgileri; 
+            <b>İşlem Güvenliği Verileri:</b> Giriş şifresi, oturum logları, IP adresi ve işlem zaman damgalarıdır.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">3. KİŞİSEL VERİ İŞLEME AMAÇLARI VE HUKUKİ SEBEPLERİ</h4>
+            <p>Kişisel verileriniz KVKK'nın 5. ve 6. maddelerine uygun olarak şu amaçlarla işlenir:</p>
+            <ul>
+                <li>Kurumsal esnaf kaydının teyidi ve sahte/yetkisiz üyeliklerin önlenmesi,</li>
+                <li>Bölgenizdeki tüketici altın bozdurma taleplerinin WhatsApp Cloud API ve portal altyapısı üzerinden anlık iletilmesi,</li>
+                <li>Satış randevularının oluşturulması, 4 haneli güvenlik PIN onaylarının yürütülmesi ve muhasebe takibi,</li>
+                <li>5549 sayılı Suç Gelirlerinin Aklanmasının Önlenmesi ve Türk Ticaret Kanunu kapsamındaki yasal yükümlülüklerin yerine getirilmesi.</li>
+            </ul>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">4. VERİLERİN AKTARIMI VE SAKLAMA SÜRESİ</h4>
+            <p>Kişisel verileriniz, kanunen yetkili kamu kurum ve kuruluşları (Vergi Daireleri, MASAK, Adli Makamlar) haricinde hiçbir üçüncü taraf reklam, pazarlama veya veri brokerı şirkete aktarılmaz veya satılmaz. Verileriniz, üyelik süresince ve yasal zamanaşımı süreleri (TTK ve VUK uyarınca 10 yıl) boyunca şifrelenmiş sunucu ortamlarında muhafaza edilir.</p>
+
+            <h4 style="margin:12px 0 6px; color:#0f172a; font-size:13.5px;">5. KVKK'NIN 11. MADDESİ KAPSAMINDAKİ HAKLARINIZ</h4>
+            <p>Veri sahibi olarak dilediğiniz zaman; verilerinizin işlenip işlenmediğini öğrenme, işlenmişse buna ilişkin bilgi talep etme, amacına uygun kullanılıp kullanılmadığını öğrenme, eksik/yanlış işlenmişse düzeltilmesini isteme ve kanuni şartlar çerçevesinde silinmesini talep etme hakkına sahipsiniz. Başvurularınızı platform iletişim kanallarımız üzerinden iletebilirsiniz.</p>
+        `;
+    }
+    modal.style.display = 'flex';
+}
+
+function closeLoginLegal() {
+    document.getElementById('loginLegalModal').style.display = 'none';
+}
+
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnLogin');
+    const id = document.getElementById('userIdentifier').value.trim();
+    const pass = document.getElementById('userPassword').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Giriş Yapılıyor...';
+
+    try {
+        const res = await fetch('/api/jeweler/status/' + encodeURIComponent(id));
+        const data = await res.json();
+        if (data.success && data.data) {
+            localStorage.setItem('loggedJewelerId', data.data.id);
+            alert(`Hoş geldiniz, ${data.data.name}! Mağaza portalınıza aktarılıyorsunuz.`);
+            window.location.href = `/kuyumcu.html?jeweler=${data.data.id}`;
+        } else {
+            localStorage.setItem('loggedJewelerId', id);
+            window.location.href = `/kuyumcu.html?jeweler=${id}`;
+        }
+    } catch(err) {
+        localStorage.setItem('loggedJewelerId', id);
+        window.location.href = `/kuyumcu.html?jeweler=${id}`;
+    }
+}
+</script>
+</body>
+</html>

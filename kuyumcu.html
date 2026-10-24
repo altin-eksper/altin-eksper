@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Altın Eksper — Kuyumcu Teklif Portalı</title>
+<meta name="theme-color" content="#0f172a">
+<!-- PWA & Mobil Uygulama Ayarları -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Altın Eksper - Sarraf">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('PWA Hazır:', reg.scope))
+            .catch(err => console.log('PWA Hatası:', err));
+        });
+      }
+    </script>
+<style>
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body{
+    margin:0; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background:#0f172a; color:#f8fafc; padding:16px;
+}
+.card{
+    background:#1e293b; border:1px solid #334155; border-radius:12px;
+    padding:18px; max-width:640px; margin:0 auto 16px; box-shadow:0 10px 25px rgba(0,0,0,0.3);
+}
+.header{
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom:1px solid #334155; padding-bottom:12px; margin-bottom:14px;
+}
+.brand{ font-size:18px; font-weight:800; color:#f59e0b; }
+.timer-badge{
+    background:#fee2e2; color:#dc2626; font-weight:800; padding:6px 12px;
+    border-radius:20px; font-size:13px; display:inline-flex; align-items:center; gap:5px;
+}
+.balance-box{
+    background:#0f172a; border:1px solid #334155; border-radius:8px;
+    padding:12px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;
+}
+.btn-topup{
+    background:#f59e0b; color:#0f172a; border:none; padding:7px 14px; border-radius:6px;
+    font-weight:800; font-size:12px; cursor:pointer; transition:0.2s;
+}
+.btn-topup:hover{ background:#d97706; }
+.item-card{
+    background:#0f172a; border:1px solid #334155; border-radius:8px;
+    padding:10px; margin-bottom:8px; display:flex; gap:12px; align-items:center;
+}
+.item-thumb{
+    width:56px; height:56px; border-radius:6px; object-fit:cover;
+    background:#334155; border:1px solid #475569; cursor:pointer;
+}
+.price-input{
+    width:100%; padding:14px; border-radius:8px; border:2px solid #f59e0b;
+    background:#0f172a; color:#fff; font-size:20px; font-weight:800; text-align:center; outline:none; margin-bottom:12px;
+}
+.submit-btn{
+    width:100%; background:linear-gradient(135deg, #f59e0b, #d97706); color:#0f172a;
+    border:none; padding:14px; border-radius:8px; font-weight:800; font-size:16px; cursor:pointer; transition:0.2s;
+}
+.submit-btn:hover{ filter:brightness(1.05); }
+.submit-btn.revise-btn{
+    background:linear-gradient(135deg, #0284c7, #0369a1); color:#fff;
+}
+.photo-modal{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+    z-index:99999; align-items:center; justify-content:center; padding:20px;
+}
+.plan-option{
+    border:1px solid #475569; padding:12px; border-radius:8px; cursor:pointer;
+    display:flex; gap:10px; align-items:flex-start; background:#0f172a; margin-bottom:8px;
+    transition: 0.2s;
+}
+.plan-option:hover{ border-color:#f59e0b; }
+.balance-pulse {
+    animation: balancePop 0.4s ease-in-out;
+}
+@keyframes balancePop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); color: #facc15; }
+    100% { transform: scale(1); }
+}
+
+/* FİLTRE & MUHASEBE STİLLERİ */
+.filter-btn {
+    background:#0f172a; color:#94a3b8; border:1px solid #334155;
+    padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700;
+    cursor:pointer; transition:0.2s;
+}
+.filter-btn:hover { color:#fff; border-color:#64748b; }
+.filter-btn.active {
+    background:#f59e0b; color:#0f172a; border-color:#f59e0b;
+}
+.date-input {
+    background:#0f172a; border:1px solid #334155; color:#f8fafc;
+    padding:4px 8px; border-radius:6px; font-size:11px; outline:none;
+}
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1); cursor:pointer;
+}
+
+/* ZİL AÇ / KAPAT TOGGLE BUTONU */
+.sound-toggle-btn {
+    padding:6px 12px; border-radius:20px; font-size:11px; font-weight:800;
+    cursor:pointer; display:inline-flex; align-items:center; gap:5px;
+    transition: 0.2s ease-in-out;
+}
+.sound-toggle-btn.active {
+    background:#064e3b; border:1px solid #10b981; color:#34d399;
+}
+.sound-toggle-btn.inactive {
+    background:#1e293b; border:1px solid #475569; color:#94a3b8;
+}
+</style>
+</head>
+<body onclick="initAudioContextOnce()">
+
+<!-- MÜŞTERİ MAĞAZAYA GELDİĞİNDE GÖRÜNEN KESİN ONAY KARTI (4 HANELİ PIN KORUMALI) -->
+<div class="card" id="dealFinalizeCard" style="display:none; border:2px solid #10b981; background:linear-gradient(135deg, #064e3b, #0f172a);">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #059669; padding-bottom:10px; margin-bottom:12px;">
+        <div>
+            <h3 style="margin:0; font-size:17px; color:#34d399; display:flex; align-items:center; gap:8px;">
+                🎉 Müşteri Teklifinizi Kabul Etti!
+            </h3>
+            <span style="font-size:12px; color:#a7f3d0;" id="dealCustomerLabel">Müşteri randevusu dükkanınıza yönlendirildi.</span>
+        </div>
+        <span style="background:#10b981; color:#fff; font-size:11px; font-weight:800; padding:4px 8px; border-radius:6px;">
+            Bekleyen Randevu
+        </span>
+    </div>
+
+    <p style="font-size:12.5px; color:#cbd5e1; margin:0 0 14px; line-height:1.5;">
+        Müşteri dükkanınıza geldiğinde fiziki tartım ve ayar kontrolünü yapınız. Müşterinin WhatsApp'ına gelen <b>4 Haneli Güvenlik Kodunu</b> ve anlaşılan nihai tutarı girerek işlemi tamamlayınız.
+    </p>
+
+    <!-- TUTAR VE PIN KUTUSU YAN YANA -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+        <div style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:10px;">
+            <label style="font-size:11px; font-weight:700; color:#94a3b8; display:block; margin-bottom:4px;">
+                Gerçekleşen Tutar (TL):
+            </label>
+            <input type="number" id="actualDealPriceInput" placeholder="Örn: 85000" 
+                   style="width:100%; padding:10px; font-size:16px; font-weight:800; color:#4ade80; background:#1e293b; border:1.5px solid #10b981; border-radius:6px; outline:none;">
+        </div>
+        <div style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:10px;">
+            <label style="font-size:11px; font-weight:700; color:#facc15; display:block; margin-bottom:4px;">
+                Müşteri Güvenlik PIN Kodu:
+            </label>
+            <input type="text" id="customerPinInput" maxlength="4" placeholder="4 Haneli PIN" 
+                   style="width:100%; padding:10px; font-size:16px; font-weight:800; color:#facc15; text-align:center; letter-spacing:4px; background:#1e293b; border:1.5px solid #eab308; border-radius:6px; outline:none;">
+        </div>
+    </div>
+    <span style="font-size:11px; color:#94a3b8; margin-top:-6px; margin-bottom:12px; display:block;">
+        💡 Başarı jetonu gerçekleşen tutar üzerinden (Bilezik/Has: ‰1, Diğer: ‰2) adilce kesilir.
+    </span>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" id="btnCompleteFinalDeal" onclick="submitFinalDealConfirmation()" 
+                style="flex:2; background:#10b981; color:#fff; border:none; padding:12px; border-radius:8px; font-size:14px; font-weight:800; cursor:pointer;">
+            ✓ PIN Doğrula & İşlemi Tamamla
+        </button>
+        <button type="button" onclick="cancelDealNoShow()" 
+                style="flex:1; background:#475569; color:#f87171; border:1px solid #64748b; padding:12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+            ✕ Gelmedi (İptal)
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="header">
+        <div>
+            <div class="brand">ALTIN EKSPER</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                <span style="font-size:12px; color:#94a3b8;">Canlı Satış İhalesi</span>
+                <!-- AÇILIR / KAPANIR ZİL BUTONU -->
+                <button type="button" class="sound-toggle-btn active" id="soundToggleBtn" onclick="toggleSoundSystem(event)">
+                    🔔 Zil: Açık
+                </button>
+            </div>
+        </div>
+        <div id="countdownTimer" class="timer-badge">⏱ 15:00</div>
+    </div>
+
+    <!-- KUYUMCU BİLGİSİ & BAKİYE KUTUSU -->
+    <div class="balance-box">
+        <div>
+            <div style="font-size:11px; color:#94a3b8;">Giriş Yapan Sarraf:</div>
+            <strong id="jewelerTitle" style="color:#f8fafc; font-size:13px;">Doğrulanıyor...</strong>
+            <div id="balanceBadge" style="font-size:13px; font-weight:800; color:#38bdf8; margin-top:2px;">
+                🪙 Yükleniyor...
+            </div>
+        </div>
+        <div>
+            <button type="button" class="btn-topup" onclick="openPackagePurchaseModal()">
+                ➕ Bakiye Yükle
+            </button>
+        </div>
+    </div>
+
+    <div style="font-size:12px; color:#94a3b8; margin-bottom:6px;">Müşteri İhale Detayı:</div>
+    <div id="auctionDetails" style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155; margin-bottom:14px; font-size:13px;">
+        Yükleniyor...
+    </div>
+
+    <div style="font-size:12px; color:#94a3b8; margin-bottom:6px;">Satılacak Ürünler (Fotoğrafa basarak büyütebilirsiniz):</div>
+    <div id="itemsContainer"></div>
+
+    <form id="offerForm" onsubmit="handleSendOffer(event)" style="margin-top:16px;">
+        <label style="display:block; font-size:12px; color:#94a3b8; margin-bottom:6px; text-align:center;">
+            Nakit Alış Teklifiniz (Toplam TL):
+        </label>
+        <input type="number" id="offerPrice" class="price-input" required placeholder="Örn: 85000">
+        <input type="text" id="offerNote" placeholder="Varsa notunuz (Örn: Nakit hazır, dükkanda çay ikramı)" 
+               style="width:100%; padding:10px; border-radius:6px; border:1px solid #334155; background:#0f172a; color:#fff; font-size:13px; margin-bottom:12px; outline:none;">
+        <button type="submit" id="btnSubmitOffer" class="submit-btn">Teklifi Müşteriye İlet</button>
+    </form>
+    <div id="offerResult" style="margin-top:12px; font-size:13px; text-align:center; display:none;"></div>
+</div>
+
+<!-- KUYUMCUNUN KENDİ CİRO VE İŞLEM GEÇMİŞİ KARTI -->
+<div class="card" id="historyCard">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; border-bottom:1px solid #334155; padding-bottom:10px;">
+        <div>
+            <div style="font-weight:800; font-size:15px; color:#f59e0b;">📊 Mağaza İşlem & Ciro Geçmişim</div>
+            <div style="font-size:11px; color:#94a3b8;">Altın Eksper ile dükkanınıza bağlanan işlemler</div>
+        </div>
+        <!-- HIZLI DÖNEM BUTONLARI -->
+        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+            <button type="button" class="filter-btn active" id="btnMyAll" onclick="setMyFilter('all')">Tümü</button>
+            <button type="button" class="filter-btn" id="btnMyToday" onclick="setMyFilter('today')">Bugün</button>
+            <button type="button" class="filter-btn" id="btnMyMonth" onclick="setMyFilter('month')">Bu Ay</button>
+            <button type="button" class="filter-btn" id="btnMyYear" onclick="setMyFilter('year')">Bu Yıl</button>
+        </div>
+    </div>
+
+    <!-- ÖZEL TARİH ARALIĞI SEÇİCİ -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px; gap:8px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:11px; color:#94a3b8;">Aralık:</span>
+            <input type="date" id="myStartDate" class="date-input">
+            <span style="color:#64748b; font-size:11px;">-</span>
+            <input type="date" id="myEndDate" class="date-input">
+            <button type="button" class="filter-btn" onclick="applyMyCustomRange()" style="background:#0284c7; color:#fff; border-color:#0284c7;">Uygula</button>
+        </div>
+        <span id="myFilterBadge" style="font-size:11px; color:#38bdf8; font-weight:700;">(Tüm Zamanlar)</span>
+    </div>
+
+    <!-- MAĞAZA ÖZET METRİKLERİ -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin:14px 0;">
+        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155;">
+            <div style="font-size:11px; color:#94a3b8; font-weight:600;">KAZANILAN İŞLEM</div>
+            <div id="myDealsCount" style="font-size:20px; font-weight:800; color:#f8fafc; margin-top:4px;">0</div>
+        </div>
+        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155;">
+            <div style="font-size:11px; color:#94a3b8; font-weight:600;">BAĞLANAN CİRO</div>
+            <div id="myTotalTurnover" style="font-size:20px; font-weight:800; color:#4ade80; margin-top:4px;">0 ₺</div>
+        </div>
+        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155;">
+            <div style="font-size:11px; color:#94a3b8; font-weight:600;">HARCANAN JETON</div>
+            <div id="myTokensUsed" style="font-size:20px; font-weight:800; color:#38bdf8; margin-top:4px;">0 🪙</div>
+        </div>
+    </div>
+
+    <!-- GEÇMİŞ İŞLEM LİSTESİ TABLOSU -->
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
+            <thead>
+                <tr style="border-bottom:1px solid #334155; color:#94a3b8;">
+                    <th style="padding:8px 6px;">Tarih</th>
+                    <th style="padding:8px 6px;">Talep No</th>
+                    <th style="padding:8px 6px;">Müşteri</th>
+                    <th style="padding:8px 6px;">Alınan Tutar</th>
+                    <th style="padding:8px 6px;">Jeton Bedeli</th>
+                </tr>
+            </thead>
+            <tbody id="myDealsTbody">
+                <tr><td colspan="5" style="text-align:center; padding:14px; color:#64748b;">Yükleniyor...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- FOTOĞRAF BÜYÜTME MODALI -->
+<div id="photoModal" class="photo-modal" onclick="this.style.display='none'">
+    <img id="bigPhotoImg" src="" style="max-width:100%; max-height:90vh; border-radius:8px;">
+</div>
+
+<!-- BAKİYE & JETON PAKETİ SATIN ALMA MODALI -->
+<div id="packageModal" class="photo-modal">
+    <div style="background:#1e293b; border:1px solid #475569; border-radius:12px; max-width:460px; width:100%; padding:20px; color:#f8fafc; position:relative; box-shadow:0 15px 30px rgba(0,0,0,0.5);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #334155; padding-bottom:10px;">
+            <div>
+                <h3 style="margin:0; font-size:16px; color:#f59e0b;">🪙 Bakiye & Jeton Paketi Yükleme</h3>
+                <span style="font-size:11px; color:#94a3b8;">Havale / EFT / FAST ile anında aktivasyon</span>
+            </div>
+            <button type="button" onclick="document.getElementById('packageModal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:20px; cursor:pointer;">✕</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+            <label class="plan-option" onclick="selectPlanPrice('750', 'token_25')">
+                <input type="radio" name="buyPlan" value="token_25" checked style="margin-top:3px;">
+                <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; font-weight:700; font-size:13px; color:#f8fafc;">
+                        <span>🪙 25 İhale Jetonu</span>
+                        <span style="color:#f59e0b;">750 ₺</span>
+                    </div>
+                    <div style="font-size:11px; color:#94a3b8;">Her yeni ihale teklifinizde 1 jeton düşer.</div>
+                </div>
+            </label>
+
+            <label class="plan-option" onclick="selectPlanPrice('1.750', 'token_75')">
+                <input type="radio" name="buyPlan" value="token_75" style="margin-top:3px;">
+                <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; font-weight:700; font-size:13px; color:#38bdf8;">
+                        <span>🪙 75 Avantaj Jetonu</span>
+                        <span style="color:#38bdf8;">1.750 ₺</span>
+                    </div>
+                    <div style="font-size:11px; color:#94a3b8;">Yoğun teklif veren dükkanlar için indirimli paket.</div>
+                </div>
+            </label>
+
+            <label class="plan-option" onclick="selectPlanPrice('3.500', 'subscription_vip')" style="border:1.5px solid #facc15; background:#0f172a;">
+                <input type="radio" name="buyPlan" value="subscription_vip" style="margin-top:3px;">
+                <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; font-weight:700; font-size:13px; color:#facc15;">
+                        <span>👑 30 Gün Sınırsız VIP</span>
+                        <span style="color:#facc15;">3.500 ₺</span>
+                    </div>
+                    <div style="font-size:11px; color:#cbd5e1;">Bölgenizdeki tüm ihalelere sınırsız ve kesintisiz katılım.</div>
+                </div>
+            </label>
+        </div>
+
+        <div style="background:#0f172a; border-radius:8px; padding:12px; font-size:12px; color:#cbd5e1; margin-bottom:12px; line-height:1.6; border:1px solid #334155;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <b style="color:#f8fafc;">🏦 Havale / FAST Bilgileri:</b>
+                <span style="background:#0284c7; color:#fff; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;">7/24 FAST</span>
+            </div>
+            <div><b>Banka:</b> Garanti BBVA / Kuveyt Türk</div>
+            <div><b>Alıcı Ünvan:</b> Yasin Adalı Kuyumculuk</div>
+            
+            <div style="margin-top:8px; display:flex; align-items:center; gap:6px; background:#1e293b; padding:8px 10px; border-radius:6px; border:1px dashed #475569;">
+                <span id="ibanText" style="font-family:monospace; font-weight:700; color:#38bdf8; font-size:13px; flex:1; word-break:break-all;">TR00 0000 0000 0000 0000 0000 00</span>
+                <button type="button" onclick="copyIban()" style="background:#f59e0b; color:#0f172a; border:none; padding:5px 9px; border-radius:4px; font-weight:800; font-size:11px; cursor:pointer;">📋 Kopyala</button>
+            </div>
+            <div style="margin-top:6px; font-size:11px; color:#94a3b8;">
+                ⚠️ Lütfen ödeme açıklamasına <b>Dükkan Adınızı</b> yazınız.
+            </div>
+        </div>
+
+        <div style="background:#1e293b; border:1px solid #334155; padding:10px 12px; border-radius:6px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; color:#94a3b8;">Ödenecek Tutar:</span>
+            <b id="paymentDueAmount" style="font-size:18px; color:#4ade80;">750 ₺</b>
+        </div>
+
+        <input id="senderNameInput" placeholder="Havale Yapan Ad Soyad / Dükkan Ünvanı *" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #475569; background:#0f172a; color:#fff; font-size:13px; margin-bottom:12px; outline:none;">
+
+        <button type="button" id="btnSubmitPayment" onclick="submitPackageOrder()" style="width:100%; background:#10b981; color:#fff; border:none; padding:12px; border-radius:6px; font-weight:800; font-size:14px; cursor:pointer; transition:0.2s;">
+            Ödemeyi Yaptım, Bildirimi İlet ✓
+        </button>
+    </div>
+</div>
+
+<script>
+const BACKEND_API_URL = '/api';
+const urlParams = new URLSearchParams(window.location.search);
+const reqId = urlParams.get('req') || '';
+let loggedJeweler = null;
+let hasGivenOffer = false;
+let balanceWatcherInterval = null;
+let currentAuctionData = null;
+let lastKnownStatus = null;
+
+let MY_RAW_DEALS = [];
+let MY_FILTER_MODE = 'all';
+let MY_START_DATE = null;
+let MY_END_DATE = null;
+
+// ================= İKİ DURUMLU (AÇIK / KAPALI) VE iOS UYUMLU SES MOTORU =================
+let isSoundEnabled = true;
+let audioCtx = null;
+
+function initAudioContextOnce() {
+    if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            audioCtx = new AudioContext();
+        }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+// ZİLİ AÇ / ZİLİ KAPAT BUTON İŞLEVİ
+function toggleSoundSystem(e) {
+    if (e) e.stopPropagation();
+    initAudioContextOnce();
+
+    isSoundEnabled = !isSoundEnabled;
+    const btn = document.getElementById('soundToggleBtn');
+
+    if (isSoundEnabled) {
+        btn.innerHTML = '🔔 Zil: Açık';
+        btn.className = 'sound-toggle-btn active';
+        playCashBellSound(true);
+    } else {
+        btn.innerHTML = '🔕 Zil: Kapalı';
+        btn.className = 'sound-toggle-btn inactive';
+    }
+}
+
+// Ding-Dong Kasa / Bildirim Melodisi
+function playCashBellSound(forcePlay = false) {
+    if (!isSoundEnabled && !forcePlay) return;
+
+    try {
+        initAudioContextOnce();
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+
+        const osc1 = audioCtx.createOscillator();
+        const gain1 = audioCtx.createGain();
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(659.25, now);
+        gain1.gain.setValueAtTime(0.5, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc1.connect(gain1);
+        gain1.connect(audioCtx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.5);
+
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880.00, now + 0.12);
+        gain2.gain.setValueAtTime(0.6, now + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 1.1);
+
+        if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 250]);
+        }
+    } catch (e) {
+        console.log('Ses yürütülemedi:', e);
+    }
+}
+
+async function fetchJewelerStatus(jewelerId) {
+    if (!jewelerId) return null;
+    try {
+        const res = await fetch(BACKEND_API_URL + '/jeweler/status/' + jewelerId);
+        const data = await res.json();
+        if (data.success && data.data) {
+            return data.data;
+        }
+    } catch(e) {}
+    return null;
+}
+
+function startLiveBalanceWatcher(jewelerId) {
+    if (balanceWatcherInterval) clearInterval(balanceWatcherInterval);
+    balanceWatcherInterval = setInterval(async () => {
+        if (!jewelerId) return;
+        const freshData = await fetchJewelerStatus(jewelerId);
+        if (freshData && loggedJeweler) {
+            if (freshData.credits !== loggedJeweler.credits || freshData.membershipType !== loggedJeweler.membershipType) {
+                loggedJeweler.credits = freshData.credits;
+                loggedJeweler.membershipType = freshData.membershipType;
+                updateBalanceDisplay(true);
+                loadMyDeals(jewelerId);
+            }
+        }
+
+        // İhale Durumunu Canlı Dinle (Farklı cihazdan kapatıldıysa ekrandan anında düşür)
+        if (reqId) {
+            try {
+                const rRes = await fetch(BACKEND_API_URL + '/request/' + reqId);
+                const rData = await rRes.json();
+                if (rData.success && rData.data) {
+                    const currentReq = rData.data;
+                    const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || '');
+                    const isWinner = (currentReq.winnerCode && (currentReq.winnerCode === jId || (loggedJeweler && currentReq.winnerCode === loggedJeweler.name)));
+
+                    // 1. Müşteri Teklifi Kabul Ettiğinde
+                    if (currentReq.status === 'APPOINTMENT_SET' && isWinner && lastKnownStatus !== 'APPOINTMENT_SET') {
+                        lastKnownStatus = 'APPOINTMENT_SET';
+                        playCashBellSound();
+                        checkAppointmentState(currentReq);
+                    }
+
+                    // 2. İşlem Başka Bir Cihazdan (PC / Mobil) Tamamlandıysa Açık Olan Onay Kartını Anında Kaldır
+                    if (currentReq.status === 'COMPLETED' && lastKnownStatus !== 'COMPLETED') {
+                        lastKnownStatus = 'COMPLETED';
+                        checkAppointmentState(currentReq);
+                        loadMyDeals(jId);
+                    }
+                }
+            } catch(err) {}
+        }
+    }, 3000); // 3 saniyede bir hızlı ve kesintisiz senkronizasyon
+}
+
+async function initPortal() {
+    let jewelerId = urlParams.get('jeweler') || localStorage.getItem('loggedJewelerId');
+    if (!jewelerId) {
+        jewelerId = prompt("Sarraf / Kuyumcu Kodunuzu Giriniz (Örn: SARRAF_01 veya SARRAF_0885):");
+    }
+    if (jewelerId) {
+        jewelerId = jewelerId.trim().toUpperCase();
+        localStorage.setItem('loggedJewelerId', jewelerId);
+    }
+    
+    if (jewelerId) {
+        const data = await fetchJewelerStatus(jewelerId);
+        if (data) {
+            loggedJeweler = data;
+            document.getElementById('jewelerTitle').textContent = loggedJeweler.name + ' (' + loggedJeweler.id + ')';
+            updateBalanceDisplay();
+            startLiveBalanceWatcher(jewelerId);
+            loadMyDeals(jewelerId);
+        }
+    }
+
+    if (!reqId) {
+        document.getElementById('auctionDetails').textContent = 'Geçersiz veya süresi dolmuş ihale linki.';
+        return;
+    }
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/request/' + reqId);
+        const data = await res.json();
+        if (data.success && data.data) {
+            currentAuctionData = data.data;
+            lastKnownStatus = currentAuctionData.status;
+            renderAuction(data.data);
+            checkExistingOffer(data.data);
+            checkAppointmentState(data.data);
+            setTimeout(() => { playCashBellSound(); }, 800);
+
+            // Eğer 15 dk dolmuşsa formu gizle, sarrafa net bilgi kutusu göster
+            const isExpired = currentAuctionData.status === 'EXPIRED' || (currentAuctionData.expiresAt && new Date(currentAuctionData.expiresAt).getTime() <= Date.now());
+            if (isExpired && currentAuctionData.status !== 'APPOINTMENT_SET' && currentAuctionData.status !== 'COMPLETED') {
+                const offerForm = document.getElementById('offerForm');
+                if (offerForm) offerForm.style.display = 'none';
+                
+                const tBadge = document.getElementById('countdownTimer');
+                if (tBadge) {
+                    tBadge.textContent = '⏱ Süre Doldu';
+                    tBadge.style.background = '#e2e8f0';
+                    tBadge.style.color = '#64748b';
+                }
+
+                const resultBox = document.getElementById('offerResult');
+                if (resultBox) {
+                    resultBox.style.display = 'block';
+                    resultBox.style.color = '#f59e0b';
+                    resultBox.innerHTML = `⚠️ <b>15 dakikalık ihale süresi dolmuştur.</b><br>Müşteri ihaleyi yeniden başlatırsa WhatsApp üzerinden tekrar bildirim alacaksınız.`;
+                }
+            }
+        } else {
+            document.getElementById('auctionDetails').innerHTML = '⚠️ Bu ihale kaydı bulunamadı veya silinmiş.';
+        }
+    } catch(e) {
+        document.getElementById('auctionDetails').textContent = 'Sunucuya bağlanılamadı.';
+    }
+}
+
+// Müşteri bu kuyumcuyu seçmişse dükkanda tamamlama kartını açar / Başka cihazdan tamamlandıysa kilitler
+function checkAppointmentState(req) {
+    const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || '');
+    const finalizeCard = document.getElementById('dealFinalizeCard');
+    if (!finalizeCard) return;
+
+    const isWinner = (req.winnerCode && (req.winnerCode === jId || (loggedJeweler && req.winnerCode === loggedJeweler.name)));
+
+    if (req.status === 'APPOINTMENT_SET' && isWinner) {
+        finalizeCard.style.display = 'block';
+        const priceInput = document.getElementById('actualDealPriceInput');
+        if (priceInput && !priceInput.value) {
+            priceInput.value = req.agreedPrice || '';
+        }
+        const lbl = document.getElementById('dealCustomerLabel');
+        if (lbl) {
+            lbl.textContent = `Müşteri: ${req.customerName || 'Müşteri'} • Randevu Tutarı: ${Number(req.agreedPrice || 0).toLocaleString('tr-TR')} TL`;
+        }
+        finalizeCard.scrollIntoView({ behavior: 'smooth' });
+    } else if (req.status === 'COMPLETED') {
+        // İŞLEM TAMAMLANDI: Onay formunu tamamen yok et, ikinci kez kapatılmasına izin verme!
+        finalizeCard.style.display = 'none';
+        const resultBox = document.getElementById('offerResult');
+        if (resultBox && isWinner) {
+            resultBox.style.display = 'block';
+            resultBox.style.color = '#4ade80';
+            resultBox.innerHTML = `✅ <b>Bu işlem dükkanınızda başarıyla tamamlanmıştır.</b><br>Gerçekleşen Tutar: ${Number(req.actualDealPrice || req.agreedPrice).toLocaleString('tr-TR')} ₺`;
+        }
+        // Teklif formunu da devre dışı bırak
+        const offerBtn = document.getElementById('btnSubmitOffer');
+        if (offerBtn) {
+            offerBtn.disabled = true;
+            offerBtn.textContent = 'İşlem Kapatıldı ✓';
+        }
+    } else {
+        finalizeCard.style.display = 'none';
+    }
+}
+
+// Dükkanda gerçekleşen tutar ve 4 haneli PIN ile işlemi onaylama (Çift tıklama & mükerrer korumalı)
+async function submitFinalDealConfirmation() {
+    const actualPrice = document.getElementById('actualDealPriceInput').value;
+    const pin = document.getElementById('customerPinInput').value.trim();
+
+    if (!actualPrice || Number(actualPrice) <= 0) {
+        alert("Lütfen dükkanda gerçekleşen alım tutarını giriniz.");
+        return;
+    }
+
+    if (!pin || pin.length !== 4) {
+        alert("Lütfen müşterinin telefonuna gelen 4 haneli Güvenlik Kodunu giriniz.");
+        return;
+    }
+
+    if (!confirm(Number(actualPrice).toLocaleString('tr-TR') + " TL tutarındaki işlemi onaylayıp faturayı kapatmak istiyor musunuz?")) return;
+
+    const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || 'SARRAF_01');
+    const btn = document.getElementById('btnCompleteFinalDeal');
+    btn.disabled = true;
+    btn.textContent = 'PIN Doğrulanıyor...';
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/request/complete-deal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                requestId: reqId, 
+                jewelerId: jId, 
+                actualDealPrice: actualPrice,
+                customerPin: pin 
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            playCashBellSound(true); // Kapanış sesi
+            alert("✅ " + data.message);
+            if (loggedJeweler && data.remainingCredits !== null) {
+                loggedJeweler.credits = data.remainingCredits;
+                updateBalanceDisplay(true);
+            }
+            document.getElementById('dealFinalizeCard').style.display = 'none';
+            loadMyDeals(jId);
+            location.reload();
+        } else {
+            alert("⚠️ " + data.message);
+            // Eğer işlem başka bir cihazdan zaten kapatılmışsa formu doğrudan kapat
+            if (data.message && data.message.includes('zaten')) {
+                document.getElementById('dealFinalizeCard').style.display = 'none';
+                loadMyDeals(jId);
+            } else {
+                btn.disabled = false;
+                btn.textContent = '✓ PIN Doğrula & İşlemi Tamamla';
+            }
+        }
+    } catch (e) {
+        alert("Bağlantı hatası oluştu.");
+        btn.disabled = false;
+        btn.textContent = '✓ PIN Doğrula & İşlemi Tamamla';
+    }
+}
+
+// Müşteri dükkana gelmediğinde randevuyu sıfır kayıpla iptal etme
+async function cancelDealNoShow() {
+    if (!confirm("Müşteri dükkana gelmedi mi? Bu randevu iptal edilecek ve sizden hiçbir jeton düşülmeyecektir.")) return;
+
+    const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || 'SARRAF_01');
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/request/cancel-deal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestId: reqId, jewelerId: jId, reason: 'Müşteri mağazaya gelmedi.' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert("İşlem iptal edildi. Hesabınızdan hiçbir jeton kesilmemiştir.");
+            document.getElementById('dealFinalizeCard').style.display = 'none';
+        }
+    } catch (e) {
+        alert("İptal işlemi başarısız.");
+    }
+}
+
+async function loadMyDeals(jewelerId) {
+    if (!jewelerId) return;
+    try {
+        const res = await fetch(BACKEND_API_URL + '/jeweler/deals/' + jewelerId);
+        const data = await res.json();
+        if (data.success && data.deals) {
+            MY_RAW_DEALS = data.deals;
+            applyMyFilterAndRender();
+        }
+    } catch (e) {
+        console.error('Kişisel işlem geçmişi yüklenemedi:', e);
+    }
+}
+
+function setMyFilter(mode) {
+    MY_FILTER_MODE = mode;
+    ['btnMyAll', 'btnMyToday', 'btnMyMonth', 'btnMyYear'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+    });
+
+    if (mode === 'all') document.getElementById('btnMyAll').classList.add('active');
+    if (mode === 'today') document.getElementById('btnMyToday').classList.add('active');
+    if (mode === 'month') document.getElementById('btnMyMonth').classList.add('active');
+    if (mode === 'year') document.getElementById('btnMyYear').classList.add('active');
+
+    document.getElementById('myStartDate').value = '';
+    document.getElementById('myEndDate').value = '';
+
+    applyMyFilterAndRender();
+}
+
+function applyMyCustomRange() {
+    const sVal = document.getElementById('myStartDate').value;
+    const eVal = document.getElementById('myEndDate').value;
+
+    if (!sVal && !eVal) {
+        alert('Lütfen bir başlangıç veya bitiş tarihi seçin.');
+        return;
+    }
+
+    MY_FILTER_MODE = 'custom';
+    MY_START_DATE = sVal ? new Date(sVal + 'T00:00:00') : null;
+    MY_END_DATE = eVal ? new Date(eVal + 'T23:59:59') : null;
+
+    ['btnMyAll', 'btnMyToday', 'btnMyMonth', 'btnMyYear'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+    });
+
+    applyMyFilterAndRender();
+}
+
+function applyMyFilterAndRender() {
+    const now = new Date();
+    const filtered = MY_RAW_DEALS.filter(d => {
+        const dealDate = new Date(d.completedAt);
+
+        if (MY_FILTER_MODE === 'all') return true;
+        if (MY_FILTER_MODE === 'today') {
+            return dealDate.getDate() === now.getDate() &&
+                   dealDate.getMonth() === now.getMonth() &&
+                   dealDate.getFullYear() === now.getFullYear();
+        }
+        if (MY_FILTER_MODE === 'month') {
+            return dealDate.getMonth() === now.getMonth() &&
+                   dealDate.getFullYear() === now.getFullYear();
+        }
+        if (MY_FILTER_MODE === 'year') {
+            return dealDate.getFullYear() === now.getFullYear();
+        }
+        if (MY_FILTER_MODE === 'custom') {
+            if (MY_START_DATE && dealDate < MY_START_DATE) return false;
+            if (MY_END_DATE && dealDate > MY_END_DATE) return false;
+            return true;
+        }
+        return true;
+    });
+
+    let sumTurnover = 0;
+    let sumTokens = 0;
+
+    filtered.forEach(d => {
+        sumTurnover += Number(d.agreedPrice || 0);
+        sumTokens += Number(d.deductedTokens || 0);
+    });
+
+    document.getElementById('myDealsCount').textContent = filtered.length;
+    document.getElementById('myTotalTurnover').textContent = sumTurnover.toLocaleString('tr-TR') + ' ₺';
+    document.getElementById('myTokensUsed').textContent = sumTokens + ' 🪙';
+
+    const badge = document.getElementById('myFilterBadge');
+    if (MY_FILTER_MODE === 'all') badge.textContent = '(Tüm Zamanlar)';
+    else if (MY_FILTER_MODE === 'today') badge.textContent = '(Bugün)';
+    else if (MY_FILTER_MODE === 'month') badge.textContent = '(Bu Ay)';
+    else if (MY_FILTER_MODE === 'year') badge.textContent = '(Bu Yıl)';
+    else if (MY_FILTER_MODE === 'custom') {
+        const s = MY_START_DATE ? MY_START_DATE.toLocaleDateString('tr-TR') : '...';
+        const e = MY_END_DATE ? MY_END_DATE.toLocaleDateString('tr-TR') : '...';
+        badge.textContent = `(${s} - ${e})`;
+    }
+
+    const tbody = document.getElementById('myDealsTbody');
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:14px; color:#64748b;">Seçili dönemde tamamlanmış işlem kaydınız bulunmuyor.</td></tr>';
+    } else {
+        tbody.innerHTML = filtered.map(d => `
+            <tr style="border-bottom:1px solid #334155;">
+                <td style="padding:8px 6px; color:#94a3b8;">${new Date(d.completedAt).toLocaleDateString('tr-TR')}</td>
+                <td style="padding:8px 6px;"><b>#${d.requestId}</b></td>
+                <td style="padding:8px 6px;">${d.customerName || 'Müşteri'}</td>
+                <td style="padding:8px 6px;"><b style="color:#4ade80;">${Number(d.agreedPrice).toLocaleString('tr-TR')} ₺</b></td>
+                <td style="padding:8px 6px;"><b style="color:#38bdf8;">-${d.deductedTokens} 🪙</b></td>
+            </tr>
+        `).join('');
+    }
+}
+
+function checkExistingOffer(req) {
+    const jId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || '');
+    if (!jId) return;
+
+    const myQuote = (req.quotes || []).find(q => q.jewelerCode === jId);
+    if (myQuote) {
+        hasGivenOffer = true;
+        document.getElementById('offerPrice').value = myQuote.offerPrice;
+        if (myQuote.note) document.getElementById('offerNote').value = myQuote.note;
+        
+        const btn = document.getElementById('btnSubmitOffer');
+        btn.textContent = 'Teklifi Güncelle (Revize Et)';
+        btn.classList.add('revise-btn');
+
+        const resultBox = document.getElementById('offerResult');
+        resultBox.style.display = 'block';
+        resultBox.style.color = '#38bdf8';
+        resultBox.innerHTML = `ℹ️ Bu ihaleye daha önce <b>${Number(myQuote.offerPrice).toLocaleString('tr-TR')} ₺</b> teklif verdiniz. Dilerseniz yukarıdan güncelleyebilirsiniz.`;
+    }
+}
+
+function updateBalanceDisplay(withPulse = false) {
+    const bBadge = document.getElementById('balanceBadge');
+    if (!loggedJeweler || !bBadge) return;
+    
+    if (loggedJeweler.membershipType === 'subscription') {
+        bBadge.innerHTML = '👑 VIP Aylık Sınırsız';
+        bBadge.style.color = '#facc15';
+    } else {
+        bBadge.innerHTML = `🪙 Kalan: <span id="jewelerCreditCount">${loggedJeweler.credits ?? 0}</span> Jeton`;
+        bBadge.style.color = '#38bdf8';
+    }
+
+    if (withPulse) {
+        bBadge.classList.remove('balance-pulse');
+        void bBadge.offsetWidth;
+        bBadge.classList.add('balance-pulse');
+    }
+}
+
+// Global dizi: Ürün görsellerini doğrudan güvenli indeksle eşlemek için
+window.itemPhotosMap = [];
+
+function renderAuction(req) {
+    document.getElementById('auctionDetails').innerHTML = `
+        📍 <b>Bölge:</b> ${req.district} &bull; ⚖️ <b>Toplam:</b> ${req.totalGrams} &bull; 🏷 <b>Ref. Değer:</b> ${req.totalReferenceTL}
+    `;
+
+    const itemsBox = document.getElementById('itemsContainer');
+    window.itemPhotosMap = [];
+
+    itemsBox.innerHTML = (req.items || []).map((it, idx) => {
+        // it.photo, it.image veya it.img değişkenlerini güvenle kontrol et
+        const photoSrc = it.photo || it.image || it.img || '';
+        let imgHtml = '';
+
+        if (photoSrc && photoSrc.length > 50) {
+            window.itemPhotosMap[idx] = photoSrc;
+            imgHtml = `<img src="${photoSrc}" class="item-thumb" onclick="openPhotoByIndex(${idx})" title="Büyütmek için dokunun">`;
+        } else {
+            window.itemPhotosMap[idx] = null;
+            imgHtml = `<div class="item-thumb" style="display:flex; align-items:center; justify-content:center; font-size:10px; color:#64748b;">Foto Yok</div>`;
+        }
+
+        return `
+            <div class="item-card">
+                ${imgHtml}
+                <div style="flex:1;">
+                    <div style="font-weight:700; color:#f8fafc; font-size:14px;">${it.productName} (${it.karat} Ayar)</div>
+                    <div style="font-size:12px; color:#94a3b8;">${it.grams ? it.grams + ' g' : ''} ${it.qty ? it.qty + ' adet' : ''}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    startCountdown(req.expiresAt);
+}
+
+function openPhotoByIndex(idx) {
+    const src = window.itemPhotosMap && window.itemPhotosMap[idx];
+    if (src) {
+        openBigPhoto(src);
+    }
+}
+
+function startCountdown(expiresAtIso) {
+    const expireTime = new Date(expiresAtIso).getTime();
+    const tBadge = document.getElementById('countdownTimer');
+
+    const interval = setInterval(() => {
+        const diff = expireTime - Date.now();
+        if (diff <= 0) {
+            clearInterval(interval);
+            tBadge.textContent = '⏱ Süre Doldu';
+            document.getElementById('offerForm').style.display = 'none';
+            return;
+        }
+        const m = Math.floor(diff / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        tBadge.textContent = `⏱ ${(m<10?'0':'')+m}:${(s<10?'0':'')+s}`;
+    }, 1000);
+}
+
+function openBigPhoto(src) {
+    document.getElementById('bigPhotoImg').src = src;
+    document.getElementById('photoModal').style.display = 'flex';
+}
+
+function openPackagePurchaseModal() {
+    document.getElementById('packageModal').style.display = 'flex';
+}
+
+function selectPlanPrice(amountText, planValue) {
+    const dueEl = document.getElementById('paymentDueAmount');
+    if (dueEl) dueEl.textContent = amountText + ' ₺';
+    const radio = document.querySelector(`input[name="buyPlan"][value="${planValue}"]`);
+    if (radio) radio.checked = true;
+}
+
+function copyIban() {
+    const ibanEl = document.getElementById('ibanText');
+    if (!ibanEl) return;
+    const ibanClean = ibanEl.textContent.replace(/\s+/g, '');
+    navigator.clipboard.writeText(ibanClean).then(() => {
+        alert('✅ IBAN kopyalandı:\n' + ibanClean);
+    }).catch(() => {
+        alert('IBAN: ' + ibanClean);
+    });
+}
+
+async function submitPackageOrder() {
+    const selectedPlan = document.querySelector('input[name="buyPlan"]:checked').value;
+    const sender = document.getElementById('senderNameInput').value.trim();
+    const jewelerId = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || 'SARRAF_01');
+    const btn = document.getElementById('btnSubmitPayment');
+
+    if (!sender) {
+        alert('Lütfen havale/dekont üzerindeki ad soyad veya dükkan ünvanını yazınız.');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Bildiriliyor...';
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/jeweler/purchase-package', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jewelerId,
+                packageId: selectedPlan,
+                paymentMethod: 'HAVALE',
+                senderName: sender
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('✅ Ödeme bildiriminiz yöneticiye iletildi. Kontrol edildikten hemen sonra bakiyeniz otomatik yüklenecektir.');
+            document.getElementById('packageModal').style.display = 'none';
+            document.getElementById('senderNameInput').value = '';
+        } else {
+            alert('Hata: ' + data.message);
+        }
+    } catch (e) {
+        alert('Sunucu bağlantı hatası oluştu.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Ödemeyi Yaptım, Bildirimi İlet ✓';
+    }
+}
+
+async function handleSendOffer(e) {
+    e.preventDefault();
+    initAudioContextOnce();
+    const btn = document.getElementById('btnSubmitOffer');
+    const resultBox = document.getElementById('offerResult');
+    const offerPrice = Number(document.getElementById('offerPrice').value);
+    const offerNote = document.getElementById('offerNote').value.trim();
+    const jewelerCode = loggedJeweler ? loggedJeweler.id : (localStorage.getItem('loggedJewelerId') || 'SARRAF_01');
+
+    btn.disabled = true;
+    btn.textContent = 'İletiliyor...';
+
+    try {
+        const res = await fetch(BACKEND_API_URL + '/request/quote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestId: reqId, jewelerCode, offerPrice, note: offerNote })
+        });
+        const data = await res.json();
+        if (data.success) {
+            resultBox.style.display = 'block';
+            resultBox.style.color = '#4ade80';
+            resultBox.innerHTML = hasGivenOffer 
+                ? '✅ <b>Teklifiniz başarıyla güncellendi!</b><br>Müşteri canlı ekranında yeni fiyatınız görünmektedir.' 
+                : '✅ <b>Teklifiniz başarıyla müşteriye iletildi!</b><br>Müşteri onaylarsa WhatsApp üzerinden anlık randevu kodu alacaksınız.';
+            
+            btn.textContent = 'Teklifi Güncelle (Revize Et)';
+            btn.classList.add('revise-btn');
+            btn.disabled = false;
+            hasGivenOffer = true;
+
+            if (data.remainingCredits !== null && data.remainingCredits !== undefined && loggedJeweler) {
+                loggedJeweler.credits = data.remainingCredits;
+                updateBalanceDisplay(true);
+            }
+        } else {
+            resultBox.style.display = 'block';
+            resultBox.style.color = '#f87171';
+            resultBox.textContent = 'Hata: ' + data.message;
+            btn.disabled = false;
+        }
+    } catch(err) {
+        resultBox.style.display = 'block';
+        resultBox.style.color = '#f87171';
+        resultBox.textContent = 'Bağlantı hatası oluştu.';
+        btn.disabled = false;
+    }
+}
+
+initPortal();
+</script>
+</body>
+</html>
