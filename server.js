@@ -752,7 +752,7 @@ app.get('/api/request/restart', async (req, res) => {
             `);
         }
 
-        // 1. AŞAMA: WhatsApp botu önizleme yaparken veya müşteri linki ilk açtığında sadece onay butonu göster (KUYUMCULARA MESAJ ATMA)
+        // 1. AŞAMA: Onay Ekranı (WhatsApp önizlemesinde kuyumculara mesaj gitmez)
         if (confirm !== 'true') {
             return res.send(`
                 <!DOCTYPE html>
@@ -785,37 +785,64 @@ app.get('/api/request/restart', async (req, res) => {
             `);
         }
 
-        // 2. AŞAMA: Müşteri BUTONA BİZZAT TIKLADIĞI ANDA süre uzatılır ve sarraflara bildirim gönderilir
+        // 2. AŞAMA: Müşteri butona bastığında süre uzatılır
         target.expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
         target.status = 'PENDING';
         target.hasExpiredNotified = false;
         saveDatabase();
 
-        const targetDistrictRaw = (target.district || '').trim().toLowerCase();
-        let matchedJewelers = JEWELERS_DIRECTORY.filter(j => {
-            if (j.status !== 'ACTIVE') return false;
-            if (!targetDistrictRaw) return true;
-            return j.districts && j.districts.some(d => {
-                const cleanD = d.toLowerCase();
-                return targetDistrictRaw.includes(cleanD) || cleanD.includes(targetDistrictRaw);
-            });
-        });
-        if (matchedJewelers.length === 0) matchedJewelers = JEWELERS_DIRECTORY.filter(j => j.status === 'ACTIVE');
+        // Kuyumcu havuzunu al (hem database.jewelers hem JEWELERS_DIRECTORY kontrolü)
+        const allJewelers = (database && database.jewelers && database.jewelers.length > 0) 
+            ? database.jewelers 
+            : (typeof JEWELERS_DIRECTORY !== 'undefined' ? JEWELERS_DIRECTORY : []);
 
+        // Talebin ilçelerini dizi veya metin olarak güvenli topla
+        const reqDistricts = Array.isArray(target.districts) 
+            ? target.districts.map(d => String(d).trim().toLowerCase()) 
+            : (target.district ? [String(target.district).trim().toLowerCase()] : []);
+
+        // Kuyumcuları filtrele (ACTIVE veya APPROVED)
+        let matchedJewelers = allJewelers.filter(j => {
+            const isActive = (j.status === 'ACTIVE' || j.status === 'APPROVED');
+            if (!isActive) return false;
+            if (reqDistricts.length === 0) return true;
+
+            const jDistricts = Array.isArray(j.districts) 
+                ? j.districts.map(d => String(d).trim().toLowerCase())
+                : (j.district ? [String(j.district).trim().toLowerCase()] : []);
+
+            return reqDistricts.some(rd => jDistricts.some(jd => jd.includes(rd) || rd.includes(jd)));
+        });
+
+        // Eşleşen çıkmazsa aktif olanların tümüne ilet
+        if (matchedJewelers.length === 0) {
+            matchedJewelers = allJewelers.filter(j => j.status === 'ACTIVE' || j.status === 'APPROVED');
+        }
+
+        // Mesajı sarraflara ilet
+        const displayDistrict = reqDistricts.join(', ') || target.district || 'Bölge';
         for (const jeweler of matchedJewelers) {
-            const offerLink = `https://altin-eksper.onrender.com/kuyumcu.html?req=${target.requestId}&jeweler=${jeweler.id}`;
+            const targetPhone = jeweler.phone || jeweler.whatsapp;
+            if (!targetPhone) continue;
+
+            const offerLink = `https://altin-eksper.onrender.com/kuyumcu.html?req=${target.requestId}&jeweler=${jeweler.id || ''}`;
             const reAlert = 
 `🔄 *ALTIN EKSPER — İHALE YENİDEN BAŞLATILDI!*
 
-Sayın *${jeweler.name}*, #${target.requestId} nolu müşteri satış ihalesi müşteri tarafından YENİLENDİ.
+Sayın *${jeweler.name || 'Sarrafımız'}*, #${target.requestId} nolu müşteri satış ihalesi müşteri tarafından YENİLENDİ.
 
-📍 *Bölge:* ${target.district}
+📍 *Bölge:* ${displayDistrict}
 ⚖️ *Ağırlık:* ${target.totalGrams || '0 g'}
 ⏱ *Yeni Teklif Süresi:* 15 Dakika
 
-👉 *Teklifinizi Hemen İletin:* ${offerLink}`;
+👉 *Teklifinizi Hemen İletin:*
+${offerLink}`;
 
-            await sendWhatsAppMessage(jeweler.phone, reAlert);
+            try {
+                await sendWhatsAppMessage(targetPhone, reAlert);
+            } catch (err) {
+                console.error(`[Restart] WhatsApp gönderim hatası:`, err);
+            }
         }
 
         res.send(`
