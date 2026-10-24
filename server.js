@@ -735,6 +735,15 @@ app.get('/api/requests', (req, res) => {
     const active = requestsPool.filter(r => r.status === 'APPOINTMENT_SET' || !r.expiresAt || new Date(r.expiresAt).getTime() > now);
     res.json({ success: true, requests: active });
 });
+// Müşteri tekil talep sorgulama (sayfa yenilenince veya geçmişten çağrılınca)
+app.get('/api/request/:id', (req, res) => {
+    const { id } = req.params;
+    const target = requestsPool.find(r => String(r.requestId).trim() === String(id).trim() || String(r.id).trim() === String(id).trim());
+    if (!target) {
+        return res.status(404).json({ success: false, message: 'Talep bulunamadı' });
+    }
+    res.json({ success: true, request: target });
+});
 // ================== MÜŞTERİ: İHALEYİ YENİDEN BAŞLAT (SEÇENEK B) ==================
 app.get('/api/request/restart', async (req, res) => {
     try {
@@ -743,7 +752,7 @@ app.get('/api/request/restart', async (req, res) => {
 
         if (!target) {
             return res.send(`
-                <!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Hata</title>
+                <!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Hata</title></head>
                 <body style="font-family:sans-serif; text-align:center; padding:40px; background:#0f172a; color:#fff;">
                     <h3 style="color:#ef4444;">Talep Kaydı Bulunamadı</h3>
                     <p>Bu talep sistemden kaldırılmış olabilir. Lütfen ana sayfadan yeni bir talep oluşturunuz.</p>
@@ -752,7 +761,7 @@ app.get('/api/request/restart', async (req, res) => {
             `);
         }
 
-        // 1. AŞAMA: Onay Ekranı (WhatsApp önizlemesinde kuyumculara mesaj gitmez)
+        // 1. AŞAMA: Onay Ekranı (WhatsApp önizlemesinde kuyumcuya bildirim gitmez)
         if (confirm !== 'true') {
             return res.send(`
                 <!DOCTYPE html>
@@ -785,53 +794,39 @@ app.get('/api/request/restart', async (req, res) => {
             `);
         }
 
-        // 2. AŞAMA: Müşteri butona bastığında süre uzatılır
+        // 2. AŞAMA: Müşteri butona bastı, ihaleyi canlandır
         target.expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
         target.status = 'PENDING';
         target.hasExpiredNotified = false;
-        saveDatabase();
+        if (typeof saveDatabase === 'function') saveDatabase();
 
-        // Kuyumcu havuzunu al (hem database.jewelers hem JEWELERS_DIRECTORY kontrolü)
-        const allJewelers = (database && database.jewelers && database.jewelers.length > 0) 
-            ? database.jewelers 
-            : (typeof JEWELERS_DIRECTORY !== 'undefined' ? JEWELERS_DIRECTORY : []);
+        // Kuyumcuları JEWELERS_DIRECTORY üzerinden al
+        const list = (typeof JEWELERS_DIRECTORY !== 'undefined' && Array.isArray(JEWELERS_DIRECTORY)) ? JEWELERS_DIRECTORY : [];
+        const targetDistrictRaw = (target.district || '').trim().toLowerCase();
 
-        // Talebin ilçelerini dizi veya metin olarak güvenli topla
-        const reqDistricts = Array.isArray(target.districts) 
-            ? target.districts.map(d => String(d).trim().toLowerCase()) 
-            : (target.district ? [String(target.district).trim().toLowerCase()] : []);
-
-        // Kuyumcuları filtrele (ACTIVE veya APPROVED)
-        let matchedJewelers = allJewelers.filter(j => {
-            const isActive = (j.status === 'ACTIVE' || j.status === 'APPROVED');
-            if (!isActive) return false;
-            if (reqDistricts.length === 0) return true;
-
-            const jDistricts = Array.isArray(j.districts) 
-                ? j.districts.map(d => String(d).trim().toLowerCase())
-                : (j.district ? [String(j.district).trim().toLowerCase()] : []);
-
-            return reqDistricts.some(rd => jDistricts.some(jd => jd.includes(rd) || rd.includes(jd)));
+        let matchedJewelers = list.filter(j => {
+            if (j.status !== 'ACTIVE') return false;
+            if (!targetDistrictRaw) return true;
+            return j.districts && j.districts.some(d => {
+                const cleanD = String(d).toLowerCase();
+                return targetDistrictRaw.includes(cleanD) || cleanD.includes(targetDistrictRaw);
+            });
         });
 
-        // Eşleşen çıkmazsa aktif olanların tümüne ilet
         if (matchedJewelers.length === 0) {
-            matchedJewelers = allJewelers.filter(j => j.status === 'ACTIVE' || j.status === 'APPROVED');
+            matchedJewelers = list.filter(j => j.status === 'ACTIVE');
         }
 
-        // Mesajı sarraflara ilet
-        const displayDistrict = reqDistricts.join(', ') || target.district || 'Bölge';
+        // Sarraflara WhatsApp bildirimi gönder
         for (const jeweler of matchedJewelers) {
-            const targetPhone = jeweler.phone || jeweler.whatsapp;
-            if (!targetPhone) continue;
-
-            const offerLink = `https://altin-eksper.onrender.com/kuyumcu.html?req=${target.requestId}&jeweler=${jeweler.id || ''}`;
+            if (!jeweler.phone) continue;
+            const offerLink = `https://altin-eksper.onrender.com/kuyumcu.html?req=${target.requestId}&jeweler=${jeweler.id}`;
             const reAlert = 
 `🔄 *ALTIN EKSPER — İHALE YENİDEN BAŞLATILDI!*
 
 Sayın *${jeweler.name || 'Sarrafımız'}*, #${target.requestId} nolu müşteri satış ihalesi müşteri tarafından YENİLENDİ.
 
-📍 *Bölge:* ${displayDistrict}
+📍 *Bölge:* ${target.district || 'Antalya'}
 ⚖️ *Ağırlık:* ${target.totalGrams || '0 g'}
 ⏱ *Yeni Teklif Süresi:* 15 Dakika
 
@@ -839,13 +834,14 @@ Sayın *${jeweler.name || 'Sarrafımız'}*, #${target.requestId} nolu müşteri 
 ${offerLink}`;
 
             try {
-                await sendWhatsAppMessage(targetPhone, reAlert);
-            } catch (err) {
-                console.error(`[Restart] WhatsApp gönderim hatası:`, err);
+                await sendWhatsAppMessage(jeweler.phone, reAlert);
+            } catch (msgErr) {
+                console.error('Sarraf WhatsApp iletim hatası:', msgErr);
             }
         }
 
-        res.send(`
+        // Müşteriye başarı ekranı
+        return res.send(`
             <!DOCTYPE html>
             <html lang="tr">
             <head>
@@ -858,16 +854,18 @@ ${offerLink}`;
                 <div style="max-width:440px; margin:0 auto; background:#1e293b; padding:25px; border-radius:12px; border:1px solid #10b981;">
                     <h2 style="color:#10b981; margin-top:0;">✓ İhale Yenilendi</h2>
                     <p style="color:#cbd5e1; font-size:14px; line-height:1.6;">
-                        #${target.requestId} nolu satış talebiniz için <b>15 dakikalık yeni süre</b> başlatıldı ve bölgenizdeki anlaşmalı sarraflara taze bildirim iletildi.
+                        #${target.requestId} nolu satış talebiniz için <b>15 dakikalık yeni süre</b> başlatıldı ve bölgenizdeki anlaşmalı sarraflara bildirim iletildi.
                     </p>
                     <p style="color:#94a3b8; font-size:13px;">Gelen teklifler WhatsApp hattınıza iletilecektir.</p>
+                    <a href="/" style="display:inline-block; margin-top:15px; background:#10b981; color:#0f172a; text-decoration:none; padding:10px 20px; border-radius:8px; font-weight:bold; font-size:14px;">Ana Sayfaya Dön</a>
                 </div>
             </body>
             </html>
         `);
+
     } catch (e) {
-        console.error('Restart error:', e);
-        res.status(500).send('Hata oluştu.');
+        console.error('Restart genel hata detayı:', e);
+        return res.status(500).send(`Sistem hatası: ${e.message}`);
     }
 });
 // ================== MÜŞTERİ GERİ BİLDİRİMİ / DOĞRULAMA ==================
