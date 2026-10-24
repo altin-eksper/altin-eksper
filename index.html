@@ -1747,9 +1747,13 @@ function addQuickRow(product, karat) {
     const tr = rowsContainer.lastElementChild;
     if (!tr) return;
 
-    const karatEl = tr.querySelector('.karat');
-    if (karatEl && !karatEl.disabled) karatEl.value = String(karat);
     configureRow(tr);
+
+    const karatEl = tr.querySelector('.karat');
+    if (karatEl && !karatEl.disabled) {
+        karatEl.value = String(karat);
+        karatEl.dispatchEvent(new Event('change'));
+    }
 
     const targetInput = tr.querySelector('.qty:not([disabled]), .grams:not([disabled])');
     if (targetInput) targetInput.focus();
