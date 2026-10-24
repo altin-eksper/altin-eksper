@@ -3553,6 +3553,12 @@ async function triggerWhatsAppOffer(e) {
         if (btn) { btn.textContent = '📲 WhatsApp ile Teklif İste (0536 043 42 07)'; btn.disabled = false; }
     }
 
+    localStorage.setItem('customerActiveRequest', JSON.stringify({
+        requestId: tempId,
+        expiresAt: expiresAt,
+        customerName: cName,
+        customerPhone: cPhone
+    }));
     startListeningCustomerOffers(tempId, expiresAt, cName, cPhone);
 }
 
@@ -3755,9 +3761,46 @@ function startApp() {
     loadLivePrices();
     setInterval(loadLivePrices, 20000);
 
-    const savedAuction = getActiveAuctionFromStorage();
-    if (savedAuction) {
-        reopenLiveAuctionModal();
+    // Müşterinin yarım kalan veya devam eden ihalesini geri yükle
+    checkAndRestoreCustomerActiveRequest();
+}
+
+async function checkAndRestoreCustomerActiveRequest() {
+    try {
+        const raw = localStorage.getItem('customerActiveRequest');
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (!saved || !saved.requestId) return;
+
+        // Sunucudan bu talebin güncel durumunu kontrol et
+        const res = await fetch(BACKEND_API_URL + '/request/' + saved.requestId);
+        if (!res.ok) {
+            localStorage.removeItem('customerActiveRequest');
+            return;
+        }
+        const data = await res.json();
+        const reqData = data.data;
+
+        // Eğer talep tamamlanmışsa veya iptal edilmişse hafızayı temizle
+        if (!reqData || reqData.status === 'COMPLETED' || reqData.status === 'CANCELLED') {
+            localStorage.removeItem('customerActiveRequest');
+            return;
+        }
+
+        // Talep hâlâ aktif: Canlı teklif panosunu doğrudan aç ve dinlemeye başla
+        startListeningCustomerOffers(
+            saved.requestId, 
+            reqData.expiresAt || saved.expiresAt, 
+            saved.customerName || reqData.customerName, 
+            saved.customerPhone || reqData.customerPhone
+        );
+
+        // Mevcut teklifler varsa anında ekrana dök
+        if (reqData.quotes && reqData.quotes.length > 0) {
+            renderLiveOffersToPanel(reqData.quotes, saved.requestId, saved.customerName, saved.customerPhone);
+        }
+    } catch (e) {
+        console.error('Aktif talep geri yüklenemedi:', e);
     }
 }
 
