@@ -738,7 +738,7 @@ app.get('/api/requests', (req, res) => {
 // ================== MÜŞTERİ: İHALEYİ YENİDEN BAŞLAT (SEÇENEK B) ==================
 app.get('/api/request/restart', async (req, res) => {
     try {
-        const { req: requestId } = req.query;
+        const { req: requestId, confirm } = req.query;
         const target = requestsPool.find(r => String(r.requestId).trim() === String(requestId).trim());
 
         if (!target) {
@@ -752,6 +752,40 @@ app.get('/api/request/restart', async (req, res) => {
             `);
         }
 
+        // 1. AŞAMA: WhatsApp botu önizleme yaparken veya müşteri linki ilk açtığında sadece onay butonu göster (KUYUMCULARA MESAJ ATMA)
+        if (confirm !== 'true') {
+            return res.send(`
+                <!DOCTYPE html>
+                <html lang="tr">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>İhaleyi Yeniden Başlat — Altın Eksper</title>
+                    <style>
+                        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+                        .card { background: #1e293b; border: 1.5px solid #f59e0b; border-radius: 20px; max-width: 440px; width: 100%; padding: 32px 24px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+                        .icon { font-size: 54px; margin-bottom: 12px; }
+                        h2 { margin: 0 0 12px 0; font-size: 22px; color: #f59e0b; font-weight: 800; }
+                        p { font-size: 14px; color: #cbd5e1; line-height: 1.6; margin: 0 0 24px 0; }
+                        .btn { display: block; width: 100%; background: #f59e0b; color: #0f172a; text-decoration: none; padding: 15px 0; font-size: 16px; font-weight: 800; border-radius: 12px; transition: all 0.2s; box-sizing: border-box; }
+                        .btn:active { transform: scale(0.98); background: #d97706; }
+                    </style>
+                </head>
+                <body>
+                    <div class="card">
+                        <div class="icon">⏱️</div>
+                        <h2>İhaleyi Yeniden Başlat</h2>
+                        <p><b>#${target.requestId}</b> numaralı altın satış talebiniz için bölgenizdeki sarraflara tekrar <b>15 dakikalık canlı ihale çağrısı</b> gönderilecektir.</p>
+                        <a href="/api/request/restart?req=${target.requestId}&confirm=true" class="btn">
+                            Evet, İhaleyi 15 Dk Yeniden Başlat
+                        </a>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+
+        // 2. AŞAMA: Müşteri BUTONA BİZZAT TIKLADIĞI ANDA süre uzatılır ve sarraflara bildirim gönderilir
         target.expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
         target.status = 'PENDING';
         target.hasExpiredNotified = false;
