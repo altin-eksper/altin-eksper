@@ -4022,5 +4022,131 @@ async function handleAuthRegister(e) {
     }
 }
 </script>
+<!-- MÜŞTERİ İŞLEM GEÇMİŞİ SORGULAMA MODALI -->
+<div id="customerHistoryModal" class="report-modal" style="display:none; z-index:999999; align-items:center; justify-content:center;">
+    <div class="report-modal-content" style="max-width:520px; border-radius:14px; padding:22px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e2e8f0; padding-bottom:10px; margin-bottom:14px;">
+            <div>
+                <h3 style="margin:0; font-size:18px; color:#1e293b;">📋 Müşteri İşlem Geçmişim</h3>
+                <span style="font-size:12px; color:#64748b;">Kayıtlı taleplerinizi ve canlı tekliflerinizi görün</span>
+            </div>
+            <button type="button" class="secondary" style="padding:4px 8px;" onclick="closeHistoryModal()">✕</button>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <input type="tel" id="historyPhoneInput" placeholder="05XX XXX XX XX" style="flex:1; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px;">
+            <button type="button" class="primary" onclick="queryCustomerHistory()" style="padding:10px 16px; font-weight:700;">Sorgula</button>
+        </div>
+
+        <div id="customerHistoryResult" style="max-height:350px; overflow-y:auto;">
+            <div style="text-align:center; color:#94a3b8; font-size:13px; padding:20px;">
+                Taleplerinizi listelemek için talep açarken kullandığınız telefon numaranızı giriniz.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openHistoryModal() {
+    const modal = document.getElementById('customerHistoryModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Formda önceden yazılı bir numara varsa otomatik doldursun
+        const currentPhone = document.getElementById('customerPhone')?.value.trim();
+        const input = document.getElementById('historyPhoneInput');
+        if (currentPhone && input) {
+            input.value = currentPhone;
+            queryCustomerHistory();
+        }
+    }
+}
+
+function closeHistoryModal() {
+    const modal = document.getElementById('customerHistoryModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function queryCustomerHistory() {
+    const phone = document.getElementById('historyPhoneInput')?.value.trim();
+    const resultBox = document.getElementById('customerHistoryResult');
+    if (!phone) {
+        alert('Lütfen telefon numaranızı yazınız.');
+        return;
+    }
+
+    resultBox.innerHTML = '<div style="text-align:center; color:#0284c7; padding:20px;">Talepleriniz aranıyor...</div>';
+
+    try {
+        const res = await fetch('/api/customer/history/' + encodeURIComponent(phone));
+        const data = await res.json();
+
+        if (!data.success || ((!data.activeRequests || !data.activeRequests.length) && (!data.completedDeals || !data.completedDeals.length))) {
+            resultBox.innerHTML = '<div style="text-align:center; color:#dc2626; padding:20px; font-size:13px;">Bu telefon numarasına ait aktif veya geçmiş bir talep bulunamadı.</div>';
+            return;
+        }
+
+        let html = '';
+
+        // 1. Canlı / Devam Eden İhaleler
+        if (data.activeRequests && data.activeRequests.length > 0) {
+            html += '<h4 style="margin:6px 0; font-size:13px; color:#16a34a;">● Aktif / Devam Eden İhaleleriniz</h4>';
+            data.activeRequests.forEach(r => {
+                const qCount = r.quotes ? r.quotes.length : 0;
+                html += `
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong>Talep #${r.requestId}</strong>
+                            <span style="background:#10b981; color:#fff; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px;">${qCount} Teklif Geldi</span>
+                        </div>
+                        <div style="font-size:12px; color:#475569; margin:4px 0;">
+                            Ağırlık: <b>${r.totalGrams || '—'}</b> • İlçe: <b>${r.district || '—'}</b>
+                        </div>
+                        <button type="button" class="primary" style="width:100%; margin-top:8px; padding:7px; font-size:12px; background:#0f766e; color:#fff;" onclick="openSelectedCustomerAuction('${r.requestId}')">
+                            Teklifleri Gör & Takip Et →
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        // 2. Tamamlanmış İşlemler
+        if (data.completedDeals && data.completedDeals.length > 0) {
+            html += '<h4 style="margin:14px 0 6px; font-size:13px; color:#475569;">✓ Tamamlanan İşlemleriniz</h4>';
+            data.completedDeals.forEach(d => {
+                html += `
+                    <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:12px;">
+                        <div style="display:flex; justify-content:space-between;">
+                            <b>#${d.requestId} — ${d.jewelerName}</b>
+                            <span style="color:#16a34a; font-weight:700;">${Number(d.agreedPrice).toLocaleString('tr-TR')} ₺</span>
+                        </div>
+                        <div style="color:#64748b; font-size:11px; margin-top:3px;">
+                            ${new Date(d.completedAt).toLocaleDateString('tr-TR')} • Mağazada tamamlandı
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        resultBox.innerHTML = html;
+    } catch(err) {
+        resultBox.innerHTML = '<div style="text-align:center; color:#dc2626; padding:20px;">Bağlantı hatası oluştu.</div>';
+    }
+}
+
+function openSelectedCustomerAuction(requestId) {
+    closeHistoryModal();
+    fetch('/api/request/' + requestId)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.data) {
+                const r = data.data;
+                startListeningCustomerOffers(r.requestId, r.expiresAt, r.customerName, r.customerPhone);
+                if (r.quotes && r.quotes.length > 0) {
+                    renderLiveOffersToPanel(r.quotes, r.requestId, r.customerName, r.customerPhone);
+                }
+            }
+        });
+}
+</script>
 </body>
 </html>
