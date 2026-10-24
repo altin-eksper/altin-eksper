@@ -1380,4 +1380,3 @@ app.get('/api/customer/history/:phone', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Altın Eksper API Sunucusu ${PORT} portunda çalışıyor.`);
 });
-// Test baglantisi kontrol edildi
