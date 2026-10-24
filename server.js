@@ -735,16 +735,8 @@ app.get('/api/requests', (req, res) => {
     const active = requestsPool.filter(r => r.status === 'APPOINTMENT_SET' || !r.expiresAt || new Date(r.expiresAt).getTime() > now);
     res.json({ success: true, requests: active });
 });
-// Müşteri tekil talep sorgulama (sayfa yenilenince veya geçmişten çağrılınca)
-app.get('/api/request/:id', (req, res) => {
-    const { id } = req.params;
-    const target = requestsPool.find(r => String(r.requestId).trim() === String(id).trim() || String(r.id).trim() === String(id).trim());
-    if (!target) {
-        return res.status(404).json({ success: false, message: 'Talep bulunamadı' });
-    }
-    res.json({ success: true, request: target });
-});
 // ================== MÜŞTERİ: İHALEYİ YENİDEN BAŞLAT (SEÇENEK B) ==================
+// ================== MÜŞTERİ: İHALEYİ YENİDEN BAŞLAT (İKİ AŞAMALI GÜVENLİ ONAY) ==================
 app.get('/api/request/restart', async (req, res) => {
     try {
         const { req: requestId, confirm } = req.query;
@@ -752,7 +744,7 @@ app.get('/api/request/restart', async (req, res) => {
 
         if (!target) {
             return res.send(`
-                <!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Hata</title></head>
+                <!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Hata</title>
                 <body style="font-family:sans-serif; text-align:center; padding:40px; background:#0f172a; color:#fff;">
                     <h3 style="color:#ef4444;">Talep Kaydı Bulunamadı</h3>
                     <p>Bu talep sistemden kaldırılmış olabilir. Lütfen ana sayfadan yeni bir talep oluşturunuz.</p>
@@ -761,7 +753,7 @@ app.get('/api/request/restart', async (req, res) => {
             `);
         }
 
-        // 1. AŞAMA: Onay Ekranı (WhatsApp önizlemesinde kuyumcuya bildirim gitmez)
+        // 1. AŞAMA: WhatsApp botu veya ilk tıklamada SADECE onay ekranı gösterilir (Kuyumculara bildirim gitmez!)
         if (confirm !== 'true') {
             return res.send(`
                 <!DOCTYPE html>
@@ -769,79 +761,64 @@ app.get('/api/request/restart', async (req, res) => {
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>İhaleyi Yeniden Başlat — Altın Eksper</title>
+                    <title>İhale Süresini Uzat</title>
                     <style>
-                        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-                        .card { background: #1e293b; border: 1.5px solid #f59e0b; border-radius: 20px; max-width: 440px; width: 100%; padding: 32px 24px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-                        .icon { font-size: 54px; margin-bottom: 12px; }
-                        h2 { margin: 0 0 12px 0; font-size: 22px; color: #f59e0b; font-weight: 800; }
-                        p { font-size: 14px; color: #cbd5e1; line-height: 1.6; margin: 0 0 24px 0; }
-                        .btn { display: block; width: 100%; background: #f59e0b; color: #0f172a; text-decoration: none; padding: 15px 0; font-size: 16px; font-weight: 800; border-radius: 12px; transition: all 0.2s; box-sizing: border-box; }
-                        .btn:active { transform: scale(0.98); background: #d97706; }
+                        body { font-family: sans-serif; text-align: center; padding: 40px 20px; background: #0f172a; color: #fff; }
+                        .card { max-width: 440px; margin: 0 auto; background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #f59e0b; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+                        .btn { display: inline-block; width: 100%; box-sizing: border-box; padding: 14px; margin-top: 20px; background: #f59e0b; color: #000; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 16px; }
                     </style>
                 </head>
                 <body>
                     <div class="card">
-                        <div class="icon">⏱️</div>
-                        <h2>İhaleyi Yeniden Başlat</h2>
-                        <p><b>#${target.requestId}</b> numaralı altın satış talebiniz için bölgenizdeki sarraflara tekrar <b>15 dakikalık canlı ihale çağrısı</b> gönderilecektir.</p>
-                        <a href="/api/request/restart?req=${target.requestId}&confirm=true" class="btn">
-                            Evet, İhaleyi 15 Dk Yeniden Başlat
-                        </a>
+                        <h2 style="color:#f59e0b; margin-top:0;">⏱ İhale Süresini Uzat</h2>
+                        <p style="color:#cbd5e1; font-size:14px; line-height:1.6;">
+                            <b>#${target.requestId}</b> nolu altın satış talebiniz için 15 dakikalık ilk süre doldu.
+                        </p>
+                        <p style="color:#94a3b8; font-size:13px; line-height:1.5;">
+                            Bölgenizdeki kuyumculara ihaleyi tekrar bildirmek ve 15 dakika ek süre başlatmak için aşağıdaki butona basınız.
+                        </p>
+                        <a class="btn" href="/api/request/restart?req=${requestId}&confirm=true">Evet, İhaleyi 15 Dk Yeniden Başlat</a>
                     </div>
                 </body>
                 </html>
             `);
         }
 
-        // 2. AŞAMA: Müşteri butona bastı, ihaleyi canlandır
+        // 2. AŞAMA: Müşteri butona bizzat bastığında süre uzatılır ve KUYUMCULARA İŞTE ŞİMDİ MESAJ GİDER
         target.expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
         target.status = 'PENDING';
         target.hasExpiredNotified = false;
-        if (typeof saveDatabase === 'function') saveDatabase();
+        saveDatabase();
 
-        // Kuyumcuları JEWELERS_DIRECTORY üzerinden al
-        const list = (typeof JEWELERS_DIRECTORY !== 'undefined' && Array.isArray(JEWELERS_DIRECTORY)) ? JEWELERS_DIRECTORY : [];
         const targetDistrictRaw = (target.district || '').trim().toLowerCase();
-
-        let matchedJewelers = list.filter(j => {
+        let matchedJewelers = JEWELERS_DIRECTORY.filter(j => {
             if (j.status !== 'ACTIVE') return false;
             if (!targetDistrictRaw) return true;
             return j.districts && j.districts.some(d => {
-                const cleanD = String(d).toLowerCase();
+                const cleanD = d.toLowerCase();
                 return targetDistrictRaw.includes(cleanD) || cleanD.includes(targetDistrictRaw);
             });
         });
+        if (matchedJewelers.length === 0) matchedJewelers = JEWELERS_DIRECTORY.filter(j => j.status === 'ACTIVE');
 
-        if (matchedJewelers.length === 0) {
-            matchedJewelers = list.filter(j => j.status === 'ACTIVE');
-        }
-
-        // Sarraflara WhatsApp bildirimi gönder
+        // Kuyumculara WhatsApp bildirimi gönderimi
         for (const jeweler of matchedJewelers) {
-            if (!jeweler.phone) continue;
             const offerLink = `https://altin-eksper.onrender.com/kuyumcu.html?req=${target.requestId}&jeweler=${jeweler.id}`;
             const reAlert = 
 `🔄 *ALTIN EKSPER — İHALE YENİDEN BAŞLATILDI!*
 
-Sayın *${jeweler.name || 'Sarrafımız'}*, #${target.requestId} nolu müşteri satış ihalesi müşteri tarafından YENİLENDİ.
+Sayın *${jeweler.name}*, #${target.requestId} nolu müşteri satış ihalesi müşteri tarafından YENİLENDİ.
 
-📍 *Bölge:* ${target.district || 'Antalya'}
+📍 *Bölge:* ${target.district}
 ⚖️ *Ağırlık:* ${target.totalGrams || '0 g'}
 ⏱ *Yeni Teklif Süresi:* 15 Dakika
 
-👉 *Teklifinizi Hemen İletin:*
-${offerLink}`;
+👉 *Teklifinizi Hemen İletin:* ${offerLink}`;
 
-            try {
-                await sendWhatsAppMessage(jeweler.phone, reAlert);
-            } catch (msgErr) {
-                console.error('Sarraf WhatsApp iletim hatası:', msgErr);
-            }
+            await sendWhatsAppMessage(jeweler.phone, reAlert);
         }
 
-        // Müşteriye başarı ekranı
-        return res.send(`
+        res.send(`
             <!DOCTYPE html>
             <html lang="tr">
             <head>
@@ -854,18 +831,16 @@ ${offerLink}`;
                 <div style="max-width:440px; margin:0 auto; background:#1e293b; padding:25px; border-radius:12px; border:1px solid #10b981;">
                     <h2 style="color:#10b981; margin-top:0;">✓ İhale Yenilendi</h2>
                     <p style="color:#cbd5e1; font-size:14px; line-height:1.6;">
-                        #${target.requestId} nolu satış talebiniz için <b>15 dakikalık yeni süre</b> başlatıldı ve bölgenizdeki anlaşmalı sarraflara bildirim iletildi.
+                        #${target.requestId} nolu talebiniz için <b>15 dakikalık yeni süre</b> başlatıldı ve sarraflara taze bildirim iletildi.
                     </p>
                     <p style="color:#94a3b8; font-size:13px;">Gelen teklifler WhatsApp hattınıza iletilecektir.</p>
-                    <a href="/" style="display:inline-block; margin-top:15px; background:#10b981; color:#0f172a; text-decoration:none; padding:10px 20px; border-radius:8px; font-weight:bold; font-size:14px;">Ana Sayfaya Dön</a>
                 </div>
             </body>
             </html>
         `);
-
     } catch (e) {
-        console.error('Restart genel hata detayı:', e);
-        return res.status(500).send(`Sistem hatası: ${e.message}`);
+        console.error('Restart error:', e);
+        res.status(500).send('Hata oluştu.');
     }
 });
 // ================== MÜŞTERİ GERİ BİLDİRİMİ / DOĞRULAMA ==================
