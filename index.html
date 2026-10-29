@@ -2909,27 +2909,7 @@ function exportCustomerLivePDF() {
         '<div class="disclaimer"><strong>Bilgilendirme Notu:</strong> Bu fiş Altın Eksper platformu üzerinden anlık toptan serbest piyasa kurları baz alınarak müşterimiz için düzenlenmiştir. Anlaşmalı kuyumcularımızda fiziki tartım ve ayar kontrolü yapıldıktan sonra kesin nakit ödemeniz anında nakit veya IBAN ile gerçekleştirilir.</div>' +
         '</body></html>';
 
-    // safePrintHtml(html); yerine doğrudan modal içine aktar:
-    const iframe = document.getElementById('pdfIframe');
-    const modal = document.getElementById('pdfViewerModal');
-    
-    if (modal && iframe) {
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-        
-        // HTML içeriğini doğrudan iframe içine yazdır
-        const iframeDoc = iframe.contentWindow || iframe.contentDocument;
-        const targetDoc = iframeDoc.document ? iframeDoc.document : iframeDoc;
-        targetDoc.open();
-        targetDoc.write(html);
-        targetDoc.close();
-        
-        // İndir butonunu gizle (HTML dökümü olduğu için sadece kapatma butonu yeterli)
-        const dlBtn = document.getElementById('pdfDownloadBtn');
-        if (dlBtn) dlBtn.style.display = 'none';
-    } else {
-        safePrintHtml(html);
-    }
+    showPdfModal(html);
 }
 
 
@@ -4172,56 +4152,64 @@ function openSelectedCustomerAuction(requestId) {
             }
         });
 }
-// PDF Modalini Güvenle Açma Fonksiyonu
-    function showPdfModal(pdfDataUriOrUrl) {
+// PDF / Fiş Penceresini Tam Ekran Aç
+    function showPdfModal(htmlContent) {
       const modal = document.getElementById('pdfViewerModal');
       const iframe = document.getElementById('pdfIframe');
-      const downloadBtn = document.getElementById('pdfDownloadBtn');
-
       if (!modal || !iframe) return;
 
-      iframe.src = pdfDataUriOrUrl;
-      downloadBtn.href = pdfDataUriOrUrl;
-      
-      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
+
+      const doc = iframe.contentWindow || iframe.contentDocument;
+      const targetDoc = doc.document ? doc.document : doc;
+      targetDoc.open();
+      targetDoc.write(htmlContent);
+      targetDoc.close();
     }
 
-    // PDF Modalini Kapatıp Ana Akışa Dönme Fonksiyonu
+    // Pencereyi Kapat
     function closePdfModal() {
       const modal = document.getElementById('pdfViewerModal');
       const iframe = document.getElementById('pdfIframe');
-
       if (!modal) return;
 
-      iframe.src = '';
-      modal.classList.add('hidden');
+      modal.style.display = 'none';
       document.body.style.overflow = '';
+      if (iframe) iframe.src = 'about:blank';
+    }
+
+    // Fişi Yazdır / PDF Olarak Kaydet
+    function printPdfModalContent() {
+      const iframe = document.getElementById('pdfIframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }
     }
   </script>
 
-  <!-- Mobil Uyumlu PDF Önizleme ve Kapatma Modalı -->
-  <div id="pdfViewerModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex flex-col justify-between p-3 sm:p-6">
-    <div class="flex items-center justify-between bg-slate-900 border border-slate-700/80 px-4 py-3 rounded-xl shadow-lg mb-2">
-      <div class="flex items-center space-x-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-        <h3 class="text-white font-semibold text-sm sm:text-base">Talep Özeti (PDF)</h3>
+<!-- TAM EKRAN MOBİL PDF / FİŞ PENCERESİ -->
+  <div id="pdfViewerModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.85); z-index:999999; flex-direction:column; padding:10px; box-sizing:border-box;">
+    
+    <!-- Üst Bar: Butonlar ve Başlık -->
+    <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; color:#fff; padding:10px 14px; border-radius:10px 10px 0 0; border-bottom:1px solid #334155;">
+      <strong style="font-size:14px; color:#f59e0b;">📄 Değerleme Fişi Önizleme</strong>
+      <div style="display:flex; gap:8px;">
+        <button type="button" onclick="printPdfModalContent()" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
+          🖨️ Yazdır / İndir
+        </button>
+        <button type="button" onclick="closePdfModal()" style="background:#e11d48; color:#fff; border:none; padding:6px 14px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer;">
+          ✕ Kapat
+        </button>
       </div>
-      <button type="button" onclick="closePdfModal()" class="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-lg transition active:scale-95 shadow">
-        <span>✕</span>
-        <span>Kapat / Geri Dön</span>
-      </button>
     </div>
 
-    <div class="flex-1 w-full bg-white rounded-xl overflow-hidden shadow-2xl relative">
-      <iframe id="pdfIframe" class="w-full h-full border-0" src=""></iframe>
+    <!-- Fiş İçeriği (İframe) -->
+    <div style="flex:1; background:#ffffff; border-radius:0 0 10px 10px; overflow:hidden;">
+      <iframe id="pdfIframe" style="width:100%; height:100%; border:none; background:#fff;"></iframe>
     </div>
 
-    <div class="mt-2 flex justify-end gap-2">
-      <a id="pdfDownloadBtn" href="#" download="Altin-Eksper-Talep-Ozeti.pdf" class="w-full sm:w-auto text-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition shadow">
-        📥 Dosyayı Telefona İndir
-      </a>
-    </div>
   </div>
 </body>
 </html>
