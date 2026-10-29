@@ -2909,7 +2909,28 @@ function exportCustomerLivePDF() {
         '<div class="disclaimer"><strong>Bilgilendirme Notu:</strong> Bu fiş Altın Eksper platformu üzerinden anlık toptan serbest piyasa kurları baz alınarak müşterimiz için düzenlenmiştir. Anlaşmalı kuyumcularımızda fiziki tartım ve ayar kontrolü yapıldıktan sonra kesin nakit ödemeniz anında nakit veya IBAN ile gerçekleştirilir.</div>' +
         '</body></html>';
 
-    safePrintHtml(html);
+    // safePrintHtml(html); yerine doğrudan modal içine aktar:
+    const iframe = document.getElementById('pdfIframe');
+    const modal = document.getElementById('pdfViewerModal');
+    
+    if (modal && iframe) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // HTML içeriğini doğrudan iframe içine yazdır
+        const iframeDoc = iframe.contentWindow || iframe.contentDocument;
+        const targetDoc = iframeDoc.document ? iframeDoc.document : iframeDoc;
+        targetDoc.open();
+        targetDoc.write(html);
+        targetDoc.close();
+        
+        // İndir butonunu gizle (HTML dökümü olduğu için sadece kapatma butonu yeterli)
+        const dlBtn = document.getElementById('pdfDownloadBtn');
+        if (dlBtn) dlBtn.style.display = 'none';
+    } else {
+        safePrintHtml(html);
+    }
+}
 }
 
 function exportCustomerLiveExcel() {
@@ -4151,6 +4172,56 @@ function openSelectedCustomerAuction(requestId) {
             }
         });
 }
-</script>
+// PDF Modalini Güvenle Açma Fonksiyonu
+    function showPdfModal(pdfDataUriOrUrl) {
+      const modal = document.getElementById('pdfViewerModal');
+      const iframe = document.getElementById('pdfIframe');
+      const downloadBtn = document.getElementById('pdfDownloadBtn');
+
+      if (!modal || !iframe) return;
+
+      iframe.src = pdfDataUriOrUrl;
+      downloadBtn.href = pdfDataUriOrUrl;
+      
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // PDF Modalini Kapatıp Ana Akışa Dönme Fonksiyonu
+    function closePdfModal() {
+      const modal = document.getElementById('pdfViewerModal');
+      const iframe = document.getElementById('pdfIframe');
+
+      if (!modal) return;
+
+      iframe.src = '';
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  </script>
+
+  <!-- Mobil Uyumlu PDF Önizleme ve Kapatma Modalı -->
+  <div id="pdfViewerModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex flex-col justify-between p-3 sm:p-6">
+    <div class="flex items-center justify-between bg-slate-900 border border-slate-700/80 px-4 py-3 rounded-xl shadow-lg mb-2">
+      <div class="flex items-center space-x-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+        <h3 class="text-white font-semibold text-sm sm:text-base">Talep Özeti (PDF)</h3>
+      </div>
+      <button type="button" onclick="closePdfModal()" class="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-lg transition active:scale-95 shadow">
+        <span>✕</span>
+        <span>Kapat / Geri Dön</span>
+      </button>
+    </div>
+
+    <div class="flex-1 w-full bg-white rounded-xl overflow-hidden shadow-2xl relative">
+      <iframe id="pdfIframe" class="w-full h-full border-0" src=""></iframe>
+    </div>
+
+    <div class="mt-2 flex justify-end gap-2">
+      <a id="pdfDownloadBtn" href="#" download="Altin-Eksper-Talep-Ozeti.pdf" class="w-full sm:w-auto text-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition shadow">
+        📥 Dosyayı Telefona İndir
+      </a>
+    </div>
+  </div>
 </body>
 </html>
