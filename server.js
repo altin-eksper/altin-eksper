@@ -302,6 +302,51 @@ async function sendWhatsAppMessage(toPhone, messageText) {
         return null;
     }
 }
+// Meta 24 Saat Kuralını Aşan Onaylı Şablon Gönderim Fonksiyonu
+async function sendWhatsAppTemplate(toPhone, templateName, parameters = []) {
+    if (!toPhone || !WHATSAPP_CONFIG.accessToken) return null;
+
+    let cleanPhone = toPhone.replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('0')) cleanPhone = '90' + cleanPhone.substring(1);
+    if (cleanPhone.length === 10) cleanPhone = '90' + cleanPhone;
+
+    const url = `https://graph.facebook.com/${WHATSAPP_CONFIG.apiVersion}/${WHATSAPP_CONFIG.phoneNumberId}/messages`;
+
+    const bodyPayload = {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: cleanPhone,
+        type: 'template',
+        template: {
+            name: templateName,
+            language: { code: 'tr' },
+            components: [
+                {
+                    type: 'body',
+                    parameters: parameters.map(p => ({ type: 'text', text: String(p) }))
+                }
+            ]
+        }
+    };
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${WHATSAPP_CONFIG.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bodyPayload)
+        });
+
+        const data = await response.json();
+        console.log(`[WhatsApp Şablon Sonucu -> ${cleanPhone}]:`, JSON.stringify(data));
+        return data;
+    } catch (err) {
+        console.error('[WhatsApp Şablon Gönderim Hatası]:', err);
+        return null;
+    }
+}
 
 // Süresi dolan (15 dk) talepleri takip et (SİLMEDEN EXPIRED YAP)
 setInterval(async () => {
@@ -711,7 +756,12 @@ ${itemsList}
 ⏱ *Kalan Teklif Süresi:* 15 Dakika
 👉 *Hemen Teklif Verin:* ${offerLink}`;
 
-            await sendWhatsAppMessage(jeweler.phone, jewelerNotification);
+            // Meta 24 saat kuralına takılmayan onaylı şablon ile bildirim
+await sendWhatsAppTemplate(jeweler.phone, 'yeni_ihale_bildirimi', [
+    reqData.requestId,
+    `${reqData.city || 'Antalya'} / ${reqData.district || 'Merkez'}`,
+    reqData.totalGrams || '0 g'
+]);
         }
 
         if (reqData.customerPhone) {
@@ -1380,4 +1430,3 @@ app.get('/api/customer/history/:phone', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Altın Eksper API Sunucusu ${PORT} portunda çalışıyor.`);
 });
-// macbook baglantisi aktif
