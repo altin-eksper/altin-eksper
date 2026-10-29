@@ -2877,15 +2877,11 @@ function exportCustomerLivePDF() {
     const totalTL = document.getElementById('grandTotal')?.textContent || '0,00 ₺';
     const totalG = document.getElementById('totalGrams')?.textContent || '0,00 g';
     const totalQ = document.getElementById('totalQty')?.textContent || '0';
-    const dateFormatted = new Intl.DateTimeFormat('tr-TR', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  weekday: 'long',
-  hour: '2-digit',
-  minute: '2-digit'
-}).format(new Date());
-
+ const _now = new Date();
+        const _d = _now.toLocaleDateString('tr-TR');
+        const _day = _now.toLocaleDateString('tr-TR', { weekday: 'long' });
+        const _t = _now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        const dateFormatted = 'Tarih : ' + _d + '<br>Gün : ' + _day + '<br>Saat : ' + _t;
     let tableRows = '';
     rows.forEach(function(tr, index) {
         const p = tr.querySelector('.product').value;
