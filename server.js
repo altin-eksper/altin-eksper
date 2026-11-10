@@ -303,31 +303,42 @@ async function sendWhatsAppMessage(toPhone, messageText) {
     }
 }
 // Meta 24 Saat Kuralını Aşan Onaylı Şablon Gönderim Fonksiyonu
-async function sendWhatsAppTemplate(toPhone, templateName, parameters = []) {
-    if (!toPhone || !WHATSAPP_CONFIG.accessToken) return null;
+async function sendWhatsAppTemplate(toPhone, templateName, parameters = [], buttonUrlParam = '') {
+  if (!toPhone || !WHATSAPP_CONFIG.accessToken) return null;
 
-    let cleanPhone = toPhone.replace(/[^0-9]/g, '');
-    if (cleanPhone.startsWith('0')) cleanPhone = '90' + cleanPhone.substring(1);
-    if (cleanPhone.length === 10) cleanPhone = '90' + cleanPhone;
+  let cleanPhone = toPhone.replace(/[^\d]/g, '');
+  if (cleanPhone.startsWith('0')) cleanPhone = '90' + cleanPhone.substring(1);
+  if (cleanPhone.length === 10) cleanPhone = '90' + cleanPhone;
 
-    const url = `https://graph.facebook.com/${WHATSAPP_CONFIG.apiVersion}/${WHATSAPP_CONFIG.phoneNumberId}/messages`;
+  const url = `https://graph.facebook.com/${WHATSAPP_CONFIG.apiVersion}/${WHATSAPP_CONFIG.phoneNumberId}/messages`;
 
-    const bodyPayload = {
-        messaging_product: 'whatsapp',
-        recipient_type: 'individual',
-        to: cleanPhone,
-        type: 'template',
-        template: {
-            name: templateName,
-            language: { code: 'tr' },
-            components: [
-                {
-                    type: 'body',
-                    parameters: parameters.map(p => ({ type: 'text', text: String(p) }))
-                }
-            ]
-        }
-    };
+  const components = [
+    {
+      type: 'body',
+      parameters: parameters.map(p => ({ type: 'text', text: String(p) }))
+    }
+  ];
+
+  if (buttonUrlParam) {
+    components.push({
+      type: 'button',
+      sub_type: 'url',
+      index: '0',
+      parameters: [{ type: 'text', text: String(buttonUrlParam) }]
+    });
+  }
+
+  const bodyPayload = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: cleanPhone,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: { code: 'tr' },
+      components: components
+    }
+  };
 
     try {
         const response = await fetch(url, {
@@ -761,11 +772,7 @@ await sendWhatsAppTemplate(jeweler.phone, 'yeni_ihale_bildirimi', [
     reqData.requestId,
     `${reqData.city || 'Antalya'} / ${reqData.district || 'Merkez'}`,
     reqData.totalGrams || '0 g'
-]);
-// Esnafa doğrudan tıklanabilir teklif bağlantısını ilet
-const offerLink = `https://altin-eksper.onrender.com/offer.html?id=${reqData.requestId}&jewelerId=${jeweler.id}`;
-await sendWhatsAppMessage(jeweler.phone, `Teklif vermek ve detayları görmek için tıklayın:\n${offerLink}`);
-        }
+], reqData.requestId);
 
         if (reqData.customerPhone) {
             const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
