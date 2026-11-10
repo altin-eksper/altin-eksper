@@ -762,6 +762,9 @@ await sendWhatsAppTemplate(jeweler.phone, 'yeni_ihale_bildirimi', [
     `${reqData.city || 'Antalya'} / ${reqData.district || 'Merkez'}`,
     reqData.totalGrams || '0 g'
 ]);
+// Esnafa doğrudan tıklanabilir teklif bağlantısını ilet
+const offerLink = `https://altin-eksper.onrender.com/offer.html?id=${reqData.requestId}&jewelerId=${jeweler.id}`;
+await sendWhatsAppMessage(jeweler.phone, `Teklif vermek ve detayları görmek için tıklayın:\n${offerLink}`);
         }
 
         if (reqData.customerPhone) {
