@@ -361,29 +361,26 @@ async function sendWhatsAppTemplate(toPhone, templateName, parameters = [], butt
 
 // Süresi dolan (15 dk) talepleri takip et (SİLMEDEN EXPIRED YAP)
 setInterval(async () => {
-    const now = Date.now();
-    for (const r of requestsPool) {
-        if (r.status === 'PENDING' && r.expiresAt && new Date(r.expiresAt).getTime() <= now) {
-            r.status = 'EXPIRED';
-            saveDatabase();
-            if ((!r.quotes || r.quotes.length === 0) && r.customerPhone && !r.hasExpiredNotified) {
-                r.hasExpiredNotified = true;
-                const restartLink = `https://altin-eksper.onrender.com/api/request/restart?req=${r.requestId}`;
-                const expiredMsg = 
-`ℹ️ *ALTIN EKSPER — İHALE SÜRESİ DOLDU*
+  const now = Date.now();
+  // Türkiye saati ile güncel saati al (0-23 arası)
+  const trHour = parseInt(new Date().toLocaleString('en-US', { timeZone: 'Europe/Istanbul', hour: 'numeric', hour12: false }), 10);
+  const isWorkingHours = trHour >= 9 && trHour < 18;
 
-Sayın *${r.customerName || 'Müşterimiz'}*, #${r.requestId} nolu altın satış talebiniz için sarraflarımız o anki dükkan içi yoğunluk nedeniyle ilk 15 dakikada teklif iletemedi.
-
-Altınlarınızı yeniden canlı ihaleye çıkarmak ve sarraflardan teklif toplamak için lütfen aşağıdaki linke dokununuz:
-
-👉 *İhaleyi Yeniden Başlat (15 Dakika):*
-${restartLink}`;
-
-                await sendWhatsAppMessage(r.customerPhone, expiredMsg);
-            }
-        }
+  for (const r of requestsPool) {
+    if (r.status === 'PENDING' && r.expiresAt && new Date(r.expiresAt).getTime() <= now) {
+      r.status = 'EXPIRED';
+      saveDatabase();
+      // Sadece mesai saatleri (09:00 - 18:00) içindeyse müşteriye süre uzatma/yeniden başlatma mesajı at
+      if (isWorkingHours && (!r.quotes || r.quotes.length === 0) && r.customerPhone && !r.hasExpiredNotified) {
+        r.hasExpiredNotified = true;
+        saveDatabase();
+        const restartLink = `https://altin-eksper.onrender.com/api/request/restart?req=${r.requestId}`;
+        const expiredMsg = `⏳ *ALTIN EKSPER - İHALE SÜRESİ DOLDU*\n\nSayın *${r.customerName || 'Müşterimiz'}*, #${r.requestId} nolu altın satış talebiniz için sarraflarımız o anki dükkan içi yoğunluk nedeniyle teklif iletemedi.\n\nAltınlarınızı yeniden canlı ihaleye çıkarmak ve sarraflardan teklif toplamak için lütfen aşağıdaki linke dokununuz:\n\n👉 *İhaleyi Yeniden Başlat (15 Dakika):*\n${restartLink}`;
+        
+        await sendWhatsAppMessage(r.customerPhone, expiredMsg);
+      }
     }
-
+  }
     // Sadece 24 saatten eski ve tamamlanmamış çöpleri temizle
     const ONE_DAY = 24 * 60 * 60 * 1000;
     requestsPool = requestsPool.filter(r => {
