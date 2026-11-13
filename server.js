@@ -770,6 +770,14 @@ await sendWhatsAppTemplate(jeweler.phone, 'yeni_ihale_bildirimi', [
     `${reqData.city || 'Antalya'} / ${reqData.district || 'Merkez'}`,
     reqData.totalGrams || '0 g'
 ], reqData.requestId);
+await sendWhatsAppTemplate(jeweler.phone, 'yeni_ihale_bildirimi', [
+          reqData.requestId,
+          `${reqData.city || 'Antalya'} / ${reqData.district || 'Merkez'}`,
+          reqData.totalGrams || '0 g'
+        ], reqData.requestId);
+      } // <-- BU PARANTEZ EKSİK, BURAYA EKLEYİN
+
+      if (reqData.customerPhone) {
 
         if (reqData.customerPhone) {
             const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
