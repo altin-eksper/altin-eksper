@@ -764,26 +764,23 @@ ${itemsList}
 ⏱ *Kalan Teklif Süresi:* 15 Dakika
 👉 *Hemen Teklif Verin:* ${offerLink}`;
 
-            // Meta 24 saat kuralına takılmayan onaylı şablon ile bildirim
-await sendWhatsAppTemplate(jeweler.phone, 'yeni_ihale_bildirimi', [
-    reqData.requestId,
-    `${reqData.city || 'Antalya'} / ${reqData.district || 'Merkez'}`,
-    reqData.totalGrams || '0 g'
-], reqData.requestId);
-await sendWhatsAppTemplate(jeweler.phone, 'yeni_ihale_bildirimi', [
-          reqData.requestId,
-          `${reqData.city || 'Antalya'} / ${reqData.district || 'Merkez'}`,
-          reqData.totalGrams || '0 g'
-        ], reqData.requestId);
-      } // <-- BU PARANTEZ EKSİK, BURAYA EKLEYİN
+  // Meta 24 saat kuralına takılmayan onaylı şablon ile bildirim
+        await sendWhatsAppTemplate(
+          jeweler.phone,
+          'yeni_ihale_bildirimi',
+          [
+            reqData.requestId,
+            `${reqData.city || 'Antalya'} / ${reqData.district || 'Merkez'}`,
+            reqData.totalGrams || '0 g'
+          ],
+          reqData.requestId
+        );
+      }
 
       if (reqData.customerPhone) {
-
-        if (reqData.customerPhone) {
-            const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
-            await sendWhatsAppMessage(reqData.customerPhone, customerMsg);
-        }
-
+        const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
+        await sendWhatsAppMessage(reqData.customerPhone, customerMsg);
+      }
         res.json({ 
             success: true, 
             message: `İhale açıldı, ${matchedJewelers.length} aktif sarrafa WhatsApp iletildi.`, 
