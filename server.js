@@ -791,6 +791,11 @@ ${itemsList}
         res.status(500).json({ success: false, message: 'Sunucu hatası' });
     }
 });
+// Meta butonundan gelen /offer.html?id=XXX isteklerini kuyumcu.html paneline yönlendir
+app.get('/offer.html', (req, res) => {
+  const reqId = req.query.id || req.query.req || '';
+  res.redirect(`/kuyumcu.html?req=${reqId}`);
+});
 
 app.get('/api/requests', (req, res) => {
     const now = Date.now();
