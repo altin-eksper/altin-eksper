@@ -2873,7 +2873,7 @@ function exportCustomerLivePDF() {
 
     const cName = document.getElementById('customerNote')?.value.trim() || 'Değerli Müşterimiz';
     const cPhone = document.getElementById('customerPhone')?.value.trim() || 'Belirtilmedi';
-    const dist = document.getElementById('customerDistrict')?.value.trim() || 'Merkez';
+    const cDistrict = document.getElementById('customerDistrict')?.value.trim() || 'Merkez';
     const totalTL = document.getElementById('grandTotal')?.textContent || '0,00 ₺';
     const totalG = document.getElementById('totalGrams')?.textContent || '0,00 g';
     const totalQ = document.getElementById('totalQty')?.textContent || '0';
