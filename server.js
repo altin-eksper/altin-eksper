@@ -777,13 +777,19 @@ ${itemsList}
         );
       }
 
-     if (reqData.customerPhone) {
-        await sendWhatsAppTemplate(
+  if (reqData.customerPhone) {
+        // 1. Önce yeni onaylı şablonu dene
+        const tplRes = await sendWhatsAppTemplate(
           reqData.customerPhone,
           'musteri_talep_bildirimi',
           [reqData.requestId]
         );
-      }
+
+        // 2. Şablon henüz Meta onayındaysa (hata dönerse) eski düz metne düş
+        if (!tplRes || tplRes.error) {
+          const customerMsg = `✅ *Altın Eksper:* #${reqData.requestId} nolu satış talebiniz kayıtlı sarraflara iletildi. Teklifler toplanıyor, 15 dakika içinde en iyi teklif size bildirilecektir.`;
+          await sendWhatsAppMessage(reqData.customerPhone, customerMsg);
+        }
       }
         res.json({ 
             success: true, 
