@@ -654,9 +654,9 @@ tfoot td{ padding:12px 10px; border-top:2px solid #1e293b; border-bottom:none; }
             <button type="button" class="secondary" style="background:#0284c7;" onclick="exportCustomerLiveExcel()">
                 📊 Değerleme Listesi (Excel)
             </button>
-          <button type="button" class="secondary" style="background:#d97706; color:#fff; font-weight:700; cursor:pointer;" onclick="exportCustomerLivePDF()">
-  📄 Değerleme Fişi (PDF)
-</button>
+            <button type="button" class="secondary" style="background:#475569;" onclick="exportCustomerLivePDF()">
+                📄 Değerleme Fişi (PDF)
+            </button>
         </div>
         <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
             <!-- MÜŞTERİ KVKK & SÖZLEŞME ONAY KUTUSU -->
@@ -4069,7 +4069,7 @@ async function handleAuthRegister(e) {
         </div>
     </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <script>
 function openHistoryModal() {
     const modal = document.getElementById('customerHistoryModal');
@@ -4172,54 +4172,40 @@ function openSelectedCustomerAuction(requestId) {
         });
 }
 // PDF / Fiş Penceresini Tam Ekran Aç
-function showPdfModal(htmlContent) {
-  const modal = document.getElementById('pdfViewerModal');
-  const iframe = document.getElementById('pdfIframe');
-  if (!modal || !iframe) return;
+    function showPdfModal(htmlContent) {
+      const modal = document.getElementById('pdfViewerModal');
+      const iframe = document.getElementById('pdfIframe');
+      if (!modal || !iframe) return;
 
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
 
-  const doc = iframe.contentWindow || iframe.contentDocument;
-  const targetDoc = doc.document ? doc.document : doc;
-  targetDoc.open();
-  targetDoc.write(htmlContent);
-  targetDoc.close();
-}
+      const doc = iframe.contentWindow || iframe.contentDocument;
+      const targetDoc = doc.document ? doc.document : doc;
+      targetDoc.open();
+      targetDoc.write(htmlContent);
+      targetDoc.close();
+    }
 
-// Pencereyi Kapat
-function closePdfModal() {
-  const modal = document.getElementById('pdfViewerModal');
-  const iframe = document.getElementById('pdfIframe');
-  if (!modal) return;
+    // Pencereyi Kapat
+    function closePdfModal() {
+      const modal = document.getElementById('pdfViewerModal');
+      const iframe = document.getElementById('pdfIframe');
+      if (!modal) return;
 
-  modal.style.display = 'none';
-  document.body.style.overflow = '';
-  if (iframe) iframe.src = 'about:blank';
-}
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+      if (iframe) iframe.src = 'about:blank';
+    }
 
-// Fişi Yazdır veya Doğrudan PDF Olarak İndir
-function printPdfModalContent() {
-  const iframe = document.getElementById('pdfIframe');
-  if (!iframe || !iframe.contentWindow) return;
-
-  const doc = iframe.contentDocument || iframe.contentWindow.document;
-  if (window.html2pdf && doc && doc.body) {
-    html2pdf()
-      .set({
-        margin: 8,
-        filename: 'Altin-Eksper-Degerleme-Fisi.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      })
-      .from(doc.body)
-      .save();
-  } else {
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-  }
-}
+    // Fişi Yazdır / PDF Olarak Kaydet
+    function printPdfModalContent() {
+      const iframe = document.getElementById('pdfIframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }
+    }
   </script>
 
 <!-- TAM EKRAN MOBİL PDF / FİŞ PENCERESİ -->
@@ -4238,7 +4224,7 @@ function printPdfModalContent() {
       </div>
     </div>
 
-    <!-- Fiş İçeriği (İframe) --> 
+    <!-- Fiş İçeriği (İframe) -->
     <div style="flex:1; background:#ffffff; border-radius:0 0 10px 10px; overflow:hidden;">
       <iframe id="pdfIframe" style="width:100%; height:100%; border:none; background:#fff;"></iframe>
     </div>
