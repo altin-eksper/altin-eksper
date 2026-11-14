@@ -1024,7 +1024,7 @@ app.get('/api/request/:id', (req, res) => {
 });
 
 // ================= TEKLİF VERME & REVİZE ETME =================
-app.post('/api/request/quote', (req, res) => {
+app.post('/api/request/quote', async (req, res) => {
     const { requestId, jewelerCode, offerPrice, note } = req.body;
     console.log(`[Teklif Girişi]: #${requestId} için ${jewelerCode} -> ${offerPrice} TL`);
 
@@ -1076,7 +1076,26 @@ app.post('/api/request/quote', (req, res) => {
     }
 
     saveDatabase();
+// Müşteriye yeni teklif geldiğini WhatsApp üzerinden bildir
+  if (target.customerPhone) {
+    const bestQuote = [...target.quotes].sort((a, b) => Number(b.offerPrice) - Number(a.offerPrice))[0];
+    const formattedPrice = Number(bestQuote.offerPrice).toLocaleString('tr-TR') + ' TL';
+    const jewelerName = jeweler ? jeweler.name : jewelerCode;
 
+    // 1. Önce onaylı şablonu dene (24 saat kuralına takılmaz)
+    const tplRes = await sendWhatsAppTemplate(
+      target.customerPhone,
+      'musteri_teklif_bildirimi',
+      [target.requestId, formattedPrice, jewelerName],
+      target.requestId
+    );
+
+    // 2. Şablon henüz Meta onayındaysa (hata dönerse) düz metin gönder
+    if (!tplRes || tplRes.error) {
+      const offerMsg = `🔔 *ALTIN EKSPER — YENİ TEKLİF GELDİ!*\n\n#${target.requestId} nolu satış talebiniz için yeni teklif ulaştı.\n\n💰 *En İyi Teklif:* ${formattedPrice}\n🏪 *Teklif Veren:* ${jewelerName}\n\n👉 *Teklifleri Gör:* https://altin-eksper.onrender.com/?req=${target.requestId}`;
+      await sendWhatsAppMessage(target.customerPhone, offerMsg);
+    }
+  }
     res.json({ 
         success: true, 
         quotes: target.quotes, 
