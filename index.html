@@ -2919,14 +2919,67 @@ function exportCustomerLivePDF() {
             ayarRowsHtml += '<tr><td style="color:#64748b;">' + karat + ' Ayar Ağırlık:</td><td style="text-align:right; font-weight:700;">' + ayarTotals[karat].toFixed(2) + ' g</td></tr>';
         });
 
-        const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Altın Eksper - Müşteri Ön Değerleme Fişi</title>' +
-            '<style>@page { size: A4 portrait; margin: 12mm; } body{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #1e293b; margin: 0; padding: 20px; font-size: 13px; line-height: 1.4; } .receipt-box{ max-width: 800px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); } .doc-header{ display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 16px; margin-bottom: 16px; } .brand-title{ font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; } .meta-info{ font-size: 11px; color: #64748b; line-height: 1.5; text-align: right; } .cust-info{ background: #f8fafc; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; display: flex; gap: 24px; font-size: 12px; } table.receipt-table{ width: 100%; border-collapse: collapse; margin-bottom: 16px; } table.receipt-table th{ background: #f8fafc; color: #475569; font-weight: 600; text-align: left; padding: 8px 10px; font-size: 11px; border-bottom: 1px solid #e2e8f0; } table.receipt-table td{ padding: 8px 10px; border-bottom: 1px solid #f1f5f9; font-size: 12px; } .summary-card{ margin-top: 12px; display: flex; justify-content: flex-end; } .summary-table{ width: 320px; border-collapse: collapse; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; } .summary-table td{ padding: 8px 12px; border-bottom: 1px solid #edf2f7; font-size: 12px; } .total-row td{ font-weight: 800; font-size: 14px; color: #b45309; border-bottom: none; background: #fef3c7; }</style></head><body><div class="receipt-box">' +
-            '<div class="doc-header"><div><div class="brand-title">ALTIN EKSPER</div><div style="font-size:11px; color:#64748b; font-weight:600; margin-top:2px;">MÜŞTERİ ÖN DEĞERLEME FİŞİ</div></div>' + dateFormatted + '</div>' +
-            '<div class="cust-info"><div><strong>Müşteri:</strong> ' + safeText(cName) + '</div><div><strong>Bölge / İlçe:</strong> ' + safeText(cDistrict) + '</div></div>' +
-            '<table class="receipt-table"><thead><tr><th style="width:30px; text-align:center;">#</th><th>Ürün Cinsi</th><th style="width:75px; text-align:center;">Ayar</th><th style="width:50px; text-align:center;">Adet</th><th style="width:75px; text-align:center;">Gram</th><th style="width:110px; text-align:right;">Birim Fiyat</th><th style="width:110px; text-align:right;">Tutar</th></tr></thead><tbody>' + tableRows + '</tbody></table>' +
-            '<div class="summary-card"><table class="summary-table"><tr><td style="color:#64748b;">Toplam Adet:</td><td style="text-align:right; font-weight:700;">' + totalQ + '</td></tr>' + ayarRowsHtml + '<tr><td style="color:#64748b;">Toplam Brüt Ağırlık:</td><td style="text-align:right; font-weight:700;">' + totalG + '</td></tr><tr class="total-row"><td>GÖSTERGE TOPLAM:</td><td style="text-align:right; color:#b45309;">' + totalTL + '</td></tr></table></div>' +
-            '<div style="margin-top:16px; font-size:11px; color:#94a3b8; line-height:1.4;"><strong>Bilgilendirme Notu:</strong> Bu fiş Altın Eksper platformu üzerinden anlık toptan serbest piyasa referans verileriyle hazırlanmış olup bağlayıcı teklif niteliği taşımaz. Nihai alım satım işlemleri fiziki ekspertiz ve anlaşmalı kuyumcu onayı ile gerçekleşir.</div>' +
-            '</div></body></html>';
+   const html = '<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Altın Eksper - Müşteri Ön Değerleme Fişi</title>' +
+      '<style>' +
+        '@page { size: A4 portrait; margin: 10mm; }' +
+        '* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }' +
+        'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1e293b; background: #ffffff; margin: 0; padding: 12px; }' +
+        '.lux-sheet { border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 25px rgba(15,23,42,0.06); }' +
+        '.doc-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 22px 26px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #f59e0b; }' +
+        '.brand-title { font-size: 24px; font-weight: 800; letter-spacing: 1.5px; color: #f59e0b; }' +
+        '.brand-sub { font-size: 11px; color: #cbd5e1; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-weight: 600; }' +
+        '.doc-header table td { color: #e2e8f0 !important; font-size: 11px; }' +
+        '.body-wrap { padding: 22px 26px; }' +
+        '.cust-info { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 13px; color: #334155; }' +
+        '.cust-info strong { color: #0f172a; }' +
+        '.receipt-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; font-size: 12px; }' +
+        '.receipt-table thead tr { background: #0f172a; color: #f8fafc; }' +
+        '.receipt-table th { padding: 10px 12px; text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #f59e0b; }' +
+        '.receipt-table td { padding: 11px 12px; border-bottom: 1px solid #e2e8f0; }' +
+        '.receipt-table tbody tr:nth-child(even) { background: #f8fafc; }' +
+        '.summary-wrap { display: flex; justify-content: flex-end; margin-top: 8px; }' +
+        '.summary-card { width: 320px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border-radius: 12px; padding: 16px 20px; border: 1px solid #334155; }' +
+        '.summary-table { width: 100%; border-collapse: collapse; font-size: 12px; }' +
+        '.summary-table td { padding: 5px 0; color: #cbd5e1 !important; }' +
+        '.summary-table td:last-child { color: #ffffff !important; font-weight: 700; text-align: right; }' +
+        '.summary-total-row td { border-top: 1px solid rgba(245,158,11,0.35); padding-top: 10px !important; margin-top: 6px; font-size: 14px !important; font-weight: 800 !important; color: #f59e0b !important; }' +
+        '.footer-note { margin-top: 22px; padding: 12px 16px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; font-size: 11px; color: #92400e; line-height: 1.5; }' +
+      '</style></head><body>' +
+      '<div class="lux-sheet">' +
+        '<div class="doc-header">' +
+          '<div><div class="brand-title">ALTIN EKSPER</div><div class="brand-sub">MÜŞTERİ ÖN DEĞERLEME FİŞİ</div></div>' +
+          '<div>' + dateFormatted + '</div>' +
+        '</div>' +
+        '<div class="body-wrap">' +
+          '<div class="cust-info">' +
+            '<div><strong>Müşteri:</strong> ' + safeText(cName) + '</div>' +
+            '<div><strong>Bölge / İlçe:</strong> Antalya - ' + safeText(cDistrict) + '</div>' +
+          '</div>' +
+          '<table class="receipt-table">' +
+            '<thead><tr>' +
+              '<th style="width:32px; text-align:center;">#</th>' +
+              '<th>Ürün Cinsi</th>' +
+              '<th style="text-align:center;">Ayar</th>' +
+              '<th style="text-align:center;">Adet</th>' +
+              '<th style="text-align:center;">Gram</th>' +
+              '<th style="text-align:right;">Birim Fiyat</th>' +
+              '<th style="text-align:right;">Tutar</th>' +
+            '</tr></thead>' +
+            '<tbody>' + tableRows + '</tbody>' +
+          '</table>' +
+          '<div class="summary-wrap">' +
+            '<div class="summary-card">' +
+              '<table class="summary-table">' +
+                '<tr><td>Toplam Adet:</td><td>' + safeText(totalQ) + '</td></tr>' +
+                ayarRowsHtml +
+                '<tr><td>Toplam Brüt Ağırlık:</td><td>' + safeText(totalG) + '</td></tr>' +
+                '<tr class="summary-total-row"><td>GÖSTERGE TOPLAM:</td><td>' + safeText(totalTL) + '</td></tr>' +
+              '</table>' +
+            '</div>' +
+          '</div>' +
+          '<div class="footer-note"><strong>Bilgilendirme Notu:</strong> Bu fiş Altın Eksper platformu üzerinden anlık serbest piyasa referans verileriyle oluşturulmuş olup bağlayıcı teklif niteliği taşımaz. Nihai alım-satım işlemleri fiziki ekspertiz ve anlaşmalı kuyumcu onayı ile gerçekleşir.</div>' +
+        '</div>' +
+      '</div></body></html>';
 
     showPdfModal(html);
 }
