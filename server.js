@@ -1278,6 +1278,10 @@ ${tokenNote}
 Hayırlı ve bereketli kazançlar dileriz!`;
 
         await sendWhatsAppMessage(targetJeweler.phone, finishMsg);
+        if (customerPhone) {
+          const customerFinishMsg = `✅ *İŞLEM TAMAMLANDI*\n\nSayın *${dealRecord.customerName}*, *#${requestId}* nolu işleminiz *${targetJeweler.name}* tarafından güvenlik PIN doğrulaması ile tamamlandı.\n💰 *Gerçekleşen Tutar:* ₺${realPrice.toLocaleString('tr-TR')}`;
+          await sendWhatsAppMessage(customerPhone, customerFinishMsg).catch(() => {});
+        }
 
         res.json({
             success: true,
